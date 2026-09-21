@@ -1,4 +1,47 @@
-# Nasazení "Výraz" na Google Cloud Run (přes Firebase/Google účet)
+# Nasazení "Výraz" na Render.com (zdarma, bez karty)
+
+Render umí spustit náš Node/WebSocket server přímo, bez placení a bez karty.
+Jediná podmínka: kód musí být v GitHub repozitáři, ze kterého si ho Render natáhne.
+
+## 1. GitHub repozitář
+
+Pokud nemáš GitHub účet, založ si ho zdarma na https://github.com/signup.
+
+Pak vytvoř nové **prázdné** repo (bez README) na https://github.com/new — třeba
+pod názvem `vyraz-hra`.
+
+V terminálu, ve složce `vyraz-hra` (kód už je tu lokálně připravený a commitnutý),
+spusť (nahraď `TVOJE-JMENO` svým GitHub uživatelským jménem):
+
+```bash
+git remote add origin https://github.com/TVOJE-JMENO/vyraz-hra.git
+git branch -M main
+git push -u origin main
+```
+
+Prohlížeč/terminál tě požádá o přihlášení k GitHubu — přihlas se.
+
+## 2. Render
+
+1. Jdi na https://render.com a zaregistruj se (nejrychlejší je tlačítko "Sign up with GitHub" — propojí se to rovnou s tvým GitHub účtem).
+2. V Render dashboardu klikni **New → Web Service**.
+3. Vyber svůj repozitář `vyraz-hra` (Render se ho zeptá o povolení přístupu ke GitHubu, jen poprvé).
+4. Render sám najde soubor `render.yaml` a předvyplní: Build command `npm install`, Start command `npm start`, plán **Free**. Nic měnit nemusíš.
+5. Klikni **Create Web Service** / **Deploy**.
+
+Za pár minut (první build trvá déle) dostaneš adresu ve tvaru
+`https://vyraz-hra.onrender.com` — to je tvůj trvalý veřejný odkaz.
+
+**Jedna vlastnost zdarma tieru:** pokud appku 15 minut nikdo nepoužívá, "usne" a
+další příchozí musí počkat ~30–60 vteřin, než se probere. Pak už běží normálně.
+
+## Když příště appku upravíme
+
+Stačí lokální změny commitnout a `git push` — Render automaticky znovu nasadí.
+
+---
+
+# Alternativa: nasazení na Google Cloud Run (přes Firebase/Google účet)
 
 Appka potřebuje běžet jako trvalý server (WebSocket + živý stav lobby v paměti),
 takže "čistý" Firebase Hosting (jen statické stránky) nestačí — musí to jet přes
