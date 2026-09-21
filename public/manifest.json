@@ -1,0 +1,14 @@
+{
+  "name": "Výraz — párty hra",
+  "short_name": "Výraz",
+  "description": "Padne věta, všichni se vyfotí s reakcí a hlasuje se, čí výraz sedí nejlíp.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#151417",
+  "theme_color": "#3B0F3A",
+  "icons": [
+    { "src": "icon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
