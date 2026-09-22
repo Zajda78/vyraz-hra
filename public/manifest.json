@@ -1,13 +1,13 @@
 {
-  "name": "Výraz — párty hra",
-  "short_name": "Výraz",
+  "name": "Mogging face — párty hra",
+  "short_name": "Mogging face",
   "description": "Padne věta, všichni se vyfotí s reakcí a hlasuje se, čí výraz sedí nejlíp.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#151417",
-  "theme_color": "#3B0F3A",
+  "background_color": "#170B2E",
+  "theme_color": "#2A1252",
   "icons": [
     { "src": "icon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml", "purpose": "any" }
   ]

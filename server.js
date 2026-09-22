@@ -16,6 +16,10 @@ const RESULTS_AUTO_ADVANCE_SECONDS = 15;
 const DRAW_SECONDS_DEFAULT = 20;
 const DRAW_SECONDS_MIN = 5;
 const DRAW_SECONDS_MAX = 120;
+const CAPTION_SECONDS_DEFAULT = 40;
+const CAPTION_SECONDS_MIN = 10;
+const CAPTION_SECONDS_MAX = 180;
+const CAPTION_WIN_POINTS = 100;
 
 // Bodování podle pořadí v kole — 1. místo dostane nejvíc, další míň, ale
 // nikdo nejde na nulu úplně (kromě "Nestihl to"). Plynulý sestupný žebříček,
@@ -26,26 +30,6 @@ function pointsForRank(rank) {
   const idx = Math.min(rank - 1, POINTS_BY_RANK.length - 1);
   return POINTS_BY_RANK[idx];
 }
-
-// Klasické prompty — bez odkazu na konkrétního hráče.
-const PLAIN_PROMPTS = [
-  'Tvůj výraz, když ti šéf řekne, že přesčas je dobrovolný',
-  'Jak se tváříš, když ti někdo sní poslední kousek jídla z lednice',
-  'Tvoje tvář, když zjistíš, že jsi poslal zprávu do špatného chatu',
-  'Výraz, když ti bábinka řekne, že vypadáš unaveně',
-  'Jak vypadáš v pondělí ráno v 6:00',
-  'Tvář, když si uvědomíš, že jsi zapomněl nabít telefon',
-  'Výraz, když ti řeknou "to je dlouhý příběh" a pak nic neřeknou',
-  'Tvůj výraz, když učitel/šéf řekne "ještě jedna věc, než půjdete"',
-  'Tvář, když objevíš, že jsi celý den měl něco mezi zuby',
-  'Výraz, když ti auto před tebou na semaforu nejede a je zelená už 5 vteřin',
-  'Jak vypadáš, když ochutnáš jídlo, co vypadalo líp, než chutná',
-  'Tvář, když ti volá neznámé číslo v 7 ráno',
-  'Výraz, když najdeš 200 Kč v kapse bundy, kterou jsi nenosil od zimy',
-  'Tvůj výraz, když omylem lajkneš starou fotku někoho na Instagramu',
-  'Tvář, když ti někdo řekne vtip a čeká, že se zasměješ',
-  'Výraz, když si sedneš a uvědomíš si, že jsi celý den měl trenýrky naruby',
-];
 
 // Prompty s dosazeným jménem náhodného hráče z lobby ({name} se nahradí).
 const NAME_PROMPTS = [
@@ -64,6 +48,24 @@ const NAME_PROMPTS = [
   'Tvář, když ti {name} v hospodě řekne "platím" a nemá peněženku',
   'Výraz, když {name} prohraje sázku a musí tě poslouchat 24 hodin',
   'Tvůj výraz, když ti {name} ukáže fotky z dovolené, kam tě nepozval',
+  'Tvář, když ti {name} v posilovně nabídne spotování a upustí činku',
+  'Výraz, když {name} sfoukne svíčky na dortu, co jsi pekl ty',
+  'Tvůj výraz, když ti {name} řekne, že tvůj oblíbený tým zase prohrál',
+  'Výraz, když ti {name} napíše zprávu ve 3 ráno a evidentně je vzhůru',
+  'Tvář, když ti {name} přizná, že ti dva roky říkal špatné jméno',
+  'Výraz, když na tebe {name} v obchodě zamává a ty nevíš, kdo to je',
+  'Tvůj výraz, když ti {name} řekne, že tvoje oblíbená písnička je trapná',
+  'Výraz, když ti {name} ukáže, že tě sledoval už na základce',
+  'Tvář, když ti {name} vrátí půjčenou knihu celou zmuchlanou',
+  'Výraz, když {name} v kvízu vyhraje otázku, na kterou jsi znal odpověď ty',
+  'Tvůj výraz, když ti {name} řekne, že máš něco na zubech už celý večer',
+  'Výraz, když ti {name} přizná, že smazal tvůj rozkoukaný seriál',
+  'Tvář, když tě {name} vyfotí přesně v momentě nejhoršího výrazu',
+  'Výraz, když ti {name} řekne, že tvůj parfém zná od souseda',
+  'Tvůj výraz, když {name} otevře tvoji lednici a řekne "to je všechno?"',
+  'Výraz, když ti {name} připomene trapas ze silvestra, na který jsi zapomněl',
+  'Tvář, když ti {name} řekne, že jeho pes tě má radši než jeho',
+  'Výraz, když ti {name} přizná, že tvůj vtip nikdy nebyl vtipný',
 ];
 
 function code() {
@@ -83,8 +85,8 @@ const lobbies = new Map();
 function newLobby(hostId) {
   return {
     hostId,
-    mode: 'classic', // classic | draw — nastaví se při create_lobby, dál se nemění
-    phase: 'lobby', // lobby | submitting | drawing | voting | results | gameover
+    mode: 'classic', // classic | draw | caption — nastaví se při create_lobby, dál se nemění
+    phase: 'lobby', // lobby | submitting | drawing | voting | subject_photo | captioning | judging | results | gameover
     totalRounds: 6,
     drawEnabled: false,
     drawSeconds: DRAW_SECONDS_DEFAULT,
@@ -96,33 +98,31 @@ function newLobby(hostId) {
     votes: new Map(), // voterId -> targetId
     drawDone: new Set(), // hráči, kteří dokreslili (nebo neměli co)
     cardOrder: [], // shuffled player ids for this round's reveal
+    // --- Main character (mode: 'caption') ---
+    captionSeconds: CAPTION_SECONDS_DEFAULT, // jediná fáze s časovým limitem — psaní popisků
+    subjectOrder: [], // pořadí hráčů, kdo bude objekt fotky, zamíchané při startu hry
+    subjectIndex: -1,
+    subjectId: null,
+    subjectPhoto: null, // { photoDataUrl } | null
+    captions: new Map(), // playerId -> text
+    captionOrder: [], // zamíchané pořadí id autorů pro anonymní zobrazení při výběru
     deadlineAt: null,
     timer: null,
     lastRoundResult: null,
   };
 }
 
-function allPromptTemplates() {
-  return [
-    ...PLAIN_PROMPTS.map((text) => ({ text, named: false })),
-    ...NAME_PROMPTS.map((text) => ({ text, named: true })),
-  ];
-}
-
 function pickPrompt(lobby) {
-  const templates = allPromptTemplates();
-  const remaining = templates.filter((t) => !lobby.usedPrompts.has(t.text));
-  const pool = remaining.length ? remaining : templates;
+  const remaining = NAME_PROMPTS.filter((t) => !lobby.usedPrompts.has(t));
+  const pool = remaining.length ? remaining : NAME_PROMPTS;
   const chosen = pool[crypto.randomInt(pool.length)];
 
-  lobby.usedPrompts.add(chosen.text);
-  if (lobby.usedPrompts.size >= templates.length) lobby.usedPrompts.clear();
-
-  if (!chosen.named) return chosen.text;
+  lobby.usedPrompts.add(chosen);
+  if (lobby.usedPrompts.size >= NAME_PROMPTS.length) lobby.usedPrompts.clear();
 
   const players = connectedPlayers(lobby);
   const target = players[crypto.randomInt(players.length)];
-  return chosen.text.replace('{name}', target.name);
+  return chosen.replace('{name}', target.name);
 }
 
 function shuffle(arr) {
@@ -146,6 +146,7 @@ function clearTimer(lobby) {
 }
 
 function startRound(lobby) {
+  if (lobby.mode === 'caption') return startCaptionRound(lobby);
   clearTimer(lobby);
   lobby.round += 1;
   lobby.prompt = pickPrompt(lobby);
@@ -157,6 +158,112 @@ function startRound(lobby) {
   lobby.phase = 'submitting';
   lobby.deadlineAt = Date.now() + SUBMIT_SECONDS * 1000;
   lobby.timer = setTimeout(() => afterSubmitting(lobby), SUBMIT_SECONDS * 1000);
+  broadcast(lobby);
+}
+
+// ---------------------------------------------------------- Main character ---
+
+// Najde dalšího hráče v rotaci, co je připojený (odpojené přeskočí).
+function pickNextSubject(lobby) {
+  const order = lobby.subjectOrder;
+  if (!order.length) return null;
+  for (let i = 1; i <= order.length; i++) {
+    const idx = (lobby.subjectIndex + i) % order.length;
+    const pid = order[idx];
+    const player = lobby.players.get(pid);
+    if (player && player.connected) {
+      lobby.subjectIndex = idx;
+      return pid;
+    }
+  }
+  return null;
+}
+
+function startCaptionRound(lobby) {
+  clearTimer(lobby);
+  lobby.round += 1;
+  lobby.prompt = null;
+  lobby.subjectPhoto = null;
+  lobby.captions = new Map();
+  lobby.captionOrder = [];
+  lobby.lastRoundResult = null;
+
+  const subjectId = pickNextSubject(lobby);
+  lobby.subjectId = subjectId;
+  if (!subjectId) return; // nikdo připojený — hra se pozastaví, dokud se někdo nevrátí
+
+  // Čas na fotku je neomezený — čeká se, dokud objekt fotku neodešle.
+  lobby.phase = 'subject_photo';
+  lobby.deadlineAt = null;
+  broadcast(lobby);
+}
+
+function afterSubjectPhoto(lobby) {
+  if (lobby.phase !== 'subject_photo') return;
+  clearTimer(lobby);
+  if (!lobby.subjectPhoto) return; // bez timeoutu — dokud fotka nedorazí, není co dělat
+  beginCaptioning(lobby);
+}
+
+function beginCaptioning(lobby) {
+  lobby.phase = 'captioning';
+  lobby.deadlineAt = Date.now() + lobby.captionSeconds * 1000;
+  lobby.timer = setTimeout(() => afterCaptioning(lobby), lobby.captionSeconds * 1000);
+  broadcast(lobby);
+}
+
+function maybeAdvanceFromCaptioning(lobby) {
+  if (lobby.phase !== 'captioning') return;
+  const eligible = connectedPlayers(lobby).filter((p) => p.id !== lobby.subjectId);
+  if (eligible.length > 0 && eligible.every((p) => lobby.captions.has(p.id))) {
+    afterCaptioning(lobby);
+  }
+}
+
+function afterCaptioning(lobby) {
+  if (lobby.phase !== 'captioning') return;
+  clearTimer(lobby);
+  if (lobby.captions.size === 0) {
+    finishCaptionRound(lobby, { noCaptions: true });
+    return;
+  }
+  // Čas na výběr vítěze je neomezený — čeká se, dokud objekt fotky nevybere.
+  lobby.captionOrder = shuffle([...lobby.captions.keys()]);
+  lobby.phase = 'judging';
+  lobby.deadlineAt = null;
+  broadcast(lobby);
+}
+
+function finishCaptionRound(lobby, { winnerId = null, skipped = false, noCaptions = false } = {}) {
+  clearTimer(lobby);
+
+  if (winnerId) {
+    const winner = lobby.players.get(winnerId);
+    if (winner) winner.score += CAPTION_WIN_POINTS;
+  }
+
+  const captionsList = [...lobby.captions.entries()].map(([pid, text]) => {
+    const player = lobby.players.get(pid);
+    return { id: pid, name: player ? player.name : '???', text, isWinner: pid === winnerId };
+  });
+
+  const subjectPlayer = lobby.players.get(lobby.subjectId);
+  lobby.lastRoundResult = {
+    kind: 'caption',
+    round: lobby.round,
+    subjectId: lobby.subjectId,
+    subjectName: subjectPlayer ? subjectPlayer.name : '???',
+    photoDataUrl: lobby.subjectPhoto ? lobby.subjectPhoto.photoDataUrl : null,
+    captions: captionsList,
+    winnerId,
+    points: winnerId ? CAPTION_WIN_POINTS : 0,
+    skipped,
+    noCaptions,
+  };
+
+  lobby.phase = 'results';
+  lobby.deadlineAt = Date.now() + RESULTS_AUTO_ADVANCE_SECONDS * 1000;
+  lobby.timer = setTimeout(() => advanceAfterResults(lobby), RESULTS_AUTO_ADVANCE_SECONDS * 1000);
   broadcast(lobby);
 }
 
@@ -309,6 +416,9 @@ function advanceAfterResults(lobby) {
     lobby.submissions.clear();
     lobby.votes.clear();
     lobby.cardOrder = [];
+    lobby.subjectPhoto = null;
+    lobby.captions = new Map();
+    lobby.captionOrder = [];
     lobby.lastRoundResult = null;
     lobby.phase = 'gameover';
     lobby.deadlineAt = null;
@@ -339,6 +449,7 @@ function publicState(lobby, viewerId) {
     totalRounds: lobby.totalRounds,
     drawEnabled: lobby.drawEnabled,
     drawSeconds: lobby.drawSeconds,
+    captionSeconds: lobby.captionSeconds,
     prompt: lobby.prompt,
     players,
     youId: viewerId,
@@ -374,6 +485,30 @@ function publicState(lobby, viewerId) {
     base.votedCount = lobby.votes.size;
     base.activeCount = connectedPlayers(lobby).length;
     base.youVoted = lobby.votes.has(viewerId);
+  }
+
+  if (lobby.phase === 'subject_photo') {
+    base.subjectId = lobby.subjectId;
+    base.subjectName = lobby.players.get(lobby.subjectId)?.name || '???';
+    base.isSubject = viewerId === lobby.subjectId;
+  }
+
+  if (lobby.phase === 'captioning') {
+    base.subjectId = lobby.subjectId;
+    base.subjectName = lobby.players.get(lobby.subjectId)?.name || '???';
+    base.isSubject = viewerId === lobby.subjectId;
+    base.subjectPhotoDataUrl = lobby.subjectPhoto ? lobby.subjectPhoto.photoDataUrl : null;
+    base.captionedCount = lobby.captions.size;
+    base.captionEligibleCount = connectedPlayers(lobby).filter((p) => p.id !== lobby.subjectId).length;
+    base.youCaptioned = lobby.captions.has(viewerId);
+  }
+
+  if (lobby.phase === 'judging') {
+    base.subjectId = lobby.subjectId;
+    base.subjectName = lobby.players.get(lobby.subjectId)?.name || '???';
+    base.isSubject = viewerId === lobby.subjectId;
+    base.subjectPhotoDataUrl = lobby.subjectPhoto ? lobby.subjectPhoto.photoDataUrl : null;
+    base.captionCards = lobby.captionOrder.map((pid) => ({ id: pid, text: lobby.captions.get(pid) }));
   }
 
   if (lobby.phase === 'results') {
@@ -426,7 +561,7 @@ wss.on('connection', (ws) => {
       const newCode = code();
       lobby = newLobby(null);
       lobby.code = newCode;
-      lobby.mode = msg.mode === 'draw' ? 'draw' : 'classic';
+      lobby.mode = msg.mode === 'draw' ? 'draw' : msg.mode === 'caption' ? 'caption' : 'classic';
       lobby.drawEnabled = lobby.mode === 'draw';
       playerId = id();
       lobby.hostId = playerId;
@@ -477,8 +612,20 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'set_caption_settings' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode === 'caption') {
+      if (msg.seconds != null) {
+        lobby.captionSeconds = Math.max(CAPTION_SECONDS_MIN, Math.min(CAPTION_SECONDS_MAX, Number(msg.seconds) || CAPTION_SECONDS_DEFAULT));
+      }
+      broadcast(lobby);
+      return;
+    }
+
     if (msg.type === 'start_game' && playerId === lobby.hostId && lobby.phase === 'lobby') {
       if (lobby.players.size < 2) return sendError(ws, 'Potřebuješ aspoň 2 hráče.');
+      if (lobby.mode === 'caption') {
+        lobby.subjectOrder = shuffle([...lobby.players.keys()]);
+        lobby.subjectIndex = -1;
+      }
       startRound(lobby);
       return;
     }
@@ -493,10 +640,35 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'submit_photo' && lobby.phase === 'subject_photo' && playerId === lobby.subjectId) {
+      if (typeof msg.photoDataUrl === 'string' && msg.photoDataUrl.startsWith('data:image/')) {
+        lobby.subjectPhoto = { photoDataUrl: msg.photoDataUrl };
+        broadcast(lobby);
+        afterSubjectPhoto(lobby);
+      }
+      return;
+    }
+
     if (msg.type === 'finish_drawing' && lobby.phase === 'drawing') {
       lobby.drawDone.add(playerId);
       broadcast(lobby);
       maybeAdvanceFromDrawing(lobby);
+      return;
+    }
+
+    if (msg.type === 'submit_caption' && lobby.phase === 'captioning' && playerId !== lobby.subjectId) {
+      const text = String(msg.text || '').trim().slice(0, 140);
+      if (!text) return;
+      lobby.captions.set(playerId, text);
+      broadcast(lobby);
+      maybeAdvanceFromCaptioning(lobby);
+      return;
+    }
+
+    if (msg.type === 'pick_caption' && lobby.phase === 'judging' && playerId === lobby.subjectId) {
+      const authorId = msg.authorId;
+      if (!lobby.captions.has(authorId)) return;
+      finishCaptionRound(lobby, { winnerId: authorId });
       return;
     }
 
@@ -527,6 +699,12 @@ wss.on('connection', (ws) => {
       lobby.votes.clear();
       lobby.drawDone = new Set();
       lobby.cardOrder = [];
+      lobby.subjectOrder = [];
+      lobby.subjectIndex = -1;
+      lobby.subjectId = null;
+      lobby.subjectPhoto = null;
+      lobby.captions = new Map();
+      lobby.captionOrder = [];
       lobby.lastRoundResult = null;
       lobby.deadlineAt = null;
       for (const p of lobby.players.values()) p.score = 0;
@@ -549,6 +727,7 @@ wss.on('connection', (ws) => {
       if (lobby.phase === 'submitting') maybeAdvanceFromSubmitting(lobby);
       if (lobby.phase === 'drawing') maybeAdvanceFromDrawing(lobby);
       if (lobby.phase === 'voting') maybeAdvanceFromVoting(lobby);
+      if (lobby.phase === 'captioning') maybeAdvanceFromCaptioning(lobby);
       broadcast(lobby);
     }
   });

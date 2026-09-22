@@ -68,10 +68,43 @@ function getSavedName() {
   return localStorage.getItem('vyraz_name') || '';
 }
 
+// Velké obrysové ikony do pozadí dlaždic na úvodní obrazovce — mají sedět
+// jako jemný stín ZA textem, ne přes něj (viz mode-card-content z-index).
+const MODE_ICON_CAMERA = `
+  <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 20 L47 9 H73 L80 20 H106 C111.5 20 116 24.5 116 30 V86 C116 91.5 111.5 96 106 96 H14 C8.5 96 4 91.5 4 86 V30 C4 24.5 8.5 20 14 20 H40 Z" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+    <circle cx="60" cy="58" r="25" stroke="currentColor" stroke-width="6"/>
+    <circle cx="60" cy="58" r="10" fill="currentColor"/>
+    <circle cx="98" cy="35" r="3.5" fill="currentColor"/>
+  </svg>`;
+
+const MODE_ICON_PALETTE = `
+  <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M65 4 C92 4 114 24 114 50 C114 76 92 96 65 96 C40 96 20 85 20 72 C20 60 34 54 34 50 C34 46 20 40 20 28 C20 15 40 4 65 4 Z" stroke="currentColor" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="68" cy="24" r="9" stroke="currentColor" stroke-width="5"/>
+    <circle cx="96" cy="44" r="8" stroke="currentColor" stroke-width="5"/>
+    <circle cx="90" cy="68" r="8" stroke="currentColor" stroke-width="5"/>
+    <circle cx="64" cy="80" r="8" stroke="currentColor" stroke-width="5"/>
+    <circle cx="43" cy="65" r="8" stroke="currentColor" stroke-width="5"/>
+  </svg>`;
+
+const MODE_ICON_SPEECH = `
+  <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M60 8 C90 8 114 26 114 48 C114 70 90 88 60 88 C52 88 44 87 37 84 L14 94 L22 74 C12 66 6 57 6 48 C6 26 30 8 60 8 Z" stroke="currentColor" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="38" cy="48" r="5.5" fill="currentColor"/>
+    <circle cx="60" cy="48" r="5.5" fill="currentColor"/>
+    <circle cx="82" cy="48" r="5.5" fill="currentColor"/>
+  </svg>`;
+
+function modeDisplayName(mode) {
+  if (mode === 'draw') return 'Domalovánka';
+  if (mode === 'caption') return 'Main character';
+  return 'Výraz';
+}
+
 function brandHtml(state) {
-  const modeName = state?.mode === 'draw' ? 'Domalovánka' : 'Výraz';
-  const modeEmoji = state?.mode === 'draw' ? '🖌️' : '🎭';
-  return `<div class="brand"><div class="mark">${modeEmoji}</div><h1>${modeName}</h1></div>`;
+  const modeName = modeDisplayName(state?.mode);
+  return `<div class="brand"><img class="mark" src="icon.svg" alt=""><h1>${modeName}</h1></div>`;
 }
 
 function renderStartScreen() {
@@ -82,7 +115,7 @@ function renderStartScreen() {
 
   app.innerHTML = `
     <div class="home-top">
-      <div class="brand"><div class="mark">🎭</div><h1>Výraz</h1></div>
+      <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>Mogging face</h1></div>
       <div class="home-actions">
         <button id="rules-btn" class="text-btn">Pravidla</button>
         <button id="settings-btn" class="icon-btn" title="Nastavení">⚙️</button>
@@ -111,19 +144,33 @@ function renderStartScreen() {
 
       <div class="section-eyebrow">VYTVOŘIT HRU</div>
       <div class="mode-card" data-mode="classic">
-        <div class="glow"></div>
+        <div class="mode-icon-bg">${MODE_ICON_CAMERA}</div>
         <div class="ribbon">ZDARMA</div>
-        <span class="mode-emoji">🎭</span>
-        <h3>Výraz</h3>
-        <p>Padne věta, všichni se vyfotí s reakcí a hlasujete, čí výraz sedí nejlíp.</p>
+        <div class="mode-card-content">
+          <span class="mode-emoji">🎭</span>
+          <h3>Výraz</h3>
+          <p>Padne věta, všichni se vyfotí s reakcí a hlasujete, čí výraz sedí nejlíp.</p>
+        </div>
       </div>
 
       <div class="mode-card mode-card-draw" data-mode="draw">
-        <div class="glow"></div>
+        <div class="mode-icon-bg">${MODE_ICON_PALETTE}</div>
         <div class="ribbon">ZDARMA</div>
-        <span class="mode-emoji">🖌️</span>
-        <h3>Domalovánka</h3>
-        <p>Vyfoť se, pak máš chvíli na to si do fotky prstem něco dokreslit — a stejně jako u Výrazu se hlasuje a bodují místa.</p>
+        <div class="mode-card-content">
+          <span class="mode-emoji">🖌️</span>
+          <h3>Domalovánka</h3>
+          <p>Vyfoť se, pak máš chvíli na to si do fotky prstem něco dokreslit — a stejně jako u Výrazu se hlasuje a bodují místa.</p>
+        </div>
+      </div>
+
+      <div class="mode-card mode-card-caption" data-mode="caption">
+        <div class="mode-icon-bg">${MODE_ICON_SPEECH}</div>
+        <div class="ribbon">ZDARMA</div>
+        <div class="mode-card-content">
+          <span class="mode-emoji">💬</span>
+          <h3>Main character</h3>
+          <p>Jeden hráč se vyfotí, ostatní vymyslí nejlepší popisek k fotce a on sám vybere vítěze.</p>
+        </div>
       </div>
 
       <p class="footer-note">Prototyp pro pár kamarádů. Fotky se posílají jen po dobu hry a nikam se natrvalo neukládají.</p>
@@ -263,11 +310,12 @@ function showRulesModal() {
   const items = [
     'Hostitel založí lobby a pošle kamarádům kód.',
     'Každé kolo padne věta a všichni mají 30 vteřin se s reakcí vyfotit.',
-    'Některé věty se týkají konkrétního spoluhráče z lobby — hra jeho jméno vybere náhodně.',
+    'Každá věta se týká konkrétního spoluhráče z lobby — hra jeho jméno vybere náhodně.',
     'Kdo to nestihne, dostane místo fotky smutný emoji "Nestihl to!!".',
     'V Domalovánce je po vyfocení navíc chvíli čas si do fotky prstem něco dokreslit (hostitel nastaví kolik vteřin).',
     'Fotky se odhalí najednou a hlasujete, která sedí k zadání nejlíp — pro sebe hlasovat nejde.',
     'Body dostane každý podle pořadí v hlasování — 1. místo nejvíc, další o kousek míň. Při shodném počtu hlasů je i shodné pořadí a shodné body.',
+    'V módu Main character je to jinak: každé kolo se vyfotí jeden hráč, ostatní k jeho fotce napíšou popisek a on sám vybere ten nejlepší — autor vítězného popisku bere body. Časový limit (nastavuje hostitel) má jen psaní popisku, na fotku i na výběr vítěze je čas neomezený.',
     'Po posledním kole vyhrává, kdo má nejvíc bodů celkem.',
   ];
   openModal(`
@@ -295,6 +343,8 @@ function renderLobbyScreen(state) {
     <div class="screen">
       <div class="code-display">${escapeHtml(state.code)}</div>
       <p class="subtitle" style="text-align:center;">Tenhle kód pošli kamarádům, ať se připojí.</p>
+
+      ${state.mode === 'caption' ? `<p class="subtitle" style="text-align:center;">💬 Každé kolo je objektem fotky jiný hráč — ostatní pak vymýšlí popisek a on vybírá vítěze.</p>` : ''}
 
       <div class="card">
         <h3 style="margin-bottom:12px;">Hráči (${players.length})</h3>
@@ -329,12 +379,25 @@ function renderLobbyScreen(state) {
           </div>
         ` : ''}
 
+        ${state.mode === 'caption' ? `
+          <div class="card">
+            <h3 style="margin-bottom:12px;">💬 Čas na psaní popisku</h3>
+            <div class="stepper">
+              <button id="caption-seconds-minus">−</button>
+              <span class="val" id="caption-seconds-val">${state.captionSeconds}s</span>
+              <button id="caption-seconds-plus">+</button>
+            </div>
+            <p class="subtitle" style="margin-top:10px;">Čas na fotku a na výběr vítěze je neomezený — jen psaní popisku má limit.</p>
+          </div>
+        ` : ''}
+
         <button id="start-btn" class="btn btn-primary btn-block" ${players.length < 2 ? 'disabled' : ''}>
           ${players.length < 2 ? 'Potřeba aspoň 2 hráči' : 'Spustit hru'}
         </button>
       ` : `
         <p class="subtitle" style="text-align:center;">Čeká se, až hostitel (${escapeHtml(players.find((p) => p.isHost)?.name || '')}) spustí hru…</p>
         ${state.drawEnabled ? `<p class="subtitle" style="text-align:center;">Po fotce bude ${state.drawSeconds}s na dokreslení.</p>` : ''}
+        ${state.mode === 'caption' ? `<p class="subtitle" style="text-align:center;">Na psaní popisku bude ${state.captionSeconds}s, fotka a výběr vítěze jsou bez časového limitu.</p>` : ''}
       `}
     </div>
   `;
@@ -346,6 +409,10 @@ function renderLobbyScreen(state) {
     if (state.drawEnabled) {
       document.getElementById('draw-seconds-minus').onclick = () => send({ type: 'set_draw_settings', seconds: state.drawSeconds - 5 });
       document.getElementById('draw-seconds-plus').onclick = () => send({ type: 'set_draw_settings', seconds: state.drawSeconds + 5 });
+    }
+    if (state.mode === 'caption') {
+      document.getElementById('caption-seconds-minus').onclick = () => send({ type: 'set_caption_settings', seconds: state.captionSeconds - 10 });
+      document.getElementById('caption-seconds-plus').onclick = () => send({ type: 'set_caption_settings', seconds: state.captionSeconds + 10 });
     }
   }
   document.getElementById('back-btn').onclick = leaveLobby;
@@ -423,8 +490,13 @@ function capturePhoto() {
   if (flash) { flash.classList.add('on'); setTimeout(() => flash.classList.remove('on'), 350); }
 
   send({ type: 'submit_photo', photoDataUrl: dataUrl });
-  submittedLocally = true;
   stopCamera();
+
+  if (lastState && lastState.phase === 'subject_photo') {
+    // fáze se po odeslání změní skoro okamžitě, žádný mezikrok navíc netřeba
+    return;
+  }
+  submittedLocally = true;
   buildWaitingView(lastState);
 }
 
@@ -449,6 +521,160 @@ function buildWaitingView(state) {
 function patchWaitingCount(state) {
   const el = document.getElementById('wait-count-text');
   if (el) el.textContent = `Odevzdalo ${state.submittedCount} / ${state.activeCount} hráčů…`;
+}
+
+// ------------------------------------------------------------ POPISOVÁNKA ---
+
+async function buildSubjectPhotoView(state) {
+  mountedKey = `subject-photo-${state.round}`;
+  app.innerHTML = `
+    ${brandHtml(state)}
+    <div class="screen">
+      <div class="prompt-box">
+        <div class="eyebrow">Kolo ${state.round} / ${state.totalRounds}</div>
+        <div class="prompt-text">Ty jsi dnes objekt fotky! Zachyť se — ostatní pak vymyslí, co se na fotce děje.</div>
+      </div>
+      <div class="camera-wrap">
+        <video id="cam-video" autoplay playsinline muted></video>
+        <div class="flash" id="flash-el"></div>
+      </div>
+      <div class="shutter-row">
+        <button id="shutter-btn" class="shutter" title="Vyfotit"></button>
+      </div>
+    </div>
+  `;
+
+  const video = document.getElementById('cam-video');
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
+      audio: false,
+    });
+    video.srcObject = cameraStream;
+  } catch (err) {
+    document.querySelector('.camera-wrap').innerHTML = `
+      <div class="missed" style="justify-content:center;">
+        <span class="emoji">📵</span>
+        <span>Nepovedlo se získat přístup ke kameře.<br>Zkontroluj oprávnění prohlížeče.</span>
+      </div>`;
+  }
+
+  document.getElementById('shutter-btn').onclick = () => capturePhoto();
+}
+
+function buildSubjectWaitView(state) {
+  mountedKey = `subject-wait-${state.round}`;
+  stopCamera();
+  app.innerHTML = `
+    ${brandHtml(state)}
+    <div class="screen center">
+      <span style="font-size:3rem;">📸</span>
+      <p class="subtitle" style="text-align:center;">Čeká se, až se <strong>${escapeHtml(state.subjectName)}</strong> vyfotí…</p>
+    </div>
+  `;
+}
+
+function buildCaptioningView(state) {
+  stopCamera();
+
+  if (state.isSubject) {
+    mountedKey = `captioning-subject-${state.round}`;
+    app.innerHTML = `
+      ${brandHtml(state)}
+      <div class="screen center">
+        <div class="camera-wrap" style="max-width:260px;">
+          <img src="${state.subjectPhotoDataUrl}">
+        </div>
+        <p class="subtitle">Ostatní teď popisují tvoji fotku…</p>
+        <p class="wait-note" id="caption-count-text"></p>
+        <div class="timer" id="timer-el">--</div>
+      </div>
+    `;
+    patchCaptionCount(state);
+    return;
+  }
+
+  if (state.youCaptioned) {
+    mountedKey = `captioning-done-${state.round}`;
+    app.innerHTML = `
+      ${brandHtml(state)}
+      <div class="screen center">
+        <span style="font-size:3rem;">✅</span>
+        <p class="subtitle">Popisek odeslán!</p>
+        <p class="wait-note" id="caption-count-text"></p>
+        <div class="timer" id="timer-el">--</div>
+      </div>
+    `;
+    patchCaptionCount(state);
+    return;
+  }
+
+  mountedKey = `captioning-write-${state.round}`;
+  app.innerHTML = `
+    ${brandHtml(state)}
+    <div class="screen">
+      <div class="prompt-box">
+        <div class="eyebrow">Kolo ${state.round} / ${state.totalRounds}</div>
+        <div class="prompt-text">Napiš, co si myslíš, že se na fotce hráče ${escapeHtml(state.subjectName)} děje.</div>
+      </div>
+      <div class="timer" id="timer-el">--</div>
+      <div class="camera-wrap" style="max-width:260px; margin:0 auto;">
+        <img src="${state.subjectPhotoDataUrl}">
+      </div>
+      <div class="field">
+        <textarea id="caption-input" class="caption-textarea" maxlength="140" rows="3" placeholder="Např. Právě zjistil, že mu ujel autobus před nosem…"></textarea>
+      </div>
+      <button id="caption-submit" class="btn btn-primary btn-block">Odeslat popisek</button>
+    </div>
+  `;
+  document.getElementById('caption-submit').onclick = () => {
+    const text = document.getElementById('caption-input').value.trim();
+    if (!text) return showError('Napiš nějaký popisek.');
+    send({ type: 'submit_caption', text });
+  };
+}
+
+function patchCaptionCount(state) {
+  const el = document.getElementById('caption-count-text');
+  if (el) el.textContent = `Popsalo ${state.captionedCount} / ${state.captionEligibleCount} hráčů…`;
+}
+
+function buildJudgingView(state) {
+  mountedKey = `judging-${state.round}`;
+  stopCamera();
+
+  const cardsHtml = state.captionCards.map((c) => `
+    <div class="caption-card ${state.isSubject ? '' : 'readonly'}" data-id="${c.id}">
+      <p>${escapeHtml(c.text)}</p>
+    </div>
+  `).join('');
+
+  app.innerHTML = `
+    ${brandHtml(state)}
+    <div class="screen">
+      <div class="prompt-box">
+        <div class="eyebrow">Kolo ${state.round} / ${state.totalRounds} — výběr</div>
+        <div class="prompt-text">${state.isSubject
+          ? 'Vyber nejlepší popisek své fotky.'
+          : `${escapeHtml(state.subjectName)} teď vybírá nejlepší popisek…`}</div>
+      </div>
+      <div class="camera-wrap" style="max-width:220px; margin:0 auto 18px;">
+        <img src="${state.subjectPhotoDataUrl}">
+      </div>
+      <div class="caption-list">${cardsHtml || '<p class="wait-note">Nikdo nestihl napsat popisek.</p>'}</div>
+    </div>
+  `;
+
+  if (state.isSubject) {
+    document.querySelectorAll('.caption-card[data-id]').forEach((el) => {
+      el.onclick = () => {
+        document.querySelectorAll('.caption-card').forEach((c) => c.classList.add('disabled'));
+        el.classList.remove('disabled');
+        el.classList.add('picked');
+        send({ type: 'pick_caption', authorId: el.getAttribute('data-id') });
+      };
+    });
+  }
 }
 
 // --------------------------------------------------------------- DRAWING ---
@@ -650,10 +876,22 @@ function patchVoteCount(state) {
 
 // -------------------------------------------------------------- RESULTS ---
 
+function scoreboardRowsHtml(players) {
+  return players.map((p, i) => `
+    <div class="row ${p.isYou ? 'you' : ''}">
+      <span><span class="rank">${i + 1}.</span>${escapeHtml(p.name)}</span>
+      <span class="num" style="color:var(--gold); font-weight:700;">${p.score}</span>
+    </div>
+  `).join('');
+}
+
 function renderResultsScreen(state) {
   mountedKey = `results-${state.round}`;
   stopCamera();
   const r = state.result;
+
+  if (r.kind === 'caption') return renderCaptionResultsScreen(state, r);
+
   const cardsHtml = r.cards.map((c) => `
     <div class="result-card ${c.isWinner ? 'winner' : ''}">
       ${c.isWinner ? '<div class="crown">👑</div>' : ''}
@@ -688,6 +926,53 @@ function renderResultsScreen(state) {
         <div class="scoreboard">${scoreboardHtml}</div>
       </div>
 
+      ${state.isHost
+        ? `<button id="next-btn" class="btn btn-primary btn-block">${state.round >= state.totalRounds ? 'Zobrazit konečné výsledky' : 'Další kolo'}</button>`
+        : `<p class="wait-note">Čeká se, až hostitel spustí další kolo…</p>`}
+    </div>
+  `;
+
+  if (state.isHost) {
+    document.getElementById('next-btn').onclick = () => send({ type: 'next_round' });
+  }
+}
+
+function renderCaptionResultsScreen(state, r) {
+  let body;
+  if (r.skipped) {
+    body = `<p class="subtitle" style="text-align:center;">${escapeHtml(r.subjectName)} nestihl(a) vyfotit se — kolo se přeskočilo, nikdo nedostal body.</p>`;
+  } else if (!r.captions.length) {
+    body = `
+      <div class="camera-wrap" style="max-width:220px; margin:0 auto 16px;"><img src="${r.photoDataUrl}"></div>
+      <p class="subtitle" style="text-align:center;">Nikdo nestihl napsat popisek — nikdo nedostal body.</p>
+    `;
+  } else {
+    const captionsHtml = r.captions.map((c) => `
+      <div class="caption-card ${c.isWinner ? 'winner' : ''}">
+        ${c.isWinner ? '<div class="crown">👑</div>' : ''}
+        <p>${escapeHtml(c.text)}</p>
+        <div class="caption-author">${escapeHtml(c.name)}${c.isWinner ? ` · +${r.points} b.` : ''}</div>
+      </div>
+    `).join('');
+    body = `
+      <div class="camera-wrap" style="max-width:220px; margin:0 auto 16px;"><img src="${r.photoDataUrl}"></div>
+      <p class="subtitle" style="text-align:center;">${escapeHtml(r.subjectName)} vybral(a) nejlepší popisek</p>
+      <div class="caption-list">${captionsHtml}</div>
+    `;
+  }
+
+  app.innerHTML = `
+    ${brandHtml(state)}
+    <div class="screen">
+      <div class="prompt-box">
+        <div class="eyebrow">Výsledky kola ${r.round} / ${state.totalRounds}</div>
+        <div class="prompt-text">Fotka hráče ${escapeHtml(r.subjectName)}</div>
+      </div>
+      ${body}
+      <div class="card">
+        <h3 style="margin-bottom:10px;">Celkové skóre</h3>
+        <div class="scoreboard">${scoreboardRowsHtml(state.players)}</div>
+      </div>
       ${state.isHost
         ? `<button id="next-btn" class="btn btn-primary btn-block">${state.round >= state.totalRounds ? 'Zobrazit konečné výsledky' : 'Další kolo'}</button>`
         : `<p class="wait-note">Čeká se, až hostitel spustí další kolo…</p>`}
@@ -804,6 +1089,31 @@ function renderApp(state) {
   if (state.phase === 'voting') {
     if (mountedKey !== `voting-${state.round}`) buildVotingView(state);
     else patchVoteCount(state);
+    return;
+  }
+
+  if (state.phase === 'subject_photo') {
+    if (state.isSubject) {
+      if (mountedKey !== `subject-photo-${state.round}`) buildSubjectPhotoView(state);
+    } else if (mountedKey !== `subject-wait-${state.round}`) {
+      buildSubjectWaitView(state);
+    }
+    return;
+  }
+
+  if (state.phase === 'captioning') {
+    const expected = state.isSubject
+      ? `captioning-subject-${state.round}`
+      : state.youCaptioned
+        ? `captioning-done-${state.round}`
+        : `captioning-write-${state.round}`;
+    if (mountedKey !== expected) buildCaptioningView(state);
+    else patchCaptionCount(state);
+    return;
+  }
+
+  if (state.phase === 'judging') {
+    if (mountedKey !== `judging-${state.round}`) buildJudgingView(state);
     return;
   }
 
