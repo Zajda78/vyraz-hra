@@ -8,6 +8,9 @@ let submittedLocally = false;
 let votedLocallyFor = null;
 let drawDoneLocally = false;
 let errorTimer = null;
+let intentionalClose = false;
+let reconnectTimer = null;
+let reconnectAttempts = 0;
 
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({
@@ -19,25 +22,101 @@ function send(obj) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
 }
 
-function connect(onOpen) {
-  if (ws && ws.readyState === WebSocket.OPEN) return onOpen && onOpen();
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(`${proto}://${location.host}`);
-  ws.addEventListener('open', () => onOpen && onOpen());
-  ws.addEventListener('message', (ev) => {
+// ---------------------------------------------------- SESSION (rejoin) ---
+// Uloží kód lobby + naše hráčské id, ať se po výpadku spojení dá vrátit
+// zpátky na stejné místo ve hře, ne jen na úvodní obrazovku.
+
+function getSession() {
+  try { return JSON.parse(localStorage.getItem('vyraz_session') || 'null'); } catch { return null; }
+}
+function saveSession(code, playerId) {
+  try { localStorage.setItem('vyraz_session', JSON.stringify({ code, playerId })); } catch { /* ignore */ }
+}
+function clearSession() {
+  try { localStorage.removeItem('vyraz_session'); } catch { /* ignore */ }
+}
+
+// -------------------------------------------------------- CONNECTION ---
+
+function wireSocketEvents(socket) {
+  socket.addEventListener('message', (ev) => {
     const msg = JSON.parse(ev.data);
     if (msg.type === 'state') {
       if (msg.phase !== 'submitting') submittedLocally = false;
       if (msg.phase !== 'drawing') drawDoneLocally = false;
       if (msg.phase !== 'voting') votedLocallyFor = null;
+      if (msg.code && msg.youId) saveSession(msg.code, msg.youId);
       renderApp(msg);
     } else if (msg.type === 'error') {
       showError(msg.message);
     }
   });
-  ws.addEventListener('close', () => {
-    if (lastState) showError('Spojení se serverem spadlo. Zkus obnovit stránku.');
+  socket.addEventListener('close', () => {
+    if (ws === socket) ws = null;
+    if (intentionalClose) { intentionalClose = false; return; }
+    scheduleReconnect();
   });
+}
+
+function connect(onOpen) {
+  if (ws && ws.readyState === WebSocket.OPEN) return onOpen && onOpen();
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const socket = new WebSocket(`${proto}://${location.host}`);
+  wireSocketEvents(socket);
+  socket.addEventListener('open', () => {
+    ws = socket;
+    reconnectAttempts = 0;
+    hideReconnectOverlay();
+    onOpen && onOpen();
+  });
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) return; // pokus už běží, neplánovat druhý souběžně
+  showReconnectOverlay();
+  const delay = Math.min(1000 + reconnectAttempts * 1500, 8000);
+  reconnectAttempts += 1;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    doReconnect();
+  }, delay);
+}
+
+function doReconnect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const socket = new WebSocket(`${proto}://${location.host}`);
+  wireSocketEvents(socket);
+  socket.addEventListener('open', () => {
+    ws = socket;
+    reconnectAttempts = 0;
+    hideReconnectOverlay();
+    const session = getSession();
+    if (session) send({ type: 'rejoin', code: session.code, playerId: session.playerId });
+  });
+  // Když se ani tenhle pokus nepovede, přijde vzápětí jeho vlastní "close"
+  // event (viz wireSocketEvents) a naplánuje další pokus sám.
+}
+
+function showReconnectOverlay() {
+  let el = document.getElementById('reconnect-overlay');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'reconnect-overlay';
+    el.className = 'reconnect-overlay';
+    el.innerHTML = `
+      <div class="reconnect-box">
+        <div class="spinner"></div>
+        <p>Připojování k serveru…</p>
+        <p class="reconnect-sub">Appka se možná právě probouzí ze spánku, může to chvíli trvat.</p>
+      </div>`;
+    document.body.appendChild(el);
+  }
+  el.style.display = 'flex';
+}
+
+function hideReconnectOverlay() {
+  const el = document.getElementById('reconnect-overlay');
+  if (el) el.style.display = 'none';
 }
 
 function showError(text) {
@@ -419,13 +498,19 @@ function renderLobbyScreen(state) {
 }
 
 function leaveLobby() {
+  clearSession();
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+  hideReconnectOverlay();
   if (ws) {
+    intentionalClose = true;
     ws.close();
     ws = null;
   }
   lastState = null;
   submittedLocally = false;
   votedLocallyFor = null;
+  drawDoneLocally = false;
   renderStartScreen();
 }
 

@@ -102,6 +102,28 @@ button{font:inherit;}
   padding:10px 14px; border-radius:12px; font-size:0.88rem;
 }
 
+.reconnect-overlay{
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(10,6,20,0.82); backdrop-filter:blur(2px);
+  align-items:center; justify-content:center; padding:20px;
+}
+.reconnect-box{
+  background:var(--surface); border:1px solid var(--line); border-radius:18px;
+  padding:28px 24px; max-width:320px; text-align:center; box-shadow:var(--shadow);
+}
+.reconnect-box p{ margin:0; }
+.reconnect-box p:first-of-type{ font-weight:700; margin-top:16px; }
+.reconnect-sub{ color:var(--ink-dim); font-size:0.85rem; margin-top:8px !important; }
+.spinner{
+  width:34px; height:34px; margin:0 auto; border-radius:50%;
+  border:3px solid var(--line); border-top-color:var(--accent);
+  animation:spin 0.9s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce){
+  .spinner{ animation-duration:2.4s; }
+}
+
 .subtitle{ color:var(--ink-dim); font-size:0.92rem; line-height:1.5; }
 
 .code-display{

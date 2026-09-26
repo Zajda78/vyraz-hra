@@ -545,9 +545,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+// Bezplatné hostingy (Render apod.) mívají proxy, co tiše zabije spojení bez
+// provozu po ~minutě — v dlouhých fázích (psaní popisku, čekání na hlasy)
+// se dlouho nic neposílá. Pravidelný ping tomu zabrání a zároveň nám řekne,
+// které spojení je opravdu mrtvé (žádný pong), abychom ho mohli uklidit.
+const HEARTBEAT_MS = 25_000;
+
 wss.on('connection', (ws) => {
   let lobby = null;
   let playerId = null;
+
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
 
   ws.on('message', (raw) => {
     let msg;
@@ -592,6 +601,24 @@ wss.on('connection', (ws) => {
         connected: true,
       });
       broadcast(lobby);
+      return;
+    }
+
+    if (msg.type === 'rejoin') {
+      const target = lobbies.get((msg.code || '').toUpperCase());
+      if (!target) return sendError(ws, 'Lobby už neexistuje.');
+      const existing = target.players.get(msg.playerId);
+      if (!existing) return sendError(ws, 'Tohle místo v lobby už nejde obnovit.');
+      lobby = target;
+      playerId = msg.playerId;
+      existing.ws = ws;
+      existing.connected = true;
+      broadcast(lobby);
+      // pokud se čekalo zrovna na tohohle hráče, zkus fázi posunout dál
+      if (lobby.phase === 'submitting') maybeAdvanceFromSubmitting(lobby);
+      if (lobby.phase === 'drawing') maybeAdvanceFromDrawing(lobby);
+      if (lobby.phase === 'voting') maybeAdvanceFromVoting(lobby);
+      if (lobby.phase === 'captioning') maybeAdvanceFromCaptioning(lobby);
       return;
     }
 
@@ -716,7 +743,10 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     if (!lobby || !playerId) return;
     const p = lobby.players.get(playerId);
-    if (p) p.connected = false;
+    // Pokud mezitím hráč stihl obnovit spojení (rejoin) přes nový socket,
+    // p.ws už na tenhle (zastaralý) socket neukazuje — nepřepisujeme pak
+    // jeho čerstvé "connected: true" tímhle opožděným close eventem.
+    if (p && p.ws === ws) p.connected = false;
     // lobby ve fázi čekání na hráče se po odpojení všech po chvíli sama uklidí
     if (connectedPlayers(lobby).length === 0) {
       clearTimer(lobby);
@@ -732,6 +762,16 @@ wss.on('connection', (ws) => {
     }
   });
 });
+
+const heartbeatTimer = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, HEARTBEAT_MS);
+
+wss.on('close', () => clearInterval(heartbeatTimer));
 
 server.listen(PORT, () => {
   console.log(`Výraz běží na http://localhost:${PORT}`);
