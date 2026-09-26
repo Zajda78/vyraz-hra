@@ -8,7 +8,6 @@ let submittedLocally = false;
 let votedLocallyFor = null;
 let drawDoneLocally = false;
 let errorTimer = null;
-let intentionalClose = false;
 let reconnectTimer = null;
 let reconnectAttempts = 0;
 
@@ -49,31 +48,44 @@ function wireSocketEvents(socket) {
       renderApp(msg);
     } else if (msg.type === 'error') {
       showError(msg.message);
+    } else {
+      handleFriendMessage(msg);
     }
   });
   socket.addEventListener('close', () => {
     if (ws === socket) ws = null;
-    if (intentionalClose) { intentionalClose = false; return; }
+    if (connectingSocket === socket) connectingSocket = null;
     scheduleReconnect();
   });
 }
 
+// Spojení, které se právě otevírá — ať se při rychlém ťuknutí hned po
+// spuštění appky neotevře druhé souběžné spojení.
+let connectingSocket = null;
+
 function connect(onOpen) {
   if (ws && ws.readyState === WebSocket.OPEN) return onOpen && onOpen();
+  if (connectingSocket) {
+    if (onOpen) connectingSocket.addEventListener('open', () => onOpen());
+    return;
+  }
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   const socket = new WebSocket(`${proto}://${location.host}`);
+  connectingSocket = socket;
   wireSocketEvents(socket);
   socket.addEventListener('open', () => {
+    connectingSocket = null;
     ws = socket;
     reconnectAttempts = 0;
     hideReconnectOverlay();
+    sendHello();
     onOpen && onOpen();
   });
 }
 
 function scheduleReconnect() {
   if (reconnectTimer) return; // pokus už běží, neplánovat druhý souběžně
-  showReconnectOverlay();
+  if (getSession()) showReconnectOverlay();
   const delay = Math.min(1000 + reconnectAttempts * 1500, 8000);
   reconnectAttempts += 1;
   reconnectTimer = setTimeout(() => {
@@ -90,8 +102,9 @@ function doReconnect() {
     ws = socket;
     reconnectAttempts = 0;
     hideReconnectOverlay();
+    sendHello();
     const session = getSession();
-    if (session) send({ type: 'rejoin', code: session.code, playerId: session.playerId });
+    if (session) send({ type: 'rejoin', code: session.code, playerId: session.playerId, looks: myLooks() });
   });
   // Když se ani tenhle pokus nepovede, přijde vzápětí jeho vlastní "close"
   // event (viz wireSocketEvents) a naplánuje další pokus sám.
@@ -107,7 +120,6 @@ function showReconnectOverlay() {
       <div class="reconnect-box">
         <div class="spinner"></div>
         <p>Připojování k serveru…</p>
-        <p class="reconnect-sub">Appka se možná právě probouzí ze spánku, může to chvíli trvat.</p>
       </div>`;
     document.body.appendChild(el);
   }
@@ -178,6 +190,7 @@ const MODE_ICON_SPEECH = `
 function modeDisplayName(mode) {
   if (mode === 'draw') return 'Domalovánka';
   if (mode === 'caption') return 'Main character';
+  if (mode === 'impostor') return 'Impostor';
   return 'Výraz';
 }
 
@@ -186,7 +199,40 @@ function brandHtml(state) {
   return `<div class="brand"><img class="mark" src="icon.svg" alt=""><h1>${modeName}</h1></div>`;
 }
 
+// Úvodní obrazovka má dole lištu se dvěma záložkami: Hry a Shop.
+let homeTab = 'games';
+
 function renderStartScreen() {
+  sendHello(); // jméno/vzhled se mohly změnit — ať to přátelé vidí aktuální
+  if (homeTab === 'shop') return renderShopScreen();
+  if (homeTab === 'friends') return renderFriendsScreen();
+  if (profileOpen) return renderProfileScreen();
+  renderGamesScreen();
+}
+
+function bottomNavHtml(active) {
+  return `
+    <nav class="bottom-nav">
+      <button class="bottom-nav-btn ${active === 'games' ? 'active' : ''}" data-tab="games">${icon('gamepad')}<span>Hry</span></button>
+      <button class="bottom-nav-btn ${active === 'shop' ? 'active' : ''}" data-tab="shop">${icon('bag')}<span>Shop</span></button>
+      <button class="bottom-nav-btn ${active === 'friends' ? 'active' : ''}" data-tab="friends">${icon('users')}<span>Přátelé</span>${friendRequestsBadge()}</button>
+    </nav>`;
+}
+
+function wireBottomNav() {
+  document.querySelectorAll('.bottom-nav-btn').forEach((btn) => {
+    btn.onclick = () => {
+      if (homeTab === btn.dataset.tab) return;
+      homeTab = btn.dataset.tab;
+      shopView = 'shop'; // do shopu se vždycky vstupuje na obchod, ne do inventáře
+      profileOpen = false;
+      renderStartScreen();
+      window.scrollTo(0, 0);
+    };
+  });
+}
+
+function renderGamesScreen() {
   mountedKey = 'start';
   stopCamera();
   document.body.classList.add('home-bg');
@@ -197,24 +243,15 @@ function renderStartScreen() {
       <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>Mogging face</h1></div>
       <div class="home-actions">
         <button id="rules-btn" class="text-btn">Pravidla</button>
-        <button id="settings-btn" class="icon-btn" title="Nastavení">⚙️</button>
+        <button id="settings-btn" class="icon-btn" title="Nastavení">${icon('gear')}</button>
       </div>
     </div>
 
-    <div class="player-name-row">
-      <div class="player-name-info">
-        <div class="player-avatar">${escapeHtml((getSavedName() || '?').charAt(0).toUpperCase())}</div>
-        <span>${getSavedName()
-          ? `Hraješ jako <strong>${escapeHtml(getSavedName())}</strong>`
-          : `Zatím nemáš jméno`}</span>
-      </div>
-      <button id="change-name-btn" class="chip-btn">✏️ Změnit</button>
-    </div>
+    ${profileCardHtml()}
 
     <div class="screen">
       <div class="join-card">
         <h2>Připojit se ke hře</h2>
-        <div class="join-sub">Zadej ${CODE_LEN}místný kód od hostitele</div>
         <div class="code-boxes" id="code-boxes">
           ${Array.from({ length: CODE_LEN }).map((_, i) => `<div class="code-box" data-i="${i}"></div>`).join('')}
           <input class="code-hidden-input" id="code-hidden" maxlength="${CODE_LEN}" autocomplete="off" autocapitalize="characters" inputmode="text">
@@ -226,17 +263,17 @@ function renderStartScreen() {
         <div class="mode-icon-bg">${MODE_ICON_CAMERA}</div>
         <div class="ribbon">ZDARMA</div>
         <div class="mode-card-content">
-          <span class="mode-emoji">🎭</span>
+          ${modeTile('classic')}
           <h3>Výraz</h3>
           <p>Padne věta, všichni se vyfotí s reakcí a hlasujete, čí výraz sedí nejlíp.</p>
         </div>
       </div>
 
-      <div class="mode-card mode-card-draw" data-mode="draw">
+      <div class="mode-card mode-card-draw ${isModeUnlocked('draw') ? '' : 'is-locked'}" data-mode="draw">
         <div class="mode-icon-bg">${MODE_ICON_PALETTE}</div>
-        <div class="ribbon">ZDARMA</div>
+        ${modeRibbonHtml('draw')}
         <div class="mode-card-content">
-          <span class="mode-emoji">🖌️</span>
+          ${modeTile('draw')}
           <h3>Domalovánka</h3>
           <p>Vyfoť se, pak máš chvíli na to si do fotky prstem něco dokreslit — a stejně jako u Výrazu se hlasuje a bodují místa.</p>
         </div>
@@ -246,15 +283,27 @@ function renderStartScreen() {
         <div class="mode-icon-bg">${MODE_ICON_SPEECH}</div>
         <div class="ribbon">ZDARMA</div>
         <div class="mode-card-content">
-          <span class="mode-emoji">💬</span>
+          ${modeTile('caption')}
           <h3>Main character</h3>
           <p>Jeden hráč se vyfotí, ostatní vymyslí nejlepší popisek k fotce a on sám vybere vítěze.</p>
         </div>
       </div>
 
-      <p class="footer-note">Prototyp pro pár kamarádů. Fotky se posílají jen po dobu hry a nikam se natrvalo neukládají.</p>
+      <div class="mode-card mode-card-impostor ${isModeUnlocked('impostor') ? '' : 'is-locked'}" data-mode="impostor">
+        <div class="mode-icon-bg">${MODE_ICON_SPY}</div>
+        ${modeRibbonHtml('impostor')}
+        <div class="mode-card-content">
+          ${modeTile('impostor')}
+          <h3>Impostor</h3>
+          <p>Všichni se fotí podle stejného zadání — jen impostor má jiné. Poznáte z fotek, kdo to je?</p>
+        </div>
+      </div>
+
     </div>
+    ${bottomNavHtml('games')}
   `;
+  document.body.classList.add('has-bottom-nav');
+  wireBottomNav();
 
   const hidden = document.getElementById('code-hidden');
   const boxesWrap = document.getElementById('code-boxes');
@@ -283,18 +332,21 @@ function renderStartScreen() {
   document.querySelectorAll('.mode-card').forEach((card) => {
     card.onclick = () => {
       const mode = card.getAttribute('data-mode');
-      withName((name) => connect(() => send({ type: 'create_lobby', name, mode })));
+      const create = () => withName((name) => connect(() => send({ type: 'create_lobby', name, mode, looks: myLooks() })));
+      // placený mód může založit jen ten, kdo ho má odemčený nebo má vstupenku
+      if (!canHostMode(mode)) return showPartyPackOffer(mode, create);
+      create();
     };
   });
 
-  document.getElementById('rules-btn').onclick = showRulesModal;
-  document.getElementById('settings-btn').onclick = showSettingsModal;
-  document.getElementById('change-name-btn').onclick = () => showSettingsModal(renderStartScreen);
+  document.getElementById('rules-btn').onclick = () => showRulesModal();
+  document.getElementById('settings-btn').onclick = () => showSettingsModal(renderStartScreen);
+  wireProfileCard();
 }
 
 function attemptJoin(code) {
   withName((name) => {
-    connect(() => send({ type: 'join_lobby', name, code }));
+    connect(() => send({ type: 'join_lobby', name, code, looks: myLooks() }));
   });
 }
 
@@ -325,7 +377,6 @@ function withName(onReady) {
 function showNameModal(onReady) {
   const modal = openModal(`
     <h2>Jak se jmenuješ?</h2>
-    <p class="subtitle">Tohle jméno uvidí ostatní hráči ve hře.</p>
     <div class="field">
       <input id="modal-name-input" maxlength="20" placeholder="Např. Kuba">
     </div>
@@ -347,14 +398,13 @@ function showNameModal(onReady) {
 function showSettingsModal(onSaved) {
   const modal = openModal(`
     <h2>Nastavení</h2>
-    <p class="subtitle">Tvoje jméno pro tento telefon.</p>
     <div class="field">
       <input id="modal-settings-name" maxlength="20" value="${escapeHtml(getSavedName())}" placeholder="Např. Kuba">
     </div>
 
     <div class="field">
       <label>Kamera</label>
-      <button id="modal-camera-test" class="btn btn-ghost btn-block" type="button">📷 Povolit kameru v prohlížeči</button>
+      <button id="modal-camera-test" class="btn btn-ghost btn-block" type="button">${icon('camera')} Povolit kameru v prohlížeči</button>
       <p class="camera-status" id="modal-camera-status"></p>
     </div>
 
@@ -371,142 +421,193 @@ function showSettingsModal(onSaved) {
 
   modal.querySelector('#modal-camera-test').onclick = async () => {
     const statusEl = modal.querySelector('#modal-camera-status');
-    statusEl.textContent = 'Žádám prohlížeč o přístup…';
+    statusEl.innerHTML = 'Žádám prohlížeč o přístup…';
     statusEl.className = 'camera-status';
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
       stream.getTracks().forEach((t) => t.stop());
-      statusEl.textContent = '✅ Kamera je povolená a funguje.';
+      statusEl.innerHTML = `${icon('checkCircle')} Kamera je povolená a funguje.`;
       statusEl.className = 'camera-status ok';
     } catch (err) {
-      statusEl.textContent = '❌ Přístup ke kameře se nepovedlo získat. Zkontroluj oprávnění appky/prohlížeče pro tuhle stránku v nastavení telefonu.';
+      statusEl.innerHTML = `${icon('xCircle')} Přístup ke kameře se nepovedlo získat. Zkontroluj oprávnění appky/prohlížeče pro tuhle stránku v nastavení telefonu.`;
       statusEl.className = 'camera-status bad';
     }
   };
 }
 
-function showRulesModal() {
-  const items = [
+const RULES_BY_MODE = {
+  classic: [
     'Hostitel založí lobby a pošle kamarádům kód.',
-    'Každé kolo padne věta a všichni mají 30 vteřin se s reakcí vyfotit.',
-    'Každá věta se týká konkrétního spoluhráče z lobby — hra jeho jméno vybere náhodně.',
-    'Kdo to nestihne, dostane místo fotky smutný emoji "Nestihl to!!".',
-    'V Domalovánce je po vyfocení navíc chvíli čas si do fotky prstem něco dokreslit (hostitel nastaví kolik vteřin).',
+    'Každé kolo padne věta, která se týká náhodného spoluhráče z lobby.',
+    'Všichni mají 30 vteřin se s reakcí vyfotit.',
+    'Kdo to nestihne, má místo fotky smutný obličej „Nestihl to!!“.',
     'Fotky se odhalí najednou a hlasujete, která sedí k zadání nejlíp — pro sebe hlasovat nejde.',
-    'Body dostane každý podle pořadí v hlasování — 1. místo nejvíc, další o kousek míň. Při shodném počtu hlasů je i shodné pořadí a shodné body.',
-    'V módu Main character je to jinak: každé kolo se vyfotí jeden hráč, ostatní k jeho fotce napíšou popisek a on sám vybere ten nejlepší — autor vítězného popisku bere body. Časový limit (nastavuje hostitel) má jen psaní popisku, na fotku i na výběr vítěze je čas neomezený.',
+    'Body podle pořadí v hlasování — 1. místo 100 b., další o kousek míň. Shodný počet hlasů = shodné body.',
     'Po posledním kole vyhrává, kdo má nejvíc bodů celkem.',
-  ];
+  ],
+  draw: [
+    'Hostitel založí lobby a pošle kamarádům kód.',
+    'Každé kolo padne věta, která se týká náhodného spoluhráče z lobby.',
+    'Všichni mají 30 vteřin se s reakcí vyfotit.',
+    'Pak máš chvíli čas si do své fotky prstem něco dokreslit (kolik vteřin, nastaví hostitel).',
+    'Fotky se odhalí najednou a hlasujete, která je nejlepší — pro sebe hlasovat nejde.',
+    'Body podle pořadí v hlasování — 1. místo 100 b., další o kousek míň. Shodný počet hlasů = shodné body.',
+    'Po posledním kole vyhrává, kdo má nejvíc bodů celkem.',
+  ],
+  caption: [
+    'Hostitel založí lobby a pošle kamarádům kód.',
+    'Každé kolo je „main character“ jiný hráč — postupně se vystřídají všichni.',
+    'Main character se vyfotí, na fotku má neomezený čas.',
+    'Ostatní k jeho fotce napíšou vtipný popisek (čas nastaví hostitel).',
+    'Main character si přečte popisky bez jmen a vybere ten nejlepší.',
+    'Autor vítězného popisku dostane 100 b.',
+    'Po posledním kole vyhrává, kdo má nejvíc bodů celkem.',
+  ],
+  impostor: [
+    'Hostitel založí lobby — hraje se aspoň ve 3.',
+    'Každé kolo dostanou všichni stejné zadání na fotku, jen jeden náhodný hráč — impostor — má jiné, podobné.',
+    'Impostor ví, že je impostor, ale nezná zadání ostatních.',
+    'Všichni mají 30 vteřin se vyfotit.',
+    'Pak se ukážou všechny fotky i se jmény a máte 30 vteřin hlasovat, kdo je impostor.',
+    'Když má impostor nejvíc hlasů, vyhrávají ostatní: každý +100 b. a +3 mince.',
+    'Když unikne (i při remíze), vyhrává impostor: +250 b. a +10 mincí.',
+  ],
+};
+
+function showRulesModal(initialMode = 'classic') {
+  const modes = ['classic', 'draw', 'caption', 'impostor'];
   openModal(`
     <h2>Jak se hraje</h2>
-    <div class="rules-list">
-      ${items.map((t, i) => `<div class="item"><span class="num">${i + 1}</span><span>${escapeHtml(t)}</span></div>`).join('')}
+    <div class="rules-tabs">
+      ${modes.map((m) => `
+        <button class="rules-tab rules-tab-${m}" data-mode="${m}">
+          ${modeTile(m)}
+          <span>${modeDisplayName(m)}</span>
+        </button>`).join('')}
     </div>
+    <div class="rules-list" id="rules-list"></div>
     <button class="modal-close" id="modal-rules-close">Zavřít</button>
   `);
+
+  function show(mode) {
+    document.querySelectorAll('.rules-tab').forEach((t) => t.classList.toggle('active', t.dataset.mode === mode));
+    document.getElementById('rules-list').innerHTML = RULES_BY_MODE[mode]
+      .map((t, i) => `<div class="item"><span class="num">${i + 1}</span><span>${escapeHtml(t)}</span></div>`)
+      .join('');
+  }
+  document.querySelectorAll('.rules-tab').forEach((t) => { t.onclick = () => show(t.dataset.mode); });
+  show(initialMode);
   document.getElementById('modal-rules-close').onclick = closeModal;
 }
 
 // ---------------------------------------------------------------- LOBBY ---
 
+// Nastavení v lobby se vybírá dlaždicemi s pevnými hodnotami (ne +/−).
+const ROUND_OPTIONS = [3, 5, 10, 15, 20];
+const DRAW_SECONDS_OPTIONS = [10, 15, 20, 30, 45];
+const CAPTION_SECONDS_OPTIONS = [20, 30, 40, 60, 90];
+
+function optionPicker(id, values, current, suffix = '') {
+  return `<div class="option-picker" id="picker-${id}">
+    ${values.map((v) => `<button class="option-chip ${v === current ? 'active' : ''}" data-value="${v}">${v}${suffix}</button>`).join('')}
+  </div>`;
+}
+
+function wireOptionPicker(id, onPick) {
+  const wrap = document.getElementById(`picker-${id}`);
+  if (!wrap) return;
+  wrap.querySelectorAll('.option-chip').forEach((btn) => {
+    btn.onclick = () => onPick(Number(btn.getAttribute('data-value')));
+  });
+}
+
 function renderLobbyScreen(state) {
   mountedKey = 'lobby';
   stopCamera();
-  document.body.classList.remove('home-bg');
+  document.body.classList.remove('home-bg', 'has-bottom-nav');
   const players = state.players;
   app.innerHTML = `
     <div class="lobby-top">
-      <button id="back-btn" class="back-btn" title="Zpět na úvod">←</button>
+      <button id="back-btn" class="back-btn" title="Zpět na úvod">${icon('back')}</button>
       ${brandHtml(state)}
     </div>
     <div class="screen">
       <div class="code-display">${escapeHtml(state.code)}</div>
-      <p class="subtitle" style="text-align:center;">Tenhle kód pošli kamarádům, ať se připojí.</p>
+      <button class="btn btn-ghost btn-block invite-btn" id="invite-btn">${icon('users')} Pozvat přátele</button>
 
-      ${state.mode === 'caption' ? `<p class="subtitle" style="text-align:center;">💬 Každé kolo je objektem fotky jiný hráč — ostatní pak vymýšlí popisek a on vybírá vítěze.</p>` : ''}
 
       <div class="card">
         <h3 style="margin-bottom:12px;">Hráči (${players.length})</h3>
         <div class="player-list">
           ${players.map((p) => `
             <div class="player-row">
-              <span class="name"><span class="dot ${p.connected ? '' : 'off'}"></span>${escapeHtml(p.name)}${p.isYou ? ' (ty)' : ''}</span>
-              ${p.isHost ? '<span class="badge">Host</span>' : ''}
+              <span class="name"><span class="dot ${p.connected ? '' : 'off'}"></span>${avatarHtml(p.name, p.looks, 34)}${playerNameHtml(p.name, p.looks)}${p.isYou ? ' (ty)' : ''}</span>
+              <span class="player-row-actions">
+                ${p.isHost ? '<span class="badge">Host</span>' : ''}
+                ${!p.isYou && p.friendCode && !isFriend(p.friendCode) && !getSentRequests().some((r) => r.code === p.friendCode)
+                  ? `<button class="add-friend-mini" data-add-friend="${p.friendCode}" data-name="${escapeHtml(p.name)}" aria-label="Přidat do přátel">${icon('plus')}</button>`
+                  : ''}
+              </span>
             </div>
           `).join('')}
         </div>
       </div>
 
       ${state.isHost ? `
-        <div class="card">
-          <h3 style="margin-bottom:12px;">Počet kol</h3>
-          <div class="stepper">
-            <button id="rounds-minus">−</button>
-            <span class="val" id="rounds-val">${state.totalRounds}</span>
-            <button id="rounds-plus">+</button>
-          </div>
+        <div class="card setting-card">
+          <h3 class="setting-title">${icon('rounds')} Počet kol</h3>
+          ${optionPicker('rounds', ROUND_OPTIONS, state.totalRounds)}
         </div>
 
         ${state.drawEnabled ? `
-          <div class="card">
-            <h3 style="margin-bottom:12px;">🖌️ Čas na dokreslení</h3>
-            <div class="stepper">
-              <button id="draw-seconds-minus">−</button>
-              <span class="val" id="draw-seconds-val">${state.drawSeconds}s</span>
-              <button id="draw-seconds-plus">+</button>
-            </div>
+          <div class="card setting-card">
+            <h3 class="setting-title">${icon('brush')} Čas na dokreslení</h3>
+            ${optionPicker('draw-seconds', DRAW_SECONDS_OPTIONS, state.drawSeconds, 's')}
           </div>
         ` : ''}
 
         ${state.mode === 'caption' ? `
-          <div class="card">
-            <h3 style="margin-bottom:12px;">💬 Čas na psaní popisku</h3>
-            <div class="stepper">
-              <button id="caption-seconds-minus">−</button>
-              <span class="val" id="caption-seconds-val">${state.captionSeconds}s</span>
-              <button id="caption-seconds-plus">+</button>
-            </div>
-            <p class="subtitle" style="margin-top:10px;">Čas na fotku a na výběr vítěze je neomezený — jen psaní popisku má limit.</p>
+          <div class="card setting-card">
+            <h3 class="setting-title">${icon('timer')} Čas na psaní popisku</h3>
+            ${optionPicker('caption-seconds', CAPTION_SECONDS_OPTIONS, state.captionSeconds, 's')}
           </div>
         ` : ''}
 
-        <button id="start-btn" class="btn btn-primary btn-block" ${players.length < 2 ? 'disabled' : ''}>
-          ${players.length < 2 ? 'Potřeba aspoň 2 hráči' : 'Spustit hru'}
+        <button id="start-btn" class="btn btn-primary btn-block" ${players.length < minPlayersFor(state.mode) ? 'disabled' : ''}>
+          ${players.length < minPlayersFor(state.mode)
+            ? `Potřeba aspoň ${minPlayersFor(state.mode)} hráči`
+            : isModeUnlocked(state.mode) ? 'Spustit hru' : `Spustit hru ${icon('ticket')} 1`}
         </button>
       ` : `
         <p class="subtitle" style="text-align:center;">Čeká se, až hostitel (${escapeHtml(players.find((p) => p.isHost)?.name || '')}) spustí hru…</p>
-        ${state.drawEnabled ? `<p class="subtitle" style="text-align:center;">Po fotce bude ${state.drawSeconds}s na dokreslení.</p>` : ''}
-        ${state.mode === 'caption' ? `<p class="subtitle" style="text-align:center;">Na psaní popisku bude ${state.captionSeconds}s, fotka a výběr vítěze jsou bez časového limitu.</p>` : ''}
       `}
     </div>
   `;
 
   if (state.isHost) {
-    document.getElementById('rounds-minus').onclick = () => send({ type: 'set_rounds', rounds: state.totalRounds - 1 });
-    document.getElementById('rounds-plus').onclick = () => send({ type: 'set_rounds', rounds: state.totalRounds + 1 });
-    document.getElementById('start-btn').onclick = () => send({ type: 'start_game' });
-    if (state.drawEnabled) {
-      document.getElementById('draw-seconds-minus').onclick = () => send({ type: 'set_draw_settings', seconds: state.drawSeconds - 5 });
-      document.getElementById('draw-seconds-plus').onclick = () => send({ type: 'set_draw_settings', seconds: state.drawSeconds + 5 });
-    }
-    if (state.mode === 'caption') {
-      document.getElementById('caption-seconds-minus').onclick = () => send({ type: 'set_caption_settings', seconds: state.captionSeconds - 10 });
-      document.getElementById('caption-seconds-plus').onclick = () => send({ type: 'set_caption_settings', seconds: state.captionSeconds + 10 });
-    }
+    wireOptionPicker('rounds', (v) => send({ type: 'set_rounds', rounds: v }));
+    wireOptionPicker('draw-seconds', (v) => send({ type: 'set_draw_settings', seconds: v }));
+    wireOptionPicker('caption-seconds', (v) => send({ type: 'set_caption_settings', seconds: v }));
+    document.getElementById('start-btn').onclick = () => {
+      // zamčený mód bez vstupenky (třeba po "Hrát znovu") — nabídni koupi
+      if (!canHostMode(state.mode)) return showPartyPackOffer(state.mode, () => renderLobbyScreen(lastState));
+      send({ type: 'start_game' });
+    };
   }
   document.getElementById('back-btn').onclick = leaveLobby;
+  document.getElementById('invite-btn').onclick = showInviteFriendsModal;
+  document.querySelectorAll('[data-add-friend]').forEach((b) => {
+    b.onclick = () => {
+      sendFriendRequest(b.dataset.addFriend, b.dataset.name);
+      b.remove();
+    };
+  });
 }
 
 function leaveLobby() {
   clearSession();
-  clearTimeout(reconnectTimer);
-  reconnectTimer = null;
   hideReconnectOverlay();
-  if (ws) {
-    intentionalClose = true;
-    ws.close();
-    ws = null;
-  }
+  send({ type: 'leave_lobby' });
   lastState = null;
   submittedLocally = false;
   votedLocallyFor = null;
@@ -523,6 +624,7 @@ async function buildCameraView(state) {
     <div class="screen">
       <div class="prompt-box">
         <div class="eyebrow">Kolo ${state.round} / ${state.totalRounds}</div>
+        ${roleBadgeHtml(state)}
         <div class="prompt-text">${escapeHtml(state.prompt)}</div>
       </div>
       <div class="timer" id="timer-el">--</div>
@@ -533,7 +635,6 @@ async function buildCameraView(state) {
       <div class="shutter-row">
         <button id="shutter-btn" class="shutter" title="Vyfotit"></button>
       </div>
-      <p class="wait-note">Ťukni na tlačítko a zachyť svůj výraz. Ostatní tvoji fotku neuvidí, dokud se neodhalí všechny.</p>
     </div>
   `;
 
@@ -547,7 +648,7 @@ async function buildCameraView(state) {
   } catch (err) {
     document.querySelector('.camera-wrap').innerHTML = `
       <div class="missed" style="justify-content:center;">
-        <span class="emoji">📵</span>
+        <span class="emoji">${icon('cameraOff')}</span>
         <span>Nepovedlo se získat přístup ke kameře.<br>Zkontroluj oprávnění prohlížeče.</span>
       </div>`;
   }
@@ -592,9 +693,10 @@ function buildWaitingView(state) {
     <div class="screen center">
       <div class="prompt-box">
         <div class="eyebrow">Kolo ${state.round} / ${state.totalRounds}</div>
+        ${roleBadgeHtml(state)}
         <div class="prompt-text">${escapeHtml(state.prompt)}</div>
       </div>
-      <span style="font-size:3rem;">✅</span>
+      ${bigIcon('checkCircle', 'good')}
       <h3>Fotka odeslána!</h3>
       <p class="subtitle" id="wait-count-text">Čeká se na ostatní…</p>
       <div class="timer" id="timer-el">--</div>
@@ -639,7 +741,7 @@ async function buildSubjectPhotoView(state) {
   } catch (err) {
     document.querySelector('.camera-wrap').innerHTML = `
       <div class="missed" style="justify-content:center;">
-        <span class="emoji">📵</span>
+        <span class="emoji">${icon('cameraOff')}</span>
         <span>Nepovedlo se získat přístup ke kameře.<br>Zkontroluj oprávnění prohlížeče.</span>
       </div>`;
   }
@@ -653,8 +755,8 @@ function buildSubjectWaitView(state) {
   app.innerHTML = `
     ${brandHtml(state)}
     <div class="screen center">
-      <span style="font-size:3rem;">📸</span>
-      <p class="subtitle" style="text-align:center;">Čeká se, až se <strong>${escapeHtml(state.subjectName)}</strong> vyfotí…</p>
+      ${bigIcon('camera')}
+      <p class="subtitle" style="text-align:center;">Čeká se, až se ${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))} vyfotí…</p>
     </div>
   `;
 }
@@ -667,9 +769,7 @@ function buildCaptioningView(state) {
     app.innerHTML = `
       ${brandHtml(state)}
       <div class="screen center">
-        <div class="camera-wrap" style="max-width:260px;">
-          <img src="${state.subjectPhotoDataUrl}">
-        </div>
+        ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId), 'max-width:260px; width:100%;')}
         <p class="subtitle">Ostatní teď popisují tvoji fotku…</p>
         <p class="wait-note" id="caption-count-text"></p>
         <div class="timer" id="timer-el">--</div>
@@ -684,7 +784,7 @@ function buildCaptioningView(state) {
     app.innerHTML = `
       ${brandHtml(state)}
       <div class="screen center">
-        <span style="font-size:3rem;">✅</span>
+        ${bigIcon('checkCircle', 'good')}
         <p class="subtitle">Popisek odeslán!</p>
         <p class="wait-note" id="caption-count-text"></p>
         <div class="timer" id="timer-el">--</div>
@@ -700,12 +800,10 @@ function buildCaptioningView(state) {
     <div class="screen">
       <div class="prompt-box">
         <div class="eyebrow">Kolo ${state.round} / ${state.totalRounds}</div>
-        <div class="prompt-text">Napiš, co si myslíš, že se na fotce hráče ${escapeHtml(state.subjectName)} děje.</div>
+        <div class="prompt-text">Napiš, co si myslíš, že se na fotce hráče ${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))} děje.</div>
       </div>
       <div class="timer" id="timer-el">--</div>
-      <div class="camera-wrap" style="max-width:260px; margin:0 auto;">
-        <img src="${state.subjectPhotoDataUrl}">
-      </div>
+      ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId), 'max-width:260px; width:100%; margin:0 auto;')}
       <div class="field">
         <textarea id="caption-input" class="caption-textarea" maxlength="140" rows="3" placeholder="Např. Právě zjistil, že mu ujel autobus před nosem…"></textarea>
       </div>
@@ -741,11 +839,9 @@ function buildJudgingView(state) {
         <div class="eyebrow">Kolo ${state.round} / ${state.totalRounds} — výběr</div>
         <div class="prompt-text">${state.isSubject
           ? 'Vyber nejlepší popisek své fotky.'
-          : `${escapeHtml(state.subjectName)} teď vybírá nejlepší popisek…`}</div>
+          : `${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))} teď vybírá nejlepší popisek…`}</div>
       </div>
-      <div class="camera-wrap" style="max-width:220px; margin:0 auto 18px;">
-        <img src="${state.subjectPhotoDataUrl}">
-      </div>
+      ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId), 'max-width:220px; width:100%; margin:0 auto 18px;')}
       <div class="caption-list">${cardsHtml || '<p class="wait-note">Nikdo nestihl napsat popisek.</p>'}</div>
     </div>
   `;
@@ -883,7 +979,7 @@ function buildDrawWaitingView(state) {
         <div class="eyebrow">Kolo ${state.round} / ${state.totalRounds}</div>
         <div class="prompt-text">${escapeHtml(state.prompt)}</div>
       </div>
-      <span style="font-size:3rem;">🖌️</span>
+      ${bigIcon('brush')}
       <h3>${state.youMissed ? 'Tentokrát nic k dokreslení' : 'Kresba hotová!'}</h3>
       <p class="subtitle" id="draw-count-text">Čeká se na ostatní…</p>
       <div class="timer" id="timer-el">--</div>
@@ -905,14 +1001,14 @@ function buildVotingView(state) {
     if (c.isOwn) {
       return `
         <div class="vote-card own">
-          ${c.photoDataUrl ? `<img src="${c.photoDataUrl}">` : `<div class="missed"><span class="emoji">😢</span>Nestihl(a) jsi to!!</div>`}
+          ${c.photoDataUrl ? `<img src="${c.photoDataUrl}">` : `<div class="missed"><span class="emoji">${icon('sad')}</span>Nestihl(a) jsi to!!</div>`}
           <div class="tag">Tvoje – nelze volit</div>
         </div>`;
     }
     if (c.missed) {
       return `
         <div class="vote-card disabled">
-          <div class="missed"><span class="emoji">😢</span>Nestihl(a) to!!</div>
+          <div class="missed"><span class="emoji">${icon('sad')}</span>Nestihl(a) to!!</div>
         </div>`;
     }
     return `
@@ -929,7 +1025,6 @@ function buildVotingView(state) {
         <div class="prompt-text">${escapeHtml(state.prompt)}</div>
       </div>
       <div class="timer" id="timer-el">--</div>
-      <p class="subtitle" style="text-align:center;">Vyber fotku, která nejlíp sedí k zadání.</p>
       <div class="grid" id="vote-grid">${cardsHtml}</div>
       <p class="wait-note" id="vote-count-text"></p>
     </div>
@@ -945,7 +1040,7 @@ function buildVotingView(state) {
         c.classList.toggle('selected', c === el);
         if (c !== el) c.classList.add('disabled');
       });
-      el.insertAdjacentHTML('beforeend', '<div class="check">✓</div>');
+      el.insertAdjacentHTML('beforeend', `<div class="check">${icon('check')}</div>`);
     };
   });
 
@@ -964,7 +1059,7 @@ function patchVoteCount(state) {
 function scoreboardRowsHtml(players) {
   return players.map((p, i) => `
     <div class="row ${p.isYou ? 'you' : ''}">
-      <span><span class="rank">${i + 1}.</span>${escapeHtml(p.name)}</span>
+      <span class="sb-player"><span class="rank">${i + 1}.</span>${avatarHtml(p.name, p.looks, 28)}${playerNameHtml(p.name, p.looks)}</span>
       <span class="num" style="color:var(--gold); font-weight:700;">${p.score}</span>
     </div>
   `).join('');
@@ -976,15 +1071,16 @@ function renderResultsScreen(state) {
   const r = state.result;
 
   if (r.kind === 'caption') return renderCaptionResultsScreen(state, r);
+  if (r.kind === 'impostor') return renderImpostorResults(state, r);
 
   const cardsHtml = r.cards.map((c) => `
     <div class="result-card ${c.isWinner ? 'winner' : ''}">
-      ${c.isWinner ? '<div class="crown">👑</div>' : ''}
+      ${c.isWinner ? `<div class="crown">${CROWN_SVG}</div>` : ''}
       ${c.missed
-        ? `<div class="missed"><span class="emoji">😢</span>Nestihl(a) to!!</div>`
-        : `<img class="photo" src="${c.photoDataUrl}">`}
+        ? `<div class="missed"><span class="emoji">${icon('sad')}</span>Nestihl(a) to!!</div>`
+        : resultPhotoHtml(c.photoDataUrl, looksOf(state, c.id))}
       <div class="meta">
-        <div class="name">${escapeHtml(c.name)}</div>
+        <div class="name">${playerNameHtml(c.name, looksOf(state, c.id))}</div>
         ${c.missed ? '' : `<div class="votes">${c.votes} ${c.votes === 1 ? 'hlas' : c.votes < 5 ? 'hlasy' : 'hlasů'} · +${c.points} b.</div>`}
       </div>
     </div>
@@ -992,7 +1088,7 @@ function renderResultsScreen(state) {
 
   const scoreboardHtml = state.players.map((p, i) => `
     <div class="row ${p.isYou ? 'you' : ''}">
-      <span><span class="rank">${i + 1}.</span>${escapeHtml(p.name)}</span>
+      <span class="sb-player"><span class="rank">${i + 1}.</span>${avatarHtml(p.name, p.looks, 28)}${playerNameHtml(p.name, p.looks)}</span>
       <span class="num" style="color:var(--gold); font-weight:700;">${p.score}</span>
     </div>
   `).join('');
@@ -1028,20 +1124,20 @@ function renderCaptionResultsScreen(state, r) {
     body = `<p class="subtitle" style="text-align:center;">${escapeHtml(r.subjectName)} nestihl(a) vyfotit se — kolo se přeskočilo, nikdo nedostal body.</p>`;
   } else if (!r.captions.length) {
     body = `
-      <div class="camera-wrap" style="max-width:220px; margin:0 auto 16px;"><img src="${r.photoDataUrl}"></div>
+      ${framedPhotoHtml(r.photoDataUrl, looksOf(state, r.subjectId), 'max-width:220px; width:100%; margin:0 auto 16px;')}
       <p class="subtitle" style="text-align:center;">Nikdo nestihl napsat popisek — nikdo nedostal body.</p>
     `;
   } else {
     const captionsHtml = r.captions.map((c) => `
       <div class="caption-card ${c.isWinner ? 'winner' : ''}">
-        ${c.isWinner ? '<div class="crown">👑</div>' : ''}
+        ${c.isWinner ? `<div class="crown">${CROWN_SVG}</div>` : ''}
         <p>${escapeHtml(c.text)}</p>
-        <div class="caption-author">${escapeHtml(c.name)}${c.isWinner ? ` · +${r.points} b.` : ''}</div>
+        <div class="caption-author">${playerNameHtml(c.name, looksOf(state, c.id))}${c.isWinner ? ` · +${r.points} b.` : ''}</div>
       </div>
     `).join('');
     body = `
-      <div class="camera-wrap" style="max-width:220px; margin:0 auto 16px;"><img src="${r.photoDataUrl}"></div>
-      <p class="subtitle" style="text-align:center;">${escapeHtml(r.subjectName)} vybral(a) nejlepší popisek</p>
+      ${framedPhotoHtml(r.photoDataUrl, looksOf(state, r.subjectId), 'max-width:220px; width:100%; margin:0 auto 16px;')}
+      <p class="subtitle" style="text-align:center;">${playerNameHtml(r.subjectName, looksOf(state, r.subjectId))} vybral(a) nejlepší popisek</p>
       <div class="caption-list">${captionsHtml}</div>
     `;
   }
@@ -1051,7 +1147,7 @@ function renderCaptionResultsScreen(state, r) {
     <div class="screen">
       <div class="prompt-box">
         <div class="eyebrow">Výsledky kola ${r.round} / ${state.totalRounds}</div>
-        <div class="prompt-text">Fotka hráče ${escapeHtml(r.subjectName)}</div>
+        <div class="prompt-text">Fotka hráče ${playerNameHtml(r.subjectName, looksOf(state, r.subjectId))}</div>
       </div>
       ${body}
       <div class="card">
@@ -1081,7 +1177,6 @@ function rankGroups(players) {
   return groups;
 }
 
-const PODIUM_MEDAL = { 1: '🥇', 2: '🥈', 3: '🥉' };
 const PODIUM_LABEL = { 1: '1. místo', 2: '2. místo', 3: '3. místo' };
 
 function buildPodiumHtml(players) {
@@ -1093,8 +1188,9 @@ function buildPodiumHtml(players) {
   return `<div class="podium">
     ${order.map((s) => `
       <div class="podium-spot place-${s.place}">
-        <span class="podium-medal">${PODIUM_MEDAL[s.place]}</span>
-        <div class="podium-names">${s.group.players.map((p) => escapeHtml(p.name)).join(' & ')}</div>
+        <span class="podium-medal">${medalSvg(s.place)}</span>
+        <div class="podium-avatars">${s.group.players.map((p) => avatarHtml(p.name, p.looks, s.place === 1 ? 52 : 40)).join('')}</div>
+        <div class="podium-names">${s.group.players.map((p) => playerNameHtml(p.name, p.looks)).join(' & ')}</div>
         <div class="podium-score num">${s.group.score} b.</div>
         <div class="podium-bar">
           <span class="podium-bar-label">${PODIUM_LABEL[s.place]}</span>
@@ -1104,12 +1200,48 @@ function buildPodiumHtml(players) {
   </div>`;
 }
 
+// Minimální počet hráčů pro start — Impostor ve dvou nedává smysl.
+function minPlayersFor(mode) {
+  return mode === 'impostor' ? 3 : 2;
+}
+
+// Mince za dohranou hru: server pošle kolik, připíšou se jen jednou
+// (podle gameId), i když gameover obrazovka přijde vícekrát.
+function creditGameReward(reward) {
+  if (!reward || !reward.gameId || !reward.total) return;
+  let done = [];
+  try { done = JSON.parse(localStorage.getItem('vyraz_rewarded') || '[]'); } catch { /* ignore */ }
+  if (done.includes(reward.gameId)) return;
+  const d = shopLoad();
+  d.coins += reward.total;
+  shopSave(d);
+  done.push(reward.gameId);
+  try { localStorage.setItem('vyraz_rewarded', JSON.stringify(done.slice(-50))); } catch { /* ignore */ }
+}
+
+function rewardCardHtml(reward) {
+  if (!reward) return '';
+  const rows = [
+    ['Za dohranou hru', reward.participation],
+    ['Za umístění', reward.place],
+    ['Za vyhraná kola', reward.rounds],
+  ].filter(([, v]) => v > 0);
+  return `
+    <div class="reward-card">
+      <div class="reward-total">${COIN_SVG}<span class="num">+${reward.total}</span></div>
+      <div class="reward-rows">
+        ${rows.map(([label, v]) => `<div><span>${label}</span><span class="num">+${v}</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
 function renderGameOverScreen(state) {
   mountedKey = 'gameover';
   stopCamera();
+  creditGameReward(state.reward);
   const scoreboardHtml = state.players.map((p, i) => `
     <div class="row ${p.isYou ? 'you' : ''}">
-      <span><span class="rank">${i + 1}.</span>${escapeHtml(p.name)}</span>
+      <span class="sb-player"><span class="rank">${i + 1}.</span>${avatarHtml(p.name, p.looks, 28)}${playerNameHtml(p.name, p.looks)}</span>
       <span class="num" style="color:var(--gold); font-weight:700;">${p.score}</span>
     </div>
   `).join('');
@@ -1117,10 +1249,12 @@ function renderGameOverScreen(state) {
   app.innerHTML = `
     ${brandHtml(state)}
     <div class="screen center">
-      <div class="winners-line">${escapeHtml(state.winners.join(' & '))}</div>
+      <div class="winners-line">${state.players.filter((p) => state.winners.includes(p.name)).map((p) => playerNameHtml(p.name, p.looks)).join(' & ')}</div>
       <p class="subtitle">${state.winners.length > 1 ? 'vyhráli hru!' : 'vyhrál(a) hru!'}</p>
 
       ${buildPodiumHtml(state.players)}
+
+      ${rewardCardHtml(state.reward)}
 
       <div class="card" style="width:100%;">
         <h3 style="margin-bottom:10px;">Konečné pořadí</h3>
@@ -1146,6 +1280,11 @@ function renderGameOverScreen(state) {
 // ------------------------------------------------------------ DISPATCH ---
 
 function renderApp(state) {
+  // Hostitel spustil zamčený mód na vstupenku → vstupenka se spotřebuje.
+  if (state.isHost && lastState && lastState.phase === 'lobby' && state.phase !== 'lobby'
+      && lastState.code === state.code && !isModeUnlocked(state.mode)) {
+    useTicket(state.mode);
+  }
   lastState = state;
 
   if (state.phase === 'lobby') return renderLobbyScreen(state);
@@ -1174,6 +1313,12 @@ function renderApp(state) {
   if (state.phase === 'voting') {
     if (mountedKey !== `voting-${state.round}`) buildVotingView(state);
     else patchVoteCount(state);
+    return;
+  }
+
+  if (state.phase === 'impostor_voting') {
+    if (mountedKey !== `ivote-${state.round}`) buildImpostorVotingView(state);
+    else patchImpostorVoting(state);
     return;
   }
 
@@ -1219,8 +1364,9 @@ setInterval(() => {
   const el = document.getElementById('timer-el');
   if (!el) return;
   const remaining = Math.max(0, Math.ceil((lastState.deadlineAt - Date.now()) / 1000));
-  el.textContent = `⏱ ${remaining}s`;
+  el.innerHTML = `${icon('timer')}<span>${remaining}s</span>`;
   el.classList.toggle('low', remaining <= 5);
 }, 250);
 
 renderStartScreen();
+connect();

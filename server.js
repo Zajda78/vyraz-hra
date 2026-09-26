@@ -21,6 +21,20 @@ const CAPTION_SECONDS_MIN = 10;
 const CAPTION_SECONDS_MAX = 180;
 const CAPTION_WIN_POINTS = 100;
 
+// --- Impostor ---
+const IMPOSTOR_MIN_PLAYERS = 3;
+const IMPOSTOR_VOTE_SECONDS = 30;
+const IMPOSTOR_CIV_WIN_POINTS = 100; // každý z ostatních, když impostora odhalí
+const IMPOSTOR_WIN_POINTS = 250; // impostor, když ho neodhalí
+
+// --- Mince za hru ---
+// Záměrně skromné, ať se pořád vyplatí kupovat balíčky mincí:
+// truhla stojí 80–400 mincí, výhra celé hry dá 13.
+const COINS_PARTICIPATION = 3; // za každou dohranou hru
+const COINS_BY_PLACE = [10, 5, 3]; // 1.–3. místo (neplatí v Impostorovi)
+const COINS_IMPOSTOR_CIV_WIN = 3; // každý z ostatních za odhalení impostora
+const COINS_IMPOSTOR_WIN = 10; // impostor, když ho neodhalí
+
 // Bodování podle pořadí v kole — 1. místo dostane nejvíc, další míň, ale
 // nikdo nejde na nulu úplně (kromě "Nestihl to"). Plynulý sestupný žebříček,
 // funguje pro libovolný počet hráčů (max v lobby je 10).
@@ -68,6 +82,40 @@ const NAME_PROMPTS = [
   'Výraz, když ti {name} přizná, že tvůj vtip nikdy nebyl vtipný',
 ];
 
+// Kosmetika ze shopu (nasazený rámeček / barva jména). Server jen přeposílá
+// id věcí ostatním hráčům — co id znamená, ví až klient.
+function sanitizeLooks(raw) {
+  const clean = (v) => (typeof v === 'string' && /^[a-z0-9-]{1,32}$/.test(v) ? v : null);
+  if (!raw || typeof raw !== 'object') return { frame: null, name: null };
+  return { frame: clean(raw.frame), name: clean(raw.name) };
+}
+
+// Dvojice zadání pro Impostora: ostatní dostanou jedno, impostor druhé.
+// Schválně podobné, ať se impostor může schovat — ale ne stejné.
+// Která polovina připadne komu, se losuje každé kolo.
+const IMPOSTOR_PAIRS = [
+  ['Tvář, když kousneš do citronu', 'Tvář, když ochutnáš pálivou papriku'],
+  ['Výraz, když vyhraješ v loterii', 'Výraz, když dostaneš dárek, který jsi chtěl'],
+  ['Tvář, když uvidíš pavouka', 'Tvář, když v noci uslyšíš divný zvuk'],
+  ['Tvář, když ucítíš smradlavé ponožky', 'Tvář, když ochutnáš zkažené mléko'],
+  ['Póza jako supermodel na přehlídce', 'Póza jako kulturista na soutěži'],
+  ['Výraz, když zjistíš, že jsi zaspal', 'Výraz, když zjistíš, že jsi zapomněl klíče'],
+  ['Tvář, když tě někdo lechtá', 'Tvář, když se snažíš nesmát na pohřbu'],
+  ['Výraz, když vidíš roztomilé štěně', 'Výraz, když vidíš roztomilé miminko'],
+  ['Výraz, když čekáš na výsledky testu', 'Výraz, když čekáš na odpověď od crushe'],
+  ['Póza jako superhrdina', 'Póza jako vítěz olympiády'],
+  ['Tvář, když se díváš na horor', 'Tvář, když jedeš na horské dráze'],
+  ['Tvář, když tě bolí zub', 'Tvář, když tě bolí hlava'],
+  ['Výraz, když ti spadne telefon', 'Výraz, když ti ujede autobus'],
+  ['Tvář, když někdo řekne trapný vtip', 'Tvář, když někdo zpívá falešně'],
+  ['Póza jako socha v muzeu', 'Póza jako mim na ulici'],
+  ['Výraz, když potkáš svého ex', 'Výraz, když potkáš učitele o prázdninách'],
+  ['Tvář, když jíš nejlepší pizzu života', 'Tvář, když piješ první kafe ráno'],
+  ['Výraz, když zjistíš, že je pondělí', 'Výraz, když zjistíš, že ti došlo jídlo'],
+  ['Tvář, když někomu něco tajíš', 'Tvář, když plánuješ překvapení'],
+  ['Tvář, když se snažíš usnout', 'Tvář, když se nudíš na přednášce'],
+];
+
 function code() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let out = '';
@@ -82,12 +130,66 @@ function id() {
 /** @type {Map<string, Lobby>} */
 const lobbies = new Map();
 
+// ------------------------------------------------------------------ PŘÁTELÉ ---
+// Každý hráč má trvalý 6místný kód přítele (vygeneruje si ho telefon).
+// Server drží jen kdo je zrovna online a v jaké lobby. Seznam přátel si
+// drží každý telefon sám; žádosti pro hráče, co zrovna nejsou online,
+// čekají v paměti serveru (restart serveru je smaže).
+const FRIEND_CODE_RE = /^[A-Z2-9]{6}$/;
+
+/** @type {Map<string, { code, name, looks, sockets: Set<WebSocket>, lobbyCode: string|null }>} */
+const users = new Map();
+/** @type {Map<string, object[]>} kód → zprávy, které čekají, až se hráč připojí */
+const pendingForUser = new Map();
+
+function isOnline(code) {
+  const u = users.get(code);
+  return !!u && u.sockets.size > 0;
+}
+
+// Pošle zprávu na všechna zařízení hráče; když není online, uloží ji na později.
+function sendToUser(code, msg, { queue = false } = {}) {
+  const u = users.get(code);
+  let sent = false;
+  if (u) {
+    for (const sock of u.sockets) {
+      if (sock.readyState === WebSocket.OPEN) {
+        sock.send(JSON.stringify(msg));
+        sent = true;
+      }
+    }
+  }
+  if (!sent && queue) {
+    const list = pendingForUser.get(code) || [];
+    // stejná žádost od stejného hráče se nehromadí
+    const dupe = list.find((m) => m.type === msg.type && m.from?.code === msg.from?.code);
+    if (!dupe) list.push(msg);
+    pendingForUser.set(code, list.slice(-30));
+  }
+  return sent;
+}
+
+function friendStatus(code) {
+  const u = users.get(code);
+  if (!u || u.sockets.size === 0) return { code, online: false };
+  const lobby = u.lobbyCode ? lobbies.get(u.lobbyCode) : null;
+  return {
+    code,
+    online: true,
+    name: u.name,
+    looks: u.looks,
+    lobby: lobby
+      ? { code: lobby.code, mode: lobby.mode, phase: lobby.phase, count: lobby.players.size, joinable: lobby.phase === 'lobby' && lobby.players.size < 10 }
+      : null,
+  };
+}
+
 function newLobby(hostId) {
   return {
     hostId,
-    mode: 'classic', // classic | draw | caption — nastaví se při create_lobby, dál se nemění
-    phase: 'lobby', // lobby | submitting | drawing | voting | subject_photo | captioning | judging | results | gameover
-    totalRounds: 6,
+    mode: 'classic', // classic | draw | caption | impostor — nastaví se při create_lobby, dál se nemění
+    phase: 'lobby', // lobby | submitting | drawing | voting | impostor_voting | subject_photo | captioning | judging | results | gameover
+    totalRounds: 5,
     drawEnabled: false,
     drawSeconds: DRAW_SECONDS_DEFAULT,
     round: 0,
@@ -106,6 +208,13 @@ function newLobby(hostId) {
     subjectPhoto: null, // { photoDataUrl } | null
     captions: new Map(), // playerId -> text
     captionOrder: [], // zamíchané pořadí id autorů pro anonymní zobrazení při výběru
+    // --- Impostor (mode: 'impostor') ---
+    impostorId: null,
+    lastImpostorId: null,
+    civilPrompt: null,
+    impostorPrompt: null,
+    usedPairs: new Set(),
+    gameId: null, // nové id pro každou hru — klient podle něj připíše mince jen jednou
     deadlineAt: null,
     timer: null,
     lastRoundResult: null,
@@ -147,6 +256,7 @@ function clearTimer(lobby) {
 
 function startRound(lobby) {
   if (lobby.mode === 'caption') return startCaptionRound(lobby);
+  if (lobby.mode === 'impostor') return startImpostorRound(lobby);
   clearTimer(lobby);
   lobby.round += 1;
   lobby.prompt = pickPrompt(lobby);
@@ -158,6 +268,116 @@ function startRound(lobby) {
   lobby.phase = 'submitting';
   lobby.deadlineAt = Date.now() + SUBMIT_SECONDS * 1000;
   lobby.timer = setTimeout(() => afterSubmitting(lobby), SUBMIT_SECONDS * 1000);
+  broadcast(lobby);
+}
+
+// ---------------------------------------------------------------- Impostor ---
+
+function startImpostorRound(lobby) {
+  clearTimer(lobby);
+  lobby.round += 1;
+
+  const remaining = IMPOSTOR_PAIRS.map((_, i) => i).filter((i) => !lobby.usedPairs.has(i));
+  const pool = remaining.length ? remaining : IMPOSTOR_PAIRS.map((_, i) => i);
+  const pairIndex = pool[crypto.randomInt(pool.length)];
+  lobby.usedPairs.add(pairIndex);
+  if (lobby.usedPairs.size >= IMPOSTOR_PAIRS.length) lobby.usedPairs.clear();
+  const pair = crypto.randomInt(2) === 0 ? IMPOSTOR_PAIRS[pairIndex] : [...IMPOSTOR_PAIRS[pairIndex]].reverse();
+  lobby.civilPrompt = pair[0];
+  lobby.impostorPrompt = pair[1];
+  lobby.prompt = null;
+
+  // impostor = náhodný připojený hráč, pokud to jde, ne stejný jako minule
+  const active = connectedPlayers(lobby);
+  const candidates = active.length > 1 ? active.filter((p) => p.id !== lobby.lastImpostorId) : active;
+  lobby.impostorId = candidates[crypto.randomInt(candidates.length)].id;
+  lobby.lastImpostorId = lobby.impostorId;
+
+  lobby.submissions.clear();
+  lobby.votes.clear();
+  lobby.cardOrder = [];
+  lobby.lastRoundResult = null;
+  lobby.phase = 'submitting';
+  lobby.deadlineAt = Date.now() + SUBMIT_SECONDS * 1000;
+  lobby.timer = setTimeout(() => afterSubmitting(lobby), SUBMIT_SECONDS * 1000);
+  broadcast(lobby);
+}
+
+function promptFor(lobby, viewerId) {
+  if (lobby.mode !== 'impostor') return lobby.prompt;
+  return viewerId === lobby.impostorId ? lobby.impostorPrompt : lobby.civilPrompt;
+}
+
+function beginImpostorVoting(lobby) {
+  clearTimer(lobby);
+  lobby.cardOrder = shuffle(connectedPlayers(lobby).map((p) => p.id));
+  lobby.votes.clear();
+  lobby.phase = 'impostor_voting';
+  lobby.deadlineAt = Date.now() + IMPOSTOR_VOTE_SECONDS * 1000;
+  lobby.timer = setTimeout(() => finishImpostorVoting(lobby), IMPOSTOR_VOTE_SECONDS * 1000);
+  broadcast(lobby);
+}
+
+function maybeAdvanceFromImpostorVoting(lobby) {
+  if (lobby.phase !== 'impostor_voting') return;
+  const active = connectedPlayers(lobby);
+  if (active.length > 0 && active.every((p) => lobby.votes.has(p.id))) finishImpostorVoting(lobby);
+}
+
+function finishImpostorVoting(lobby) {
+  if (lobby.phase !== 'impostor_voting') return;
+  clearTimer(lobby);
+
+  const tally = new Map();
+  for (const targetId of lobby.votes.values()) tally.set(targetId, (tally.get(targetId) || 0) + 1);
+  const impostorVotes = tally.get(lobby.impostorId) || 0;
+  const maxOther = Math.max(0, ...[...tally.entries()].filter(([pid]) => pid !== lobby.impostorId).map(([, v]) => v));
+  // Odhalený = má víc hlasů než kdokoli jiný. Remíza nebo nula hlasů = impostor unikl.
+  const caught = impostorVotes > 0 && impostorVotes > maxOther;
+
+  for (const p of lobby.players.values()) {
+    if (caught && p.id !== lobby.impostorId) {
+      p.score += IMPOSTOR_CIV_WIN_POINTS;
+      p.coinsEarned = (p.coinsEarned || 0) + COINS_IMPOSTOR_CIV_WIN;
+    }
+    if (!caught && p.id === lobby.impostorId) {
+      p.score += IMPOSTOR_WIN_POINTS;
+      p.coinsEarned = (p.coinsEarned || 0) + COINS_IMPOSTOR_WIN;
+    }
+  }
+
+  const impostor = lobby.players.get(lobby.impostorId);
+  lobby.lastRoundResult = {
+    kind: 'impostor',
+    round: lobby.round,
+    impostorId: lobby.impostorId,
+    impostorName: impostor ? impostor.name : '???',
+    civilPrompt: lobby.civilPrompt,
+    impostorPrompt: lobby.impostorPrompt,
+    caught,
+    civPoints: IMPOSTOR_CIV_WIN_POINTS,
+    impostorPoints: IMPOSTOR_WIN_POINTS,
+    civCoins: COINS_IMPOSTOR_CIV_WIN,
+    impostorCoins: COINS_IMPOSTOR_WIN,
+    cards: lobby.cardOrder
+      .map((pid) => {
+        const player = lobby.players.get(pid);
+        const sub = lobby.submissions.get(pid);
+        return {
+          id: pid,
+          name: player ? player.name : '???',
+          photoDataUrl: sub?.missed ? null : sub?.photoDataUrl || null,
+          missed: !!sub?.missed,
+          votes: tally.get(pid) || 0,
+          isImpostor: pid === lobby.impostorId,
+        };
+      })
+      .sort((a, b) => (b.isImpostor - a.isImpostor) || (b.votes - a.votes)),
+  };
+
+  lobby.phase = 'results';
+  lobby.deadlineAt = Date.now() + RESULTS_AUTO_ADVANCE_SECONDS * 1000;
+  lobby.timer = setTimeout(() => advanceAfterResults(lobby), RESULTS_AUTO_ADVANCE_SECONDS * 1000);
   broadcast(lobby);
 }
 
@@ -286,7 +506,9 @@ function afterSubmitting(lobby) {
       lobby.submissions.set(p.id, { photoDataUrl: null, missed: true });
     }
   }
-  if (lobby.drawEnabled) {
+  if (lobby.mode === 'impostor') {
+    beginImpostorVoting(lobby);
+  } else if (lobby.drawEnabled) {
     beginDrawing(lobby);
   } else {
     beginVoting(lobby);
@@ -420,11 +642,35 @@ function advanceAfterResults(lobby) {
     lobby.captions = new Map();
     lobby.captionOrder = [];
     lobby.lastRoundResult = null;
+    awardGameCoins(lobby);
     lobby.phase = 'gameover';
     lobby.deadlineAt = null;
     broadcast(lobby);
   } else {
     startRound(lobby);
+  }
+}
+
+// Spočítá mince za dohranou hru. Server jen řekne kolik — připíše si je
+// klient (mince zatím žijí v telefonu), podle gameId jen jednou.
+function awardGameCoins(lobby) {
+  const sorted = [...lobby.players.values()].sort((a, b) => b.score - a.score);
+  let place = 0;
+  let lastScore = null;
+  for (const p of sorted) {
+    if (p.score !== lastScore) {
+      place += 1;
+      lastScore = p.score;
+    }
+    const placeCoins = lobby.mode === 'impostor' ? 0 : (COINS_BY_PLACE[place - 1] || 0);
+    const roundCoins = p.coinsEarned || 0;
+    p.reward = {
+      gameId: lobby.gameId,
+      participation: COINS_PARTICIPATION,
+      place: placeCoins,
+      rounds: roundCoins,
+      total: COINS_PARTICIPATION + placeCoins + roundCoins,
+    };
   }
 }
 
@@ -438,6 +684,8 @@ function publicState(lobby, viewerId) {
       connected: p.connected,
       isHost: p.id === lobby.hostId,
       isYou: p.id === viewerId,
+      looks: p.looks,
+      friendCode: p.friendCode || null,
     }));
 
   const base = {
@@ -450,7 +698,8 @@ function publicState(lobby, viewerId) {
     drawEnabled: lobby.drawEnabled,
     drawSeconds: lobby.drawSeconds,
     captionSeconds: lobby.captionSeconds,
-    prompt: lobby.prompt,
+    prompt: promptFor(lobby, viewerId),
+    isImpostor: lobby.mode === 'impostor' && lobby.phase !== 'lobby' && lobby.phase !== 'gameover' && viewerId === lobby.impostorId,
     players,
     youId: viewerId,
     isHost: viewerId === lobby.hostId,
@@ -487,6 +736,23 @@ function publicState(lobby, viewerId) {
     base.youVoted = lobby.votes.has(viewerId);
   }
 
+  if (lobby.phase === 'impostor_voting') {
+    base.cards = lobby.cardOrder.map((pid) => {
+      const sub = lobby.submissions.get(pid);
+      return {
+        id: pid,
+        name: lobby.players.get(pid)?.name || '???',
+        missed: !!sub?.missed,
+        photoDataUrl: sub?.missed ? null : sub?.photoDataUrl || null,
+        isOwn: pid === viewerId,
+      };
+    });
+    base.votedCount = lobby.votes.size;
+    base.activeCount = connectedPlayers(lobby).length;
+    base.youVoted = lobby.votes.has(viewerId);
+    base.yourVote = lobby.votes.get(viewerId) || null;
+  }
+
   if (lobby.phase === 'subject_photo') {
     base.subjectId = lobby.subjectId;
     base.subjectName = lobby.players.get(lobby.subjectId)?.name || '???';
@@ -518,6 +784,7 @@ function publicState(lobby, viewerId) {
   if (lobby.phase === 'gameover') {
     const top = players.length ? players[0].score : 0;
     base.winners = players.filter((p) => p.score === top).map((p) => p.name);
+    base.reward = lobby.players.get(viewerId)?.reward || null;
   }
 
   return base;
@@ -554,6 +821,76 @@ const HEARTBEAT_MS = 25_000;
 wss.on('connection', (ws) => {
   let lobby = null;
   let playerId = null;
+  let me = null; // kód přítele tohohle zařízení (po zprávě "hello")
+
+  function setPresenceLobby(code) {
+    const u = me && users.get(me);
+    if (u) u.lobbyCode = code;
+  }
+
+  // Přidá hráče do existující lobby (kódem nebo přes přítele).
+  function joinLobby(target, msg) {
+    if (!target) return 'Lobby s tímhle kódem neexistuje.';
+    if (target === lobby && playerId) return null; // už v ní jsem
+    if (target.phase !== 'lobby') return 'Hra už začala, nejde se přidat.';
+    if (target.players.size >= 10) return 'Lobby je plná (max 10 hráčů).';
+    if (lobby && playerId) leaveLobby();
+    lobby = target;
+    playerId = id();
+    lobby.players.set(playerId, {
+      id: playerId,
+      name: (msg.name || 'Hráč').slice(0, 20),
+      looks: sanitizeLooks(msg.looks),
+      friendCode: me,
+      score: 0,
+      ws,
+      connected: true,
+    });
+    setPresenceLobby(lobby.code);
+    broadcast(lobby);
+    return null;
+  }
+
+  // Odchod z lobby — buď úmyslný (tlačítko zpět), nebo výpadek spojení.
+  function detachFromLobby({ leaving }) {
+    if (!lobby || !playerId) return;
+    const current = lobby;
+    const p = current.players.get(playerId);
+    // Pokud mezitím hráč stihl obnovit spojení (rejoin) přes nový socket,
+    // p.ws už na tenhle (zastaralý) socket neukazuje — nepřepisujeme pak
+    // jeho čerstvé "connected: true" tímhle opožděným close eventem.
+    if (p && p.ws === ws) {
+      if (leaving && current.phase === 'lobby') current.players.delete(playerId);
+      else p.connected = false;
+    }
+    // odešel hostitel z čekající lobby → hostitelem se stane další připojený
+    if (leaving && current.phase === 'lobby' && current.hostId === playerId) {
+      const next = connectedPlayers(current)[0];
+      if (next) current.hostId = next.id;
+    }
+    if (me && users.get(me)?.lobbyCode === current.code) setPresenceLobby(null);
+    lobby = null;
+    playerId = null;
+
+    // lobby ve fázi čekání na hráče se po odpojení všech po chvíli sama uklidí
+    if (connectedPlayers(current).length === 0) {
+      clearTimer(current);
+      setTimeout(() => {
+        if (connectedPlayers(current).length === 0) lobbies.delete(current.code);
+      }, 60_000);
+    } else {
+      if (current.phase === 'submitting') maybeAdvanceFromSubmitting(current);
+      if (current.phase === 'drawing') maybeAdvanceFromDrawing(current);
+      if (current.phase === 'voting') maybeAdvanceFromVoting(current);
+      if (current.phase === 'captioning') maybeAdvanceFromCaptioning(current);
+      if (current.phase === 'impostor_voting') maybeAdvanceFromImpostorVoting(current);
+      broadcast(current);
+    }
+  }
+
+  function leaveLobby() {
+    detachFromLobby({ leaving: true });
+  }
 
   ws.isAlive = true;
   ws.on('pong', () => { ws.isAlive = true; });
@@ -566,41 +903,90 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'hello') {
+      const code = String(msg.friendCode || '').toUpperCase();
+      if (!FRIEND_CODE_RE.test(code)) return;
+      if (me && me !== code) users.get(me)?.sockets.delete(ws);
+      me = code;
+      const u = users.get(code) || { code, sockets: new Set(), lobbyCode: null };
+      u.name = String(msg.name || 'Hráč').slice(0, 20);
+      u.looks = sanitizeLooks(msg.looks);
+      u.sockets.add(ws);
+      users.set(code, u);
+      if (lobby) u.lobbyCode = lobby.code;
+      // doručí žádosti / přijetí, které čekaly, než se hráč připojí
+      const waiting = pendingForUser.get(code);
+      if (waiting) {
+        pendingForUser.delete(code);
+        for (const m of waiting) ws.send(JSON.stringify(m));
+      }
+      return;
+    }
+
+    if (msg.type === 'friends_status') {
+      const codes = Array.isArray(msg.codes) ? msg.codes.slice(0, 200) : [];
+      ws.send(JSON.stringify({ type: 'friends_status', friends: codes.map((c) => friendStatus(String(c).toUpperCase())) }));
+      return;
+    }
+
+    if (msg.type === 'friend_request' && me) {
+      const to = String(msg.code || '').toUpperCase();
+      if (!FRIEND_CODE_RE.test(to)) return sendError(ws, 'Kód přítele má 6 znaků.');
+      if (to === me) return sendError(ws, 'Sám sebe si do přátel přidat nejde.');
+      const u = users.get(me);
+      sendToUser(to, { type: 'friend_request', from: { code: me, name: u.name, looks: u.looks } }, { queue: true });
+      return;
+    }
+
+    if (msg.type === 'friend_accept' && me) {
+      const to = String(msg.code || '').toUpperCase();
+      if (!FRIEND_CODE_RE.test(to)) return;
+      const u = users.get(me);
+      sendToUser(to, { type: 'friend_accepted', from: { code: me, name: u.name, looks: u.looks } }, { queue: true });
+      return;
+    }
+
+    if (msg.type === 'join_friend') {
+      const target = users.get(String(msg.code || '').toUpperCase());
+      if (!target || target.sockets.size === 0) return sendError(ws, 'Přítel teď není online.');
+      if (!target.lobbyCode) return sendError(ws, 'Přítel teď není v žádné lobby.');
+      const err = joinLobby(lobbies.get(target.lobbyCode), msg);
+      if (err) sendError(ws, err);
+      return;
+    }
+
+    if (msg.type === 'leave_lobby') {
+      leaveLobby();
+      return;
+    }
+
     if (msg.type === 'create_lobby') {
+      if (lobby && playerId) leaveLobby();
       const newCode = code();
       lobby = newLobby(null);
       lobby.code = newCode;
-      lobby.mode = msg.mode === 'draw' ? 'draw' : msg.mode === 'caption' ? 'caption' : 'classic';
+      lobby.mode = ['draw', 'caption', 'impostor'].includes(msg.mode) ? msg.mode : 'classic';
       lobby.drawEnabled = lobby.mode === 'draw';
       playerId = id();
       lobby.hostId = playerId;
       lobby.players.set(playerId, {
         id: playerId,
         name: (msg.name || 'Host').slice(0, 20),
+        looks: sanitizeLooks(msg.looks),
+        friendCode: me,
         score: 0,
         ws,
         connected: true,
       });
       lobbies.set(newCode, lobby);
+      setPresenceLobby(newCode);
       broadcast(lobby);
       return;
     }
 
     if (msg.type === 'join_lobby') {
-      const target = lobbies.get((msg.code || '').toUpperCase());
-      if (!target) return sendError(ws, 'Lobby s tímhle kódem neexistuje.');
-      if (target.phase !== 'lobby') return sendError(ws, 'Hra už začala, nejde se přidat.');
-      if (target.players.size >= 10) return sendError(ws, 'Lobby je plná (max 10 hráčů).');
-      lobby = target;
-      playerId = id();
-      lobby.players.set(playerId, {
-        id: playerId,
-        name: (msg.name || 'Hráč').slice(0, 20),
-        score: 0,
-        ws,
-        connected: true,
-      });
-      broadcast(lobby);
+      const err = joinLobby(lobbies.get((msg.code || '').toUpperCase()), msg);
+      if (err) sendError(ws, err);
       return;
     }
 
@@ -613,19 +999,36 @@ wss.on('connection', (ws) => {
       playerId = msg.playerId;
       existing.ws = ws;
       existing.connected = true;
+      if (msg.looks) existing.looks = sanitizeLooks(msg.looks);
+      if (me) existing.friendCode = me;
+      setPresenceLobby(lobby.code);
       broadcast(lobby);
       // pokud se čekalo zrovna na tohohle hráče, zkus fázi posunout dál
       if (lobby.phase === 'submitting') maybeAdvanceFromSubmitting(lobby);
       if (lobby.phase === 'drawing') maybeAdvanceFromDrawing(lobby);
       if (lobby.phase === 'voting') maybeAdvanceFromVoting(lobby);
       if (lobby.phase === 'captioning') maybeAdvanceFromCaptioning(lobby);
+      if (lobby.phase === 'impostor_voting') maybeAdvanceFromImpostorVoting(lobby);
       return;
     }
 
     if (!lobby || !playerId) return;
 
+    if (msg.type === 'invite_friend' && me) {
+      const to = String(msg.code || '').toUpperCase();
+      const u = users.get(me);
+      const ok = sendToUser(to, {
+        type: 'invite',
+        from: { code: me, name: u.name, looks: u.looks },
+        lobbyCode: lobby.code,
+        mode: lobby.mode,
+      });
+      if (!ok) sendError(ws, 'Přítel teď není online.');
+      return;
+    }
+
     if (msg.type === 'set_rounds' && playerId === lobby.hostId && lobby.phase === 'lobby') {
-      const n = Math.max(3, Math.min(20, Number(msg.rounds) || 6));
+      const n = Math.max(3, Math.min(20, Number(msg.rounds) || 5));
       lobby.totalRounds = n;
       broadcast(lobby);
       return;
@@ -649,6 +1052,14 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'start_game' && playerId === lobby.hostId && lobby.phase === 'lobby') {
       if (lobby.players.size < 2) return sendError(ws, 'Potřebuješ aspoň 2 hráče.');
+      if (lobby.mode === 'impostor' && connectedPlayers(lobby).length < IMPOSTOR_MIN_PLAYERS) {
+        return sendError(ws, `Impostor potřebuje aspoň ${IMPOSTOR_MIN_PLAYERS} hráče.`);
+      }
+      lobby.gameId = id();
+      for (const p of lobby.players.values()) {
+        p.coinsEarned = 0;
+        p.reward = null;
+      }
       if (lobby.mode === 'caption') {
         lobby.subjectOrder = shuffle([...lobby.players.keys()]);
         lobby.subjectIndex = -1;
@@ -711,6 +1122,16 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'cast_vote' && lobby.phase === 'impostor_voting') {
+      const targetId = msg.targetId;
+      if (targetId === playerId) return sendError(ws, 'Nemůžeš hlasovat sám pro sebe.');
+      if (!lobby.cardOrder.includes(targetId)) return;
+      lobby.votes.set(playerId, targetId);
+      broadcast(lobby);
+      maybeAdvanceFromImpostorVoting(lobby);
+      return;
+    }
+
     if (msg.type === 'next_round' && playerId === lobby.hostId && lobby.phase === 'results') {
       advanceAfterResults(lobby);
       return;
@@ -734,32 +1155,25 @@ wss.on('connection', (ws) => {
       lobby.captionOrder = [];
       lobby.lastRoundResult = null;
       lobby.deadlineAt = null;
-      for (const p of lobby.players.values()) p.score = 0;
+      lobby.impostorId = null;
+      lobby.lastImpostorId = null;
+      lobby.civilPrompt = null;
+      lobby.impostorPrompt = null;
+      lobby.usedPairs.clear();
+      lobby.gameId = null;
+      for (const p of lobby.players.values()) {
+        p.score = 0;
+        p.coinsEarned = 0;
+        p.reward = null;
+      }
       broadcast(lobby);
       return;
     }
   });
 
   ws.on('close', () => {
-    if (!lobby || !playerId) return;
-    const p = lobby.players.get(playerId);
-    // Pokud mezitím hráč stihl obnovit spojení (rejoin) přes nový socket,
-    // p.ws už na tenhle (zastaralý) socket neukazuje — nepřepisujeme pak
-    // jeho čerstvé "connected: true" tímhle opožděným close eventem.
-    if (p && p.ws === ws) p.connected = false;
-    // lobby ve fázi čekání na hráče se po odpojení všech po chvíli sama uklidí
-    if (connectedPlayers(lobby).length === 0) {
-      clearTimer(lobby);
-      setTimeout(() => {
-        if (connectedPlayers(lobby).length === 0) lobbies.delete(lobby.code);
-      }, 60_000);
-    } else {
-      if (lobby.phase === 'submitting') maybeAdvanceFromSubmitting(lobby);
-      if (lobby.phase === 'drawing') maybeAdvanceFromDrawing(lobby);
-      if (lobby.phase === 'voting') maybeAdvanceFromVoting(lobby);
-      if (lobby.phase === 'captioning') maybeAdvanceFromCaptioning(lobby);
-      broadcast(lobby);
-    }
+    if (me) users.get(me)?.sockets.delete(ws);
+    detachFromLobby({ leaving: false });
   });
 });
 
