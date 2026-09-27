@@ -29,7 +29,7 @@ const IMPOSTOR_WIN_POINTS = 250; // impostor, když ho neodhalí
 
 // --- Mince za hru ---
 // Záměrně skromné, ať se pořád vyplatí kupovat balíčky mincí:
-// truhla stojí 80–400 mincí, výhra celé hry dá 13.
+// truhla stojí 50–250 mincí, výhra celé hry dá 13, denní odměna 30.
 const COINS_PARTICIPATION = 3; // za každou dohranou hru
 const COINS_BY_PLACE = [10, 5, 3]; // 1.–3. místo (neplatí v Impostorovi)
 const COINS_IMPOSTOR_CIV_WIN = 3; // každý z ostatních za odhalení impostora
@@ -47,39 +47,39 @@ function pointsForRank(rank) {
 
 // Prompty s dosazeným jménem náhodného hráče z lobby ({name} se nahradí).
 const NAME_PROMPTS = [
-  'Výraz, když ti {name} dluží 500 Kč a řekne "vrátím příště"',
-  'Tvůj výraz, když ti {name} sní poslední jídlo z lednice',
-  'Jak se tváříš, když tě {name} přistihne zpívat samotného v autě',
-  'Výraz, když ti {name} řekne, že vypadáš jako jeho bývalá',
-  'Tvář, když zjistíš, že ti {name} čte zprávy přes rameno',
-  'Výraz, když ti {name} v obchodě omylem řekne "miluju tě"',
-  'Tvůj výraz, když {name} vedle tebe v kině hlučně žere brambůrky',
-  'Výraz, když ti {name} přizná, že sleduje tvůj Instagram pod cizím účtem',
-  'Tvář, když tě {name} v sobotu v 7 ráno vzbudí s nápadem jít běhat',
-  'Výraz, když ti {name} řekne, že tvoje oblíbená hospoda zavřela',
-  'Tvůj výraz, když tě {name} označí na trapné fotce z výletu',
-  'Výraz, když ti {name} dá stejný dárek, co jsi mu dal loni ty',
-  'Tvář, když ti {name} v hospodě řekne "platím" a nemá peněženku',
-  'Výraz, když {name} prohraje sázku a musí tě poslouchat 24 hodin',
-  'Tvůj výraz, když ti {name} ukáže fotky z dovolené, kam tě nepozval',
-  'Tvář, když ti {name} v posilovně nabídne spotování a upustí činku',
-  'Výraz, když {name} sfoukne svíčky na dortu, co jsi pekl ty',
-  'Tvůj výraz, když ti {name} řekne, že tvůj oblíbený tým zase prohrál',
-  'Výraz, když ti {name} napíše zprávu ve 3 ráno a evidentně je vzhůru',
-  'Tvář, když ti {name} přizná, že ti dva roky říkal špatné jméno',
-  'Výraz, když na tebe {name} v obchodě zamává a ty nevíš, kdo to je',
-  'Tvůj výraz, když ti {name} řekne, že tvoje oblíbená písnička je trapná',
-  'Výraz, když ti {name} ukáže, že tě sledoval už na základce',
-  'Tvář, když ti {name} vrátí půjčenou knihu celou zmuchlanou',
-  'Výraz, když {name} v kvízu vyhraje otázku, na kterou jsi znal odpověď ty',
-  'Tvůj výraz, když ti {name} řekne, že máš něco na zubech už celý večer',
-  'Výraz, když ti {name} přizná, že smazal tvůj rozkoukaný seriál',
-  'Tvář, když tě {name} vyfotí přesně v momentě nejhoršího výrazu',
-  'Výraz, když ti {name} řekne, že tvůj parfém zná od souseda',
-  'Tvůj výraz, když {name} otevře tvoji lednici a řekne "to je všechno?"',
-  'Výraz, když ti {name} připomene trapas ze silvestra, na který jsi zapomněl',
-  'Tvář, když ti {name} řekne, že jeho pes tě má radši než jeho',
-  'Výraz, když ti {name} přizná, že tvůj vtip nikdy nebyl vtipný',
+  'Your face when {name} owes you $20 and says "I\'ll pay you back next time"',
+  'Your face when {name} eats the last food in your fridge',
+  'Your face when {name} catches you singing alone in the car',
+  'Your face when {name} says you look just like their ex',
+  'Your face when you realise {name} is reading your texts over your shoulder',
+  'Your face when {name} accidentally says "love you" to the cashier',
+  'Your face when {name} munches chips loudly next to you in the cinema',
+  'Your face when {name} admits they follow your Instagram from a fake account',
+  'Your face when {name} wakes you up at 7am on Saturday to go jogging',
+  'Your face when {name} tells you your favourite bar just closed',
+  'Your face when {name} tags you in an embarrassing trip photo',
+  'Your face when {name} gives you the exact gift you gave them last year',
+  'Your face when {name} says "I\'ll pay" at the bar and has no wallet',
+  'Your face when {name} loses a bet and has to obey you for 24 hours',
+  'Your face when {name} shows you holiday photos from a trip you weren\'t invited to',
+  'Your face when {name} offers to spot you at the gym and drops the weight',
+  'Your face when {name} blows out the candles on the cake you baked',
+  'Your face when {name} tells you your favourite team lost again',
+  'Your face when {name} texts you at 3am and is clearly wide awake',
+  'Your face when {name} admits they\'ve been calling you the wrong name for two years',
+  'Your face when {name} waves at you in a shop and you have no idea who they are',
+  'Your face when {name} says your favourite song is cringe',
+  'Your face when {name} shows you they\'ve followed you since primary school',
+  'Your face when {name} returns your book all crumpled',
+  'Your face when {name} wins a quiz question you knew the answer to',
+  'Your face when {name} tells you you\'ve had food in your teeth all night',
+  'Your face when {name} admits they deleted the show you were halfway through',
+  'Your face when {name} snaps a photo of you at your worst possible moment',
+  'Your face when {name} says your perfume smells like their neighbour',
+  'Your face when {name} opens your fridge and says "is that all?"',
+  'Your face when {name} brings up your New Year\'s Eve fail you\'d forgotten',
+  'Your face when {name} says their dog likes you more than them',
+  'Your face when {name} admits your jokes were never funny',
 ];
 
 // Kosmetika ze shopu (nasazený rámeček / barva jména). Server jen přeposílá
@@ -90,31 +90,226 @@ function sanitizeLooks(raw) {
   return { frame: clean(raw.frame), name: clean(raw.name) };
 }
 
+// Profilová fotka — malý obrázek (data URL), který si hráč nastaví
+// v úpravě profilu. Telefon ho zmenší; server hlídá jen typ a velikost.
+const AVATAR_MAX_CHARS = 24000;
+function sanitizeAvatar(raw) {
+  const v = raw && raw.avatar;
+  if (typeof v !== 'string' || v.length > AVATAR_MAX_CHARS) return null;
+  return /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v) ? v : null;
+}
+
+// Vzhled, jak ho vidí ostatní: rámeček + barva jména + profilovka.
+function publicLooks(obj) {
+  return { ...(obj.looks || { frame: null, name: null }), avatar: obj.avatar || null };
+}
+
 // Dvojice zadání pro Impostora: ostatní dostanou jedno, impostor druhé.
 // Schválně podobné, ať se impostor může schovat — ale ne stejné.
 // Která polovina připadne komu, se losuje každé kolo.
 const IMPOSTOR_PAIRS = [
-  ['Tvář, když kousneš do citronu', 'Tvář, když ochutnáš pálivou papriku'],
-  ['Výraz, když vyhraješ v loterii', 'Výraz, když dostaneš dárek, který jsi chtěl'],
-  ['Tvář, když uvidíš pavouka', 'Tvář, když v noci uslyšíš divný zvuk'],
-  ['Tvář, když ucítíš smradlavé ponožky', 'Tvář, když ochutnáš zkažené mléko'],
-  ['Póza jako supermodel na přehlídce', 'Póza jako kulturista na soutěži'],
-  ['Výraz, když zjistíš, že jsi zaspal', 'Výraz, když zjistíš, že jsi zapomněl klíče'],
-  ['Tvář, když tě někdo lechtá', 'Tvář, když se snažíš nesmát na pohřbu'],
-  ['Výraz, když vidíš roztomilé štěně', 'Výraz, když vidíš roztomilé miminko'],
-  ['Výraz, když čekáš na výsledky testu', 'Výraz, když čekáš na odpověď od crushe'],
-  ['Póza jako superhrdina', 'Póza jako vítěz olympiády'],
-  ['Tvář, když se díváš na horor', 'Tvář, když jedeš na horské dráze'],
-  ['Tvář, když tě bolí zub', 'Tvář, když tě bolí hlava'],
-  ['Výraz, když ti spadne telefon', 'Výraz, když ti ujede autobus'],
-  ['Tvář, když někdo řekne trapný vtip', 'Tvář, když někdo zpívá falešně'],
-  ['Póza jako socha v muzeu', 'Póza jako mim na ulici'],
-  ['Výraz, když potkáš svého ex', 'Výraz, když potkáš učitele o prázdninách'],
-  ['Tvář, když jíš nejlepší pizzu života', 'Tvář, když piješ první kafe ráno'],
-  ['Výraz, když zjistíš, že je pondělí', 'Výraz, když zjistíš, že ti došlo jídlo'],
-  ['Tvář, když někomu něco tajíš', 'Tvář, když plánuješ překvapení'],
-  ['Tvář, když se snažíš usnout', 'Tvář, když se nudíš na přednášce'],
+  ['Your face when you bite into a lemon', 'Your face when you taste a hot chilli'],
+  ['Your face when you win the lottery', 'Your face when you get the gift you wanted'],
+  ['Your face when you see a spider', 'Your face when you hear a weird noise at night'],
+  ['Your face when you smell stinky socks', 'Your face when you taste sour milk'],
+  ['Pose like a supermodel on the runway', 'Pose like a bodybuilder on stage'],
+  ['Your face when you realise you overslept', 'Your face when you realise you forgot your keys'],
+  ['Your face when someone tickles you', 'Your face when you try not to laugh at a funeral'],
+  ['Your face when you see a cute puppy', 'Your face when you see a cute baby'],
+  ['Your face when you wait for test results', 'Your face when you wait for your crush to reply'],
+  ['Pose like a superhero', 'Pose like an Olympic champion'],
+  ['Your face when you watch a horror movie', 'Your face when you ride a rollercoaster'],
+  ['Your face when you have a toothache', 'Your face when you have a headache'],
+  ['Your face when you drop your phone', 'Your face when you miss the bus'],
+  ['Your face when someone tells a bad joke', 'Your face when someone sings off-key'],
+  ['Pose like a statue in a museum', 'Pose like a street mime'],
+  ['Your face when you bump into your ex', 'Your face when you bump into your teacher on holiday'],
+  ['Your face when you eat the best pizza of your life', 'Your face when you drink your first coffee in the morning'],
+  ['Your face when you realise it\'s Monday', 'Your face when you realise you\'re out of food'],
+  ['Your face when you\'re keeping a secret', 'Your face when you\'re planning a surprise'],
+  ['Your face when you\'re trying to fall asleep', 'Your face when you\'re bored in a lecture'],
 ];
+
+// Sada „Spicy“ — pikantnější, trapnější otázky o randění a vztazích.
+// Schválně bez explicitního obsahu (kvůli věkovému hodnocení v obchodech).
+const SPICY_NAME_PROMPTS = [
+  'Your face when {name} slides into your DMs at 2am',
+  'Your face when {name} says they\'ve had a crush on you for years',
+  'Your face when {name} reads your last text out loud to everyone',
+  'Your face when {name} shows your ex your new Instagram',
+  'Your face when {name} walks in on you practising flirting in the mirror',
+  'Your face when {name} rates your dating profile 3/10',
+  'Your face when {name} tells everyone who you texted last night',
+  'Your face when {name} finds your secret playlist of love songs',
+  'Your face when {name} matches with your ex on a dating app',
+  'Your face when {name} asks your parents about your love life at dinner',
+  'Your face when {name} says your kissing face looks like a fish',
+  'Your face when {name} screenshots your flirty story reply',
+  'Your face when {name} brings up your most embarrassing night out',
+  'Your face when {name} reads your diary from when you were 14',
+  'Your face when {name} saw you on a date last weekend',
+  'Your face when {name} dares you to text your crush "I miss you"',
+  'Your face when {name} reveals you still have your ex\'s hoodie',
+  'Your face when {name} catches you stalking your ex\'s new partner',
+  'Your face when {name} sends a voice note of you singing to the group chat',
+  'Your face when {name} says your pick-up line is the worst they\'ve heard',
+  'Your face when {name} scrolls through your search history',
+  'Your face when {name} tells the whole party your worst date story',
+  'Your face when {name} walks in while you\'re taking your 50th selfie',
+  'Your face when {name} reveals your secret celebrity crush',
+  'Your face when {name} says you talk about someone in your sleep',
+  'Your face when {name} forwards your love letter to the group chat',
+  'Your face when {name} asks who your first kiss was — in front of them',
+  'Your face when {name} likes a 3-year-old photo of your crush from your phone',
+  'Your face when {name} says your ex is now dating their cousin',
+  'Your face when {name} tells your crush you practised asking them out',
+];
+
+const SPICY_IMPOSTOR_PAIRS = [
+  ['Your face when your crush texts you back', 'Your face when your ex texts you back'],
+  ['Your flirting face', 'Your "I\'m totally innocent" face'],
+  ['Your face after a perfect first kiss', 'Your face after a terrible first date'],
+  ['Pose like your dating app profile photo', 'Pose like your LinkedIn profile photo'],
+  ['Your face when someone winks at you', 'Your face when someone blows you a kiss'],
+  ['Your face when you get caught checking someone out', 'Your face when you get caught lying'],
+  ['Your face the morning after a wild party', 'Your face after pulling an all-nighter'],
+  ['Your face when you spot your crush at the party', 'Your face when you spot your ex at the party'],
+  ['Your face when your mum finds your dating app', 'Your face when your mum reads your texts'],
+  ['Pose like a Valentine\'s Day card', 'Pose like a wedding photo'],
+  ['Your face when someone says "we need to talk"', 'Your face when someone says "I have a secret"'],
+  ['Your face when you accidentally like an old photo', 'Your face when you text the wrong person'],
+  ['Your face when you get a love letter', 'Your face when you get a breakup text'],
+  ['Your "come here" face', 'Your "don\'t you dare" face'],
+  ['Your face when someone asks how many exes you have', 'Your face when someone asks your age'],
+  ['Pose like you\'re on a romantic dinner date', 'Pose like you\'re at a job interview'],
+  ['Your face when your date orders for you', 'Your face when your date splits the bill to the cent'],
+  ['Your most attractive face', 'Your sleepiest face'],
+  ['Your face when your crush says "you\'re like a sibling to me"', 'Your face when your crush says "let\'s just be friends"'],
+  ['Your face when you text "I love you" by accident', 'Your face when you reply "k" by accident'],
+];
+
+// Sada „Family“ — otázky vhodné pro celou rodinu i děti.
+const FAMILY_NAME_PROMPTS = [
+  'Your face when {name} says there\'s broccoli for dinner',
+  'Your face when {name} eats the last cookie',
+  'Your face when {name} says it\'s bedtime',
+  'Your face when {name} gives you a surprise present',
+  'Your face when {name} tells a really bad dad joke',
+  'Your face when {name} steps on a LEGO brick',
+  'Your face when {name} says the ice cream truck is here',
+  'Your face when {name} beats you at a board game',
+  'Your face when {name} does a silly dance',
+  'Your face when {name} says homework is cancelled',
+  'Your face when {name} finds a spider in the bath',
+  'Your face when {name} sneezes really loudly',
+  'Your face when {name} says we\'re going to the zoo',
+  'Your face when {name} burns the toast',
+  'Your face when {name} tickles you',
+  'Your face when {name} spills juice on the sofa',
+  'Your face when {name} says the dog ate your sandwich',
+  'Your face when {name} wins every round of Monopoly',
+  'Your face when {name} makes you try a super sour sweet',
+  'Your face when {name} says there\'s no Wi-Fi on holiday',
+  'Your face when {name} starts a pillow fight',
+  'Your face when {name} reads a scary story at bedtime',
+  'Your face when {name} sings in the car — really loudly',
+  'Your face when {name} hides your favourite toy',
+  'Your face when {name} says it\'s snowing outside',
+  'Your face when {name} gives you the biggest slice of cake',
+  'Your face when {name} forgets your name for a second',
+  'Your face when {name} brings home a new puppy',
+  'Your face when {name} says you have to clean your room',
+  'Your face when {name} pulls a funny face at dinner',
+];
+
+const FAMILY_IMPOSTOR_PAIRS = [
+  ['Your face when you eat a lemon', 'Your face when you eat a pickle'],
+  ['Pose like a dinosaur', 'Pose like a monkey'],
+  ['Your face when you get a present', 'Your face when you win a game'],
+  ['Pose like a superhero', 'Pose like a wizard'],
+  ['Your face when you see a ghost', 'Your face when you see a monster'],
+  ['Your face when you smell pizza', 'Your face when you smell cookies'],
+  ['Pose like a cat', 'Pose like a dog'],
+  ['Your face when you\'re super sleepy', 'Your face when you\'re super bored'],
+  ['Your face when it starts raining', 'Your face when it starts snowing'],
+  ['Pose like a statue', 'Pose like a robot'],
+  ['Your face when you eat ice cream', 'Your face when you eat chocolate'],
+  ['Your face when you hear thunder', 'Your face when you hear a loud bang'],
+  ['Pose like a ballerina', 'Pose like a footballer'],
+  ['Your face when you lose your shoe', 'Your face when you lose your homework'],
+  ['Your face when you see a rainbow', 'Your face when you see fireworks'],
+  ['Pose like a pirate', 'Pose like a king'],
+  ['Your face when you taste something spicy', 'Your face when you taste something sour'],
+  ['Your face on your birthday', 'Your face on the first day of holidays'],
+  ['Pose like a chicken', 'Pose like a penguin'],
+  ['Your face when you\'re really hungry', 'Your face when you\'re really full'],
+];
+
+// Sada „School“ — škola, učitelé, testy, spolužáci.
+const SCHOOL_NAME_PROMPTS = [
+  'Your face when {name} asks to copy your homework',
+  'Your face when {name} gets called to the board',
+  'Your face when {name} says there\'s a surprise test today',
+  'Your face when {name} falls asleep in class',
+  'Your face when {name} gets a better grade than you',
+  'Your face when {name} calls the teacher "Mum"',
+  'Your face when {name} says the teacher is off sick',
+  'Your face when {name} forgot the group project was due today',
+  'Your face when {name} whispers the wrong answer to you',
+  'Your face when {name} trips in the school hallway',
+  'Your face when {name} gets caught using their phone in class',
+  'Your face when {name} sits next to you in the exam',
+  'Your face when {name} says the school trip is cancelled',
+  'Your face when {name} asks a question 5 seconds before the bell',
+  'Your face when {name} brings the smelliest lunch',
+  'Your face when {name} says the teacher just saw your note',
+  'Your face when {name} gets picked first in PE',
+  'Your face when {name} has to present first',
+  'Your face when {name} reminds the teacher about homework',
+  'Your face when {name} says school starts tomorrow',
+  'Your face when {name} passes the test without studying',
+  'Your face when {name} says there\'s pizza in the canteen',
+  'Your face when {name} laughs during a serious lesson',
+  'Your face when {name} gets a detention',
+  'Your face when {name} shows up in the same outfit as the teacher',
+  'Your face when {name} says the exam is today, not tomorrow',
+  'Your face when {name} gets their report card',
+  'Your face when {name} does a speech with zero preparation',
+  'Your face when {name} says the fire alarm is a real one',
+  'Your face when {name} wins the school talent show',
+];
+
+const SCHOOL_IMPOSTOR_PAIRS = [
+  ['Your face when you get an A', 'Your face when you get an F'],
+  ['Your face during a maths test', 'Your face during a history test'],
+  ['Pose like a strict teacher', 'Pose like a school principal'],
+  ['Your face when the bell rings', 'Your face when the fire alarm rings'],
+  ['Your face when you forget your homework', 'Your face when you forget your lunch'],
+  ['Your face in the class photo', 'Your face in your passport photo'],
+  ['Your face on the first day of school', 'Your face on the last day of school'],
+  ['Pose like the class clown', 'Pose like the class nerd'],
+  ['Your face when the teacher calls your name', 'Your face when your parents call your name'],
+  ['Your face during PE', 'Your face after running a lap'],
+  ['Your face when you eat school lunch', 'Your face when you eat hospital food'],
+  ['Pose like you know the answer', 'Pose like you\'re hiding from the teacher'],
+  ['Your face when you see the exam questions', 'Your face when you see your exam grade'],
+  ['Your face in a boring lesson', 'Your face in a long meeting'],
+  ['Pose like a science experiment went wrong', 'Pose like a chemistry explosion'],
+  ['Your face when homework is cancelled', 'Your face when school is cancelled'],
+  ['Your face when you copy someone\'s homework', 'Your face when someone copies your homework'],
+  ['Pose like a student on a school trip', 'Pose like a tourist'],
+  ['Your face at a parent-teacher meeting', 'Your face at the dentist'],
+  ['Your face when you fall asleep in class', 'Your face when you wake up late for school'],
+];
+
+// Sady otázek, ze kterých hostitel vybírá v lobby (Main Character žádné nemá).
+// Spicy, Family a School jsou placené (Question Packs) — hlídá to zatím jen klient.
+const PROMPT_PACKS = {
+  classic: { prompts: NAME_PROMPTS, pairs: IMPOSTOR_PAIRS },
+  spicy: { prompts: SPICY_NAME_PROMPTS, pairs: SPICY_IMPOSTOR_PAIRS },
+  family: { prompts: FAMILY_NAME_PROMPTS, pairs: FAMILY_IMPOSTOR_PAIRS },
+  school: { prompts: SCHOOL_NAME_PROMPTS, pairs: SCHOOL_IMPOSTOR_PAIRS },
+};
 
 function code() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -177,7 +372,7 @@ function friendStatus(code) {
     code,
     online: true,
     name: u.name,
-    looks: u.looks,
+    looks: publicLooks(u),
     lobby: lobby
       ? { code: lobby.code, mode: lobby.mode, phase: lobby.phase, count: lobby.players.size, joinable: lobby.phase === 'lobby' && lobby.players.size < 10 }
       : null,
@@ -195,6 +390,7 @@ function newLobby(hostId) {
     round: 0,
     prompt: null,
     usedPrompts: new Set(),
+    promptPack: 'classic', // classic | spicy | family | school — sada otázek (Reaction, Doodle, Impostor)
     players: new Map(), // id -> { id, name, score, ws, connected }
     submissions: new Map(), // id -> { photoDataUrl, missed }
     votes: new Map(), // voterId -> targetId
@@ -222,12 +418,13 @@ function newLobby(hostId) {
 }
 
 function pickPrompt(lobby) {
-  const remaining = NAME_PROMPTS.filter((t) => !lobby.usedPrompts.has(t));
-  const pool = remaining.length ? remaining : NAME_PROMPTS;
+  const prompts = PROMPT_PACKS[lobby.promptPack].prompts;
+  const remaining = prompts.filter((t) => !lobby.usedPrompts.has(t));
+  const pool = remaining.length ? remaining : prompts;
   const chosen = pool[crypto.randomInt(pool.length)];
 
   lobby.usedPrompts.add(chosen);
-  if (lobby.usedPrompts.size >= NAME_PROMPTS.length) lobby.usedPrompts.clear();
+  if (prompts.every((t) => lobby.usedPrompts.has(t))) lobby.usedPrompts.clear();
 
   const players = connectedPlayers(lobby);
   const target = players[crypto.randomInt(players.length)];
@@ -277,12 +474,14 @@ function startImpostorRound(lobby) {
   clearTimer(lobby);
   lobby.round += 1;
 
-  const remaining = IMPOSTOR_PAIRS.map((_, i) => i).filter((i) => !lobby.usedPairs.has(i));
-  const pool = remaining.length ? remaining : IMPOSTOR_PAIRS.map((_, i) => i);
+  const pairs = PROMPT_PACKS[lobby.promptPack].pairs;
+  const key = (i) => `${lobby.promptPack}:${i}`;
+  const remaining = pairs.map((_, i) => i).filter((i) => !lobby.usedPairs.has(key(i)));
+  const pool = remaining.length ? remaining : pairs.map((_, i) => i);
   const pairIndex = pool[crypto.randomInt(pool.length)];
-  lobby.usedPairs.add(pairIndex);
-  if (lobby.usedPairs.size >= IMPOSTOR_PAIRS.length) lobby.usedPairs.clear();
-  const pair = crypto.randomInt(2) === 0 ? IMPOSTOR_PAIRS[pairIndex] : [...IMPOSTOR_PAIRS[pairIndex]].reverse();
+  lobby.usedPairs.add(key(pairIndex));
+  if (pairs.every((_, i) => lobby.usedPairs.has(key(i)))) lobby.usedPairs.clear();
+  const pair = crypto.randomInt(2) === 0 ? pairs[pairIndex] : [...pairs[pairIndex]].reverse();
   lobby.civilPrompt = pair[0];
   lobby.impostorPrompt = pair[1];
   lobby.prompt = null;
@@ -674,6 +873,47 @@ function awardGameCoins(lobby) {
   }
 }
 
+// Vrátí lobby do čekání na start: vynuluje kola, skóre i rozehrané věci.
+// Hráči, kteří mezitím odešli, se z lobby vyřadí.
+function resetLobbyToWaiting(lobby) {
+  clearTimer(lobby);
+  lobby.phase = 'lobby';
+  lobby.round = 0;
+  lobby.prompt = null;
+  lobby.usedPrompts.clear();
+  lobby.submissions.clear();
+  lobby.votes.clear();
+  lobby.drawDone = new Set();
+  lobby.cardOrder = [];
+  lobby.subjectOrder = [];
+  lobby.subjectIndex = -1;
+  lobby.subjectId = null;
+  lobby.subjectPhoto = null;
+  lobby.captions = new Map();
+  lobby.captionOrder = [];
+  lobby.lastRoundResult = null;
+  lobby.deadlineAt = null;
+  lobby.impostorId = null;
+  lobby.lastImpostorId = null;
+  lobby.civilPrompt = null;
+  lobby.impostorPrompt = null;
+  lobby.usedPairs.clear();
+  lobby.gameId = null;
+  for (const [pid, p] of lobby.players) {
+    if (!p.connected) {
+      lobby.players.delete(pid);
+      continue;
+    }
+    p.score = 0;
+    p.coinsEarned = 0;
+    p.reward = null;
+  }
+  if (!lobby.players.has(lobby.hostId)) {
+    const next = connectedPlayers(lobby)[0];
+    if (next) lobby.hostId = next.id;
+  }
+}
+
 function publicState(lobby, viewerId) {
   const players = [...lobby.players.values()]
     .sort((a, b) => b.score - a.score)
@@ -684,7 +924,7 @@ function publicState(lobby, viewerId) {
       connected: p.connected,
       isHost: p.id === lobby.hostId,
       isYou: p.id === viewerId,
-      looks: p.looks,
+      looks: publicLooks(p),
       friendCode: p.friendCode || null,
     }));
 
@@ -698,8 +938,10 @@ function publicState(lobby, viewerId) {
     drawEnabled: lobby.drawEnabled,
     drawSeconds: lobby.drawSeconds,
     captionSeconds: lobby.captionSeconds,
+    promptPack: lobby.promptPack,
     prompt: promptFor(lobby, viewerId),
-    isImpostor: lobby.mode === 'impostor' && lobby.phase !== 'lobby' && lobby.phase !== 'gameover' && viewerId === lobby.impostorId,
+    // impostor o své roli neví — dozví se ji až ve výsledcích kola
+    isImpostor: lobby.mode === 'impostor' && lobby.phase === 'results' && viewerId === lobby.impostorId,
     players,
     youId: viewerId,
     isHost: viewerId === lobby.hostId,
@@ -792,7 +1034,7 @@ function publicState(lobby, viewerId) {
 
 function broadcast(lobby) {
   for (const p of lobby.players.values()) {
-    if (p.ws && p.ws.readyState === WebSocket.OPEN) {
+    if (p.connected && p.ws && p.ws.readyState === WebSocket.OPEN) {
       p.ws.send(JSON.stringify(publicState(lobby, p.id)));
     }
   }
@@ -830,17 +1072,18 @@ wss.on('connection', (ws) => {
 
   // Přidá hráče do existující lobby (kódem nebo přes přítele).
   function joinLobby(target, msg) {
-    if (!target) return 'Lobby s tímhle kódem neexistuje.';
+    if (!target) return 'No lobby with that code.';
     if (target === lobby && playerId) return null; // už v ní jsem
-    if (target.phase !== 'lobby') return 'Hra už začala, nejde se přidat.';
-    if (target.players.size >= 10) return 'Lobby je plná (max 10 hráčů).';
+    if (target.phase !== 'lobby') return 'The game has already started.';
+    if (target.players.size >= 10) return 'The lobby is full (max 10 players).';
     if (lobby && playerId) leaveLobby();
     lobby = target;
     playerId = id();
     lobby.players.set(playerId, {
       id: playerId,
-      name: (msg.name || 'Hráč').slice(0, 20),
+      name: (msg.name || 'Player').slice(0, 20),
       looks: sanitizeLooks(msg.looks),
+      avatar: sanitizeAvatar(msg.looks),
       friendCode: me,
       score: 0,
       ws,
@@ -862,11 +1105,19 @@ wss.on('connection', (ws) => {
     if (p && p.ws === ws) {
       if (leaving && current.phase === 'lobby') current.players.delete(playerId);
       else p.connected = false;
+      // kdo odešel úmyslně, už nemá dostávat stav téhle hry
+      if (leaving) p.ws = null;
     }
-    // odešel hostitel z čekající lobby → hostitelem se stane další připojený
-    if (leaving && current.phase === 'lobby' && current.hostId === playerId) {
+    // odešel hostitel → hostitelem se stane další připojený hráč
+    if (leaving && current.hostId === playerId) {
       const next = connectedPlayers(current)[0];
       if (next) current.hostId = next.id;
+    }
+    // Main character: odešel hráč, na kterého se zrovna čeká (fotka / výběr
+    // popisku) → kolo se přeskočí, ať hra nezůstane viset
+    if (leaving && current.mode === 'caption' && current.subjectId === playerId
+        && (current.phase === 'subject_photo' || current.phase === 'judging')) {
+      finishCaptionRound(current, { skipped: true });
     }
     if (me && users.get(me)?.lobbyCode === current.code) setPresenceLobby(null);
     lobby = null;
@@ -909,8 +1160,9 @@ wss.on('connection', (ws) => {
       if (me && me !== code) users.get(me)?.sockets.delete(ws);
       me = code;
       const u = users.get(code) || { code, sockets: new Set(), lobbyCode: null };
-      u.name = String(msg.name || 'Hráč').slice(0, 20);
+      u.name = String(msg.name || 'Player').slice(0, 20);
       u.looks = sanitizeLooks(msg.looks);
+      u.avatar = sanitizeAvatar(msg.looks);
       u.sockets.add(ws);
       users.set(code, u);
       if (lobby) u.lobbyCode = lobby.code;
@@ -931,10 +1183,10 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'friend_request' && me) {
       const to = String(msg.code || '').toUpperCase();
-      if (!FRIEND_CODE_RE.test(to)) return sendError(ws, 'Kód přítele má 6 znaků.');
-      if (to === me) return sendError(ws, 'Sám sebe si do přátel přidat nejde.');
+      if (!FRIEND_CODE_RE.test(to)) return sendError(ws, 'Friend codes have 6 characters.');
+      if (to === me) return sendError(ws, 'You can\'t add yourself as a friend.');
       const u = users.get(me);
-      sendToUser(to, { type: 'friend_request', from: { code: me, name: u.name, looks: u.looks } }, { queue: true });
+      sendToUser(to, { type: 'friend_request', from: { code: me, name: u.name, looks: publicLooks(u) } }, { queue: true });
       return;
     }
 
@@ -942,14 +1194,14 @@ wss.on('connection', (ws) => {
       const to = String(msg.code || '').toUpperCase();
       if (!FRIEND_CODE_RE.test(to)) return;
       const u = users.get(me);
-      sendToUser(to, { type: 'friend_accepted', from: { code: me, name: u.name, looks: u.looks } }, { queue: true });
+      sendToUser(to, { type: 'friend_accepted', from: { code: me, name: u.name, looks: publicLooks(u) } }, { queue: true });
       return;
     }
 
     if (msg.type === 'join_friend') {
       const target = users.get(String(msg.code || '').toUpperCase());
-      if (!target || target.sockets.size === 0) return sendError(ws, 'Přítel teď není online.');
-      if (!target.lobbyCode) return sendError(ws, 'Přítel teď není v žádné lobby.');
+      if (!target || target.sockets.size === 0) return sendError(ws, 'Your friend isn\'t online right now.');
+      if (!target.lobbyCode) return sendError(ws, 'Your friend isn\'t in a lobby right now.');
       const err = joinLobby(lobbies.get(target.lobbyCode), msg);
       if (err) sendError(ws, err);
       return;
@@ -973,6 +1225,7 @@ wss.on('connection', (ws) => {
         id: playerId,
         name: (msg.name || 'Host').slice(0, 20),
         looks: sanitizeLooks(msg.looks),
+        avatar: sanitizeAvatar(msg.looks),
         friendCode: me,
         score: 0,
         ws,
@@ -992,14 +1245,17 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'rejoin') {
       const target = lobbies.get((msg.code || '').toUpperCase());
-      if (!target) return sendError(ws, 'Lobby už neexistuje.');
+      if (!target) return sendError(ws, 'That lobby no longer exists.');
       const existing = target.players.get(msg.playerId);
-      if (!existing) return sendError(ws, 'Tohle místo v lobby už nejde obnovit.');
+      if (!existing) return sendError(ws, 'Your spot in that lobby is gone.');
       lobby = target;
       playerId = msg.playerId;
       existing.ws = ws;
       existing.connected = true;
-      if (msg.looks) existing.looks = sanitizeLooks(msg.looks);
+      if (msg.looks) {
+        existing.looks = sanitizeLooks(msg.looks);
+        existing.avatar = sanitizeAvatar(msg.looks);
+      }
       if (me) existing.friendCode = me;
       setPresenceLobby(lobby.code);
       broadcast(lobby);
@@ -1019,11 +1275,11 @@ wss.on('connection', (ws) => {
       const u = users.get(me);
       const ok = sendToUser(to, {
         type: 'invite',
-        from: { code: me, name: u.name, looks: u.looks },
+        from: { code: me, name: u.name, looks: publicLooks(u) },
         lobbyCode: lobby.code,
         mode: lobby.mode,
       });
-      if (!ok) sendError(ws, 'Přítel teď není online.');
+      if (!ok) sendError(ws, 'Your friend isn\'t online right now.');
       return;
     }
 
@@ -1042,6 +1298,12 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'set_prompt_pack' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode !== 'caption') {
+      if (PROMPT_PACKS[msg.pack]) lobby.promptPack = msg.pack;
+      broadcast(lobby);
+      return;
+    }
+
     if (msg.type === 'set_caption_settings' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode === 'caption') {
       if (msg.seconds != null) {
         lobby.captionSeconds = Math.max(CAPTION_SECONDS_MIN, Math.min(CAPTION_SECONDS_MAX, Number(msg.seconds) || CAPTION_SECONDS_DEFAULT));
@@ -1051,9 +1313,9 @@ wss.on('connection', (ws) => {
     }
 
     if (msg.type === 'start_game' && playerId === lobby.hostId && lobby.phase === 'lobby') {
-      if (lobby.players.size < 2) return sendError(ws, 'Potřebuješ aspoň 2 hráče.');
+      if (lobby.players.size < 2) return sendError(ws, 'You need at least 2 players.');
       if (lobby.mode === 'impostor' && connectedPlayers(lobby).length < IMPOSTOR_MIN_PLAYERS) {
-        return sendError(ws, `Impostor potřebuje aspoň ${IMPOSTOR_MIN_PLAYERS} hráče.`);
+        return sendError(ws, `Impostor needs at least ${IMPOSTOR_MIN_PLAYERS} players.`);
       }
       lobby.gameId = id();
       for (const p of lobby.players.values()) {
@@ -1112,9 +1374,9 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'cast_vote' && lobby.phase === 'voting') {
       const targetId = msg.targetId;
-      if (targetId === playerId) return sendError(ws, 'Nemůžeš hlasovat sám pro sebe.');
+      if (targetId === playerId) return sendError(ws, 'You can\'t vote for yourself.');
       const targetSub = lobby.submissions.get(targetId);
-      if (!targetSub || targetSub.missed) return sendError(ws, 'Tahle karta se nedá volit.');
+      if (!targetSub || targetSub.missed) return sendError(ws, 'You can\'t vote for that card.');
       if (!lobby.cardOrder.includes(targetId)) return;
       lobby.votes.set(playerId, targetId);
       broadcast(lobby);
@@ -1124,7 +1386,7 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'cast_vote' && lobby.phase === 'impostor_voting') {
       const targetId = msg.targetId;
-      if (targetId === playerId) return sendError(ws, 'Nemůžeš hlasovat sám pro sebe.');
+      if (targetId === playerId) return sendError(ws, 'You can\'t vote for yourself.');
       if (!lobby.cardOrder.includes(targetId)) return;
       lobby.votes.set(playerId, targetId);
       broadcast(lobby);
@@ -1138,33 +1400,19 @@ wss.on('connection', (ws) => {
     }
 
     if (msg.type === 'play_again' && playerId === lobby.hostId && lobby.phase === 'gameover') {
-      clearTimer(lobby);
-      lobby.phase = 'lobby';
-      lobby.round = 0;
-      lobby.prompt = null;
-      lobby.usedPrompts.clear();
-      lobby.submissions.clear();
-      lobby.votes.clear();
-      lobby.drawDone = new Set();
-      lobby.cardOrder = [];
-      lobby.subjectOrder = [];
-      lobby.subjectIndex = -1;
-      lobby.subjectId = null;
-      lobby.subjectPhoto = null;
-      lobby.captions = new Map();
-      lobby.captionOrder = [];
-      lobby.lastRoundResult = null;
-      lobby.deadlineAt = null;
-      lobby.impostorId = null;
-      lobby.lastImpostorId = null;
-      lobby.civilPrompt = null;
-      lobby.impostorPrompt = null;
-      lobby.usedPairs.clear();
-      lobby.gameId = null;
-      for (const p of lobby.players.values()) {
-        p.score = 0;
-        p.coinsEarned = 0;
-        p.reward = null;
+      resetLobbyToWaiting(lobby);
+      broadcast(lobby);
+      return;
+    }
+
+    // Hostitel ukončí rozehranou hru — všichni se vrátí do lobby, mince
+    // za nedohranou hru nikdo nedostane.
+    if (msg.type === 'end_game' && playerId === lobby.hostId && lobby.phase !== 'lobby') {
+      resetLobbyToWaiting(lobby);
+      for (const p of connectedPlayers(lobby)) {
+        if (p.id !== playerId && p.ws?.readyState === WebSocket.OPEN) {
+          p.ws.send(JSON.stringify({ type: 'info', message: 'The host ended the game.' }));
+        }
       }
       broadcast(lobby);
       return;
@@ -1188,5 +1436,5 @@ const heartbeatTimer = setInterval(() => {
 wss.on('close', () => clearInterval(heartbeatTimer));
 
 server.listen(PORT, () => {
-  console.log(`Výraz běží na http://localhost:${PORT}`);
+  console.log(`face-it running on http://localhost:${PORT}`);
 });

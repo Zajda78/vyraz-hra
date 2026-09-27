@@ -35,7 +35,7 @@ function isFriend(code) {
 // Představí telefon serveru (kód přítele, jméno, vzhled) — volá se po
 // každém připojení a při změně jména/vzhledu.
 function sendHello() {
-  send({ type: 'hello', friendCode: getFriendCode(), name: getSavedName() || 'Hráč', looks: myLooks() });
+  send({ type: 'hello', friendCode: getFriendCode(), name: getSavedName() || 'Player', looks: myLooks() });
 }
 
 // Poslední známý stav přátel ze serveru: kód → { online, name, looks, lobby }
@@ -61,9 +61,9 @@ function addFriend(friend) {
 
 function sendFriendRequest(code, name) {
   code = String(code || '').toUpperCase().trim();
-  if (!/^[A-Z2-9]{6}$/.test(code)) return showError('Kód přítele má 6 znaků.');
-  if (code === getFriendCode()) return showError('Sám sebe si do přátel přidat nejde.');
-  if (isFriend(code)) return showToast('Už jste přátelé.');
+  if (!/^[A-Z2-9]{6}$/.test(code)) return showError('Friend codes have 6 characters.');
+  if (code === getFriendCode()) return showError('You can\'t add yourself as a friend.');
+  if (isFriend(code)) return showToast('You\'re already friends.');
   // když mi ten hráč už žádost poslal, rovnou ji přijmu
   const incoming = getFriendRequests().find((r) => r.code === code);
   if (incoming) return acceptFriend(incoming);
@@ -71,13 +71,13 @@ function sendFriendRequest(code, name) {
   const sent = getSentRequests().filter((r) => r.code !== code);
   sent.push({ code, name: name || null });
   saveList('vyraz_friend_sent', sent);
-  showToast('Žádost o přátelství odeslána');
+  showToast('Friend request sent');
 }
 
 function acceptFriend(req) {
   send({ type: 'friend_accept', code: req.code });
   addFriend(req);
-  showToast(`${req.name || req.code} je teď tvůj přítel`);
+  showToast(`${req.name || req.code} is now your friend`);
 }
 
 function declineFriend(code) {
@@ -118,14 +118,14 @@ function handleFriendMessage(msg) {
       const list = getFriendRequests().filter((r) => r.code !== msg.from.code);
       list.push(msg.from);
       saveList('vyraz_friend_requests', list);
-      showToast(`${msg.from.name} ti poslal(a) žádost o přátelství`);
+      showToast(`${msg.from.name} sent you a friend request`);
     }
     refreshFriendsUi();
     return true;
   }
   if (msg.type === 'friend_accepted') {
     addFriend(msg.from);
-    showToast(`${msg.from.name} přijal(a) tvou žádost o přátelství`);
+    showToast(`${msg.from.name} accepted your friend request`);
     refreshFriendsUi();
     return true;
   }
@@ -153,8 +153,8 @@ function friendStatusLabel(st) {
   if (!st || !st.online) return { text: 'Offline', cls: 'off' };
   if (!st.lobby) return { text: 'Online', cls: 'on' };
   const mode = modeDisplayName(st.lobby.mode);
-  if (st.lobby.joinable) return { text: `V lobby · ${mode} · ${st.lobby.count} ${st.lobby.count >= 2 && st.lobby.count <= 4 ? 'hráči' : st.lobby.count === 1 ? 'hráč' : 'hráčů'}`, cls: 'lobby' };
-  return { text: `Hraje · ${mode}`, cls: 'playing' };
+  if (st.lobby.joinable) return { text: `In lobby · ${mode} · ${st.lobby.count} ${st.lobby.count === 1 ? 'player' : 'players'}`, cls: 'lobby' };
+  return { text: `Playing · ${mode}`, cls: 'playing' };
 }
 
 function friendRowHtml(f) {
@@ -168,8 +168,8 @@ function friendRowHtml(f) {
         ${playerNameHtml(f.name || f.code, f.looks)}
         <span class="friend-status ${label.cls}">${label.text}</span>
       </div>
-      ${canJoin ? `<button class="friend-join" data-join="${f.code}">Připojit</button>` : ''}
-      <button class="friend-remove" data-remove="${f.code}" aria-label="Odebrat z přátel">${icon('close')}</button>
+      ${canJoin ? `<button class="friend-join" data-join="${f.code}">Join</button>` : ''}
+      <button class="friend-remove" data-remove="${f.code}" aria-label="Remove friend">${icon('close')}</button>
     </div>`;
 }
 
@@ -185,38 +185,38 @@ function renderFriendsScreen() {
 
   app.innerHTML = `
     <div class="home-top">
-      <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>Přátelé</h1></div>
+      <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>Friends</h1></div>
     </div>
 
     <div class="screen">
       <div class="my-code-card">
-        <div class="my-code-label">Tvůj kód přítele</div>
+        <div class="my-code-label">Your friend code</div>
         <div class="my-code">${getFriendCode()}</div>
-        <button class="chip-btn" id="copy-code">${icon('copy')} Zkopírovat</button>
+        <button class="chip-btn" id="copy-code">${icon('copy')} Copy</button>
       </div>
 
       <div class="add-friend">
-        <input id="add-friend-input" maxlength="6" placeholder="Kód přítele" autocomplete="off" autocapitalize="characters">
-        <button class="btn btn-primary" id="add-friend-btn">${icon('plus')} Přidat</button>
+        <input id="add-friend-input" maxlength="6" placeholder="Friend code" autocomplete="off" autocapitalize="characters">
+        <button class="btn btn-primary" id="add-friend-btn">${icon('plus')} Add</button>
       </div>
 
       ${requests.length ? `
-        <div class="section-eyebrow">ŽÁDOSTI O PŘÁTELSTVÍ</div>
+        <div class="section-eyebrow">FRIEND REQUESTS</div>
         <div class="friend-list">
           ${requests.map((r) => `
             <div class="friend-row">
               <div class="friend-avatar">${avatarHtml(r.name || '?', r.looks, 44)}</div>
               <div class="friend-info">${playerNameHtml(r.name || r.code, r.looks)}<span class="friend-status">${r.code}</span></div>
-              <button class="friend-join" data-accept="${r.code}">Přijmout</button>
-              <button class="friend-remove" data-decline="${r.code}" aria-label="Odmítnout">${icon('close')}</button>
+              <button class="friend-join" data-accept="${r.code}">Accept</button>
+              <button class="friend-remove" data-decline="${r.code}" aria-label="Decline">${icon('close')}</button>
             </div>`).join('')}
         </div>` : ''}
 
-      <div class="section-eyebrow">PŘÁTELÉ</div>
+      <div class="section-eyebrow">FRIENDS</div>
       <div class="friend-list" id="friend-list"></div>
 
       ${sent.length ? `
-        <div class="section-eyebrow">ČEKÁ NA PŘIJETÍ</div>
+        <div class="section-eyebrow">PENDING</div>
         <div class="friend-list">
           ${sent.map((r) => `
             <div class="friend-row pending">
@@ -239,9 +239,9 @@ function renderFriendsScreen() {
   document.getElementById('copy-code').onclick = async () => {
     try {
       await navigator.clipboard.writeText(getFriendCode());
-      showToast('Kód zkopírován');
+      showToast('Code copied');
     } catch {
-      showToast(`Tvůj kód: ${getFriendCode()}`);
+      showToast(`Your code: ${getFriendCode()}`);
     }
   };
 
@@ -271,14 +271,14 @@ function patchFriendsList() {
   friends.sort((a, b) => rank(a) - rank(b));
   el.innerHTML = friends.length
     ? friends.map(friendRowHtml).join('')
-    : `<div class="friends-empty">${icon('users')}<span>Zatím nemáš žádné přátele. Pošli kamarádovi svůj kód, nebo si ho přidej v lobby.</span></div>`;
+    : `<div class="friends-empty">${icon('users')}<span>No friends yet. Send a friend your code, or add them from a lobby.</span></div>`;
 
   el.querySelectorAll('[data-join]').forEach((b) => { b.onclick = () => joinFriend(b.dataset.join); });
   el.querySelectorAll('[data-remove]').forEach((b) => {
     b.onclick = () => {
       const f = getFriends().find((x) => x.code === b.dataset.remove);
       removeFriend(b.dataset.remove);
-      showToast(`${f?.name || 'Přítel'} odebrán(a) z přátel`);
+      showToast(`${f?.name || 'Friend'} removed from friends`);
       patchFriendsList();
     };
   });
@@ -297,8 +297,8 @@ function showInviteFriendsModal() {
   }
   requestFriendStatuses();
   const modal = openModal(`
-    <div class="x-close-row"><button class="x-close" id="invite-close" aria-label="Zavřít">${icon('close')}</button></div>
-    <h2>Pozvat přátele</h2>
+    <div class="x-close-row"><button class="x-close" id="invite-close" aria-label="Close">${icon('close')}</button></div>
+    <h2>Invite friends</h2>
     <div class="friend-list" id="invite-friends-list" style="margin-top:16px"></div>
   `);
   modal.querySelector('#invite-close').onclick = closeModal;
@@ -311,7 +311,7 @@ function patchInviteList() {
   const inLobby = new Set((lastState?.players || []).map((p) => p.friendCode).filter(Boolean));
   const friends = getFriends().filter((f) => !inLobby.has(f.code));
   if (!friends.length) {
-    el.innerHTML = `<div class="friends-empty">${icon('users')}<span>Žádní další přátelé k pozvání.</span></div>`;
+    el.innerHTML = `<div class="friends-empty">${icon('users')}<span>No more friends to invite.</span></div>`;
     return;
   }
   friends.sort((a, b) => (friendStatuses[b.code]?.online ? 1 : 0) - (friendStatuses[a.code]?.online ? 1 : 0));
@@ -324,8 +324,8 @@ function patchInviteList() {
         <div class="friend-info">${playerNameHtml(f.name || f.code, f.looks)}<span class="friend-status ${label.cls}">${label.text}</span></div>
         ${st?.online
           ? (invitedCodes.has(f.code)
-            ? `<button class="friend-join" disabled>Pozváno</button>`
-            : `<button class="friend-join" data-invite="${f.code}">Pozvat</button>`)
+            ? `<button class="friend-join" disabled>Invited</button>`
+            : `<button class="friend-join" data-invite="${f.code}">Invite</button>`)
           : ''}
       </div>`;
   }).join('');
@@ -341,16 +341,16 @@ function patchInviteList() {
 function showInviteReceived(msg) {
   // uprostřed rozehrané hry pozvánku jen oznámíme, ať nikoho nevyhodí ze hry
   if (lastState && lastState.phase !== 'lobby' && lastState.phase !== 'gameover') {
-    showToast(`${msg.from.name} tě zve do hry ${modeDisplayName(msg.mode)}`);
+    showToast(`${msg.from.name} invited you to ${modeDisplayName(msg.mode)}`);
     return;
   }
   const modal = openModal(`
-    <div class="x-close-row"><button class="x-close" id="invite-no" aria-label="Zavřít">${icon('close')}</button></div>
+    <div class="x-close-row"><button class="x-close" id="invite-no" aria-label="Close">${icon('close')}</button></div>
     <div class="invite-received">
       ${avatarHtml(msg.from.name, msg.from.looks, 72)}
-      <h2>${playerNameHtml(msg.from.name, msg.from.looks)} tě zve do hry</h2>
+      <h2>${playerNameHtml(msg.from.name, msg.from.looks)} invited you to play</h2>
       <div class="invite-mode">${modeTile(msg.mode)}<span>${modeDisplayName(msg.mode)}</span></div>
-      <button class="btn btn-primary btn-block" id="invite-yes">Připojit se</button>
+      <button class="btn btn-primary btn-block" id="invite-yes">Join</button>
     </div>
   `);
   modal.querySelector('.invite-mode').classList.add(`mode-color-${msg.mode}`);

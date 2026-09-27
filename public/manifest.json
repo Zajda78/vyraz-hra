@@ -1,7 +1,7 @@
 {
-  "name": "Mogging face — párty hra",
-  "short_name": "Mogging face",
-  "description": "Padne věta, všichni se vyfotí s reakcí a hlasuje se, čí výraz sedí nejlíp.",
+  "name": "face-it — party game",
+  "short_name": "face-it",
+  "description": "A photo party game — snap your reaction, vote for the best face, open chests and play with friends.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

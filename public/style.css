@@ -528,7 +528,7 @@ body.has-bottom-nav #app{ padding-bottom:calc(110px + env(safe-area-inset-bottom
   position:fixed; z-index:50; left:50%; transform:translateX(-50%);
   bottom:calc(12px + env(safe-area-inset-bottom));
   width:calc(100% - 32px); max-width:480px;
-  display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; padding:6px;
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:0; padding:6px;
   background:rgba(28,18,49,0.92); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
   border:1px solid var(--line); border-radius:22px;
   box-shadow:0 10px 30px -12px rgba(0,0,0,0.6);
@@ -541,7 +541,7 @@ body.has-bottom-nav #app{ padding-bottom:calc(110px + env(safe-area-inset-bottom
   transition:background .15s ease, color .15s ease;
 }
 .bottom-nav-btn .ico{ width:22px; height:22px; }
-.bottom-nav-btn.active{ background:var(--accent); color:#fff; }
+.bottom-nav-btn.active{ color:#fff; }
 
 /* ---------------------------------------------------------------- SHOP --- */
 
@@ -616,8 +616,9 @@ body.has-bottom-nav #app{ padding-bottom:calc(110px + env(safe-area-inset-bottom
   position:fixed; z-index:999; left:50%; bottom:calc(96px + env(safe-area-inset-bottom));
   transform:translate(-50%, 20px); opacity:0; pointer-events:none;
   background:#fff; color:#221E27; font-weight:700; font-size:0.88rem;
-  padding:12px 18px; border-radius:999px; box-shadow:0 10px 30px -8px rgba(0,0,0,0.6);
-  transition:opacity .2s ease, transform .2s ease; white-space:nowrap;
+  padding:12px 18px; border-radius:18px; box-shadow:0 10px 30px -8px rgba(0,0,0,0.6);
+  transition:opacity .2s ease, transform .2s ease;
+  width:max-content; max-width:calc(100% - 32px); text-align:center; line-height:1.35;
 }
 .toast.show{ opacity:1; transform:translate(-50%, 0); }
 
@@ -906,7 +907,6 @@ body.no-scroll{ overflow:hidden; }
   padding:7px 12px; border-radius:999px; font-size:0.8rem; font-weight:700;
   background:rgba(94,234,212,0.14); color:#99F6E4; border:1px solid rgba(94,234,212,0.35);
 }
-.role-badge.is-impostor{ background:rgba(239,68,68,0.18); color:#FCA5A5; border-color:rgba(239,68,68,0.5); }
 .role-badge .ico{ width:16px; height:16px; }
 
 .ivote-card{
@@ -1123,6 +1123,21 @@ body.no-scroll{ overflow:hidden; }
 .case-card:active{ transform:scale(0.98); }
 .case-card{ transition:transform .12s ease, border-color .15s ease; }
 .case-card:hover{ border-color:var(--line-strong); }
+.case-grid .case-card:nth-child(5) .case-chest, .case-grid .case-card:nth-child(5) .case-shadow{ animation-delay:-1.3s; }
+/* nová truhla — přes celou šířku, s jemnou barevnou září a štítkem NEW */
+.case-grid .case-card.is-new{
+  grid-column:1 / -1;
+  background:radial-gradient(120% 90% at 50% 0%, var(--case-glow), transparent 70%), var(--surface);
+  border-color:rgba(249,115,22,0.45);
+}
+.case-grid .case-card.is-new .case-art{ width:132px; height:112px; }
+.case-grid .case-card.is-new h3{ font-size:1.05rem; min-height:0; }
+.case-new-tag{
+  position:absolute; top:12px; left:12px; padding:4px 10px; border-radius:999px;
+  background:linear-gradient(135deg,#FB923C,#EA580C); color:#fff;
+  font-family:'Unbounded',sans-serif; font-weight:800; font-size:0.66rem; letter-spacing:.08em;
+  box-shadow:0 4px 12px -2px rgba(249,115,22,0.6);
+}
 
 /* zlatá tlačítka a bílé tlačítko balíčku: jemná záře */
 .case-open-btn{ box-shadow:0 6px 18px -8px rgba(255,255,255,0.45); }
@@ -1139,7 +1154,7 @@ body.no-scroll{ overflow:hidden; }
 @keyframes soft-sheen{ 0%,70%{ transform:translateX(-100%); } 100%{ transform:translateX(100%); } }
 
 /* aktivní záložka spodní lišty lehce září */
-.bottom-nav-btn.active{ box-shadow:0 6px 18px -8px rgba(139,92,246,0.9); }
+
 
 @media (prefers-reduced-motion: reduce){
   .mode-card, .case-chest, .case-shadow, .pack-card::after{ animation:none !important; }
@@ -1253,3 +1268,217 @@ body.no-scroll{ overflow:hidden; }
 .invite-mode .mode-tile svg{ width:24px; height:24px; }
 .mode-color-classic{ --c1:#C026D3; --c2:#F97373; }
 .mode-color-caption{ --c1:#F59E0B; --c2:#EC4899; }
+
+/* ------------------------------------------------------ OPUSTIT HRU --- */
+
+.game-brand{ position:relative; }
+.exit-game-btn{
+  margin-left:auto; width:40px; height:40px; border-radius:12px; cursor:pointer; flex:none;
+  background:var(--surface); border:1px solid var(--line); color:var(--ink-dim);
+  display:flex; align-items:center; justify-content:center;
+  transition:color .15s ease, border-color .15s ease;
+}
+.exit-game-btn:active{ color:#FCA5A5; border-color:rgba(239,68,68,0.5); }
+.exit-game-btn .ico{ width:20px; height:20px; }
+
+.exit-game{ display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:4px; }
+.exit-game h2{ margin:2px 0 8px; }
+.exit-game-icon{
+  width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:rgba(239,68,68,0.14); color:#FCA5A5;
+}
+.exit-game-icon .ico{ width:30px; height:30px; }
+.btn-danger{ background:#DC2626; color:#fff; }
+.exit-game .btn-ghost{ color:#fff; }
+#exit-end{ color:#FCA5A5; border-color:rgba(239,68,68,0.35); }
+
+/* ---------------------------------------------- další animace ozdob --- */
+
+.frame-decor .fd-spin, .frame-decor .fd-rise, .frame-decor .fd-zap, .frame-decor .fd-spark{ transform-box:fill-box; transform-origin:50% 50%; }
+@keyframes fd-spin{ to{ transform:rotate(360deg); } }
+@keyframes fd-rise{ 0%,100%{ transform:translateY(0) scale(1); opacity:1; } 50%{ transform:translateY(-4px) scale(1.12); opacity:0.75; } }
+@keyframes fd-zap{ 0%,100%{ opacity:1; transform:scale(1); } 45%{ opacity:1; } 50%{ opacity:0.2; transform:scale(0.85); } 55%{ opacity:1; transform:scale(1.1); } }
+@keyframes fd-spark{ 0%{ transform:translateY(4px); opacity:0; } 30%{ opacity:1; } 100%{ transform:translateY(-10px); opacity:0; } }
+.frame-decor .fd-spin{ animation:fd-spin 9s linear infinite; }
+.frame-decor .fd-rise{ animation:fd-rise 2.6s ease-in-out infinite; }
+.frame-decor .fd-zap{ animation:fd-zap 1.8s ease-in-out infinite; }
+.frame-decor .fd-spark{ animation:fd-spark 1.8s ease-out infinite; }
+
+/* epické a legendární barvy jména se pomalu přelévají */
+@keyframes name-shimmer{ from{ background-position:0% 50%; } to{ background-position:100% 50%; } }
+@media (prefers-reduced-motion: reduce){
+  [style*="name-shimmer"]{ animation:none !important; }
+}
+
+/* ------------------------------------------------- ANIMACE LIŠTY --- */
+
+/* fialové zvýraznění, které plynule přejede pod vybranou záložku */
+.nav-indicator{
+  position:absolute; z-index:0; top:6px; bottom:6px; left:6px;
+  width:calc((100% - 12px) / 3); border-radius:16px;
+  background:var(--accent); box-shadow:0 6px 18px -8px rgba(139,92,246,0.9);
+  transition:transform .38s cubic-bezier(.3,1.3,.5,1);
+}
+.bottom-nav-btn{ z-index:1; transition:color .25s ease; }
+@keyframes nav-pop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.28) translateY(-2px); } 100%{ transform:scale(1); } }
+.bottom-nav-btn.active .ico{ animation:nav-pop .42s cubic-bezier(.3,1.4,.5,1); }
+.bottom-nav-btn:active .ico{ transform:scale(0.9); }
+
+/* obsah obrazovky při přepnutí záložky jemně přijede ze strany */
+@keyframes screen-in{
+  from{ opacity:0; transform:translateX(calc(var(--enter-dir, 1) * 22px)); }
+  to{ opacity:1; transform:none; }
+}
+#app.screen-enter > *:not(.bottom-nav){ animation:screen-in .32s cubic-bezier(.2,.8,.2,1) both; }
+
+@media (prefers-reduced-motion: reduce){
+  .nav-indicator{ transition:none; }
+  .bottom-nav-btn.active .ico, #app.screen-enter > *{ animation:none !important; }
+}
+
+/* ------------------------------------------------------ PROFILOVKA --- */
+
+.framed-avatar-inner, .looks-photo{ overflow:hidden; }
+.avatar-img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+.avatar-actions{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:-4px 0 16px; }
+.avatar-btn{ display:inline-flex; align-items:center; gap:6px; min-height:40px; padding:9px 14px; }
+.avatar-btn .ico{ width:16px; height:16px; color:#C4B5FD; }
+
+/* ------------------------------------------------ SADA OTÁZEK (SPICY) --- */
+
+.pack-picker{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.pack-chip{
+  display:flex; align-items:center; justify-content:center; gap:8px; min-height:64px; border-radius:16px;
+  border:none; cursor:pointer; background:#2A1552; color:#fff;
+  font-family:'Unbounded',sans-serif; font-weight:800; font-size:1rem;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25); transition:transform .12s ease, background .15s ease;
+}
+.pack-chip:active{ transform:scale(0.95); }
+.pack-chip-glyph{ display:flex; line-height:1; }
+.pack-chip-glyph .pack-glyph{ width:26px; height:26px; display:block; }
+.pack-chip-classic.active{ background:#C13CF5; box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(193,60,245,0.7), inset 0 -3px 0 rgba(0,0,0,0.18); }
+.pack-chip-spicy.active{ background:linear-gradient(135deg,#F97316,#DC2626); box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(239,68,68,0.75), inset 0 -3px 0 rgba(0,0,0,0.18); }
+
+.spicy-badge{
+  display:inline-flex; align-items:center; gap:4px; margin-right:8px; padding:3px 9px; border-radius:999px;
+  background:linear-gradient(135deg,#F97316,#DC2626); color:#fff; font-size:0.68rem; font-weight:800; letter-spacing:.04em;
+  vertical-align:1px; text-transform:none;
+}
+
+/* ---------------------------------------------------- QUESTION PACKS --- */
+
+.pack-picker{ grid-template-columns:repeat(2, 1fr); }
+.pack-chip{ position:relative; flex-direction:column; gap:4px; min-height:74px; font-size:0.85rem; }
+.pack-chip.locked{ opacity:0.72; }
+.pack-chip-lock{
+  position:absolute; top:6px; right:6px; width:20px; height:20px; border-radius:50%;
+  background:linear-gradient(135deg,#FDE68A,#F0B429); color:#3b2400;
+  display:flex; align-items:center; justify-content:center;
+}
+.pack-chip-lock .ico{ width:12px; height:12px; stroke-width:2.6; }
+.pack-chip-family.active{ background:linear-gradient(135deg,#34D399,#0EA5E9); box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(14,165,233,0.75), inset 0 -3px 0 rgba(0,0,0,0.18); }
+.pack-badge-family{ background:linear-gradient(135deg,#34D399,#0EA5E9); }
+.pack-chip-school.active{ background:linear-gradient(135deg,#FACC15,#3B82F6); box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(59,130,246,0.75), inset 0 -3px 0 rgba(0,0,0,0.18); }
+.pack-badge-school{ background:linear-gradient(135deg,#FACC15,#3B82F6); }
+
+.qp-card{ background:linear-gradient(160deg, #9A3412, #7C2D12 45%, #1E3A5F); }
+.qp-tile{
+  width:58px; height:58px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.8rem;
+}
+.qp-tile-spicy{ background:linear-gradient(135deg,#F97316,#DC2626); }
+.qp-tile-family{ background:linear-gradient(135deg,#34D399,#0EA5E9); }
+.qp-tile-school{ background:linear-gradient(135deg,#FACC15,#3B82F6); }
+.qp-tile .pack-glyph{ width:34px; height:34px; display:block; }
+.spicy-badge .pack-glyph{ width:13px; height:13px; display:block; }
+.qp-card .pack-modes{ gap:8px; }
+.qp-card .pack-mode{ width:92px; }
+.qp-card .pack-mode small{ font-weight:600; font-size:0.7rem; color:rgba(255,255,255,0.75); }
+
+/* -------------------------------------------------------- DENNÍ ODMĚNY --- */
+
+.daily-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.daily-card{
+  position:relative; display:flex; flex-direction:column; align-items:center; gap:8px; padding:16px 10px 14px;
+  border-radius:22px; text-align:center; background:var(--surface); border:1px solid var(--line);
+}
+.daily-card.ready{ border-color:rgba(45,212,191,0.45); box-shadow:0 0 24px -12px rgba(45,212,191,0.8); }
+.daily-card h3{ color:#fff; font-size:0.88rem; }
+.daily-art{ height:88px; display:flex; align-items:center; justify-content:center; }
+.daily-coins-art{ position:relative; width:104px; }
+.daily-coins-art .coin{ position:absolute; width:44px; height:44px; filter:drop-shadow(0 6px 10px rgba(245,158,11,0.45)); animation:coin-bob 3s ease-in-out infinite; }
+.daily-coins-art .coin:nth-child(1){ left:8px; top:30px; animation-delay:-0.4s; }
+.daily-coins-art .coin:nth-child(2){ left:32px; top:12px; width:52px; height:52px; }
+.daily-coins-art .coin:nth-child(3){ left:58px; top:34px; animation-delay:-1.2s; }
+@keyframes coin-bob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
+.daily-chest-art{ width:104px; height:88px; }
+.daily-btn{
+  display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border:none; border-radius:999px; cursor:pointer;
+  background:linear-gradient(135deg,#5EEAD4,#14B8A6); color:#042F2E;
+  font-family:'Unbounded',sans-serif; font-weight:800; font-size:0.8rem;
+  box-shadow:0 6px 18px -8px rgba(20,184,166,0.9); transition:transform .12s ease;
+}
+.daily-btn:active{ transform:scale(0.95); }
+.daily-btn .coin{ width:16px; height:16px; }
+.daily-btn .ico{ width:14px; height:14px; }
+.daily-wait{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 14px; border-radius:999px;
+  background:var(--surface-2); color:var(--ink-dim); font-weight:700; font-size:0.8rem;
+}
+.daily-wait .ico{ width:15px; height:15px; }
+.daily-wait.wide{ width:100%; }
+
+.nav-dot{
+  position:absolute; top:10px; right:22%; width:9px; height:9px; border-radius:50%;
+  background:#2DD4BF; box-shadow:0 0 0 2px var(--bg), 0 0 8px #2DD4BF;
+}
+
+/* napodobená reklama */
+.fake-ad{
+  position:fixed; inset:0; z-index:400; display:flex; flex-direction:column; gap:16px;
+  padding:calc(16px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom));
+  background:#05030A; animation:fade-in .2s ease;
+}
+.fake-ad-top{ display:flex; justify-content:space-between; align-items:center; }
+.fake-ad-label{ padding:4px 10px; border-radius:6px; background:#FBBF24; color:#1a1300; font-weight:800; font-size:0.75rem; }
+.fake-ad-count{
+  width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,255,255,0.4); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:800;
+}
+.fake-ad-body{ flex:1; display:flex; align-items:center; justify-content:center; }
+.fake-ad-box{
+  width:100%; max-width:420px; aspect-ratio:9/12; border-radius:22px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  background:repeating-linear-gradient(45deg, #1C1231 0 18px, #221540 18px 36px); color:#fff; border:1px dashed rgba(255,255,255,0.25);
+}
+.fake-ad-box .ico{ width:48px; height:48px; color:#fff; opacity:0.8; }
+.fake-ad-box strong{ font-family:'Unbounded',sans-serif; font-size:1.2rem; }
+.fake-ad-claim{ max-width:520px; margin:0 auto; }
+@media (prefers-reduced-motion: reduce){ .daily-coins-art .coin{ animation:none; } }
+
+/* denní vstupenka — široká karta pod mincemi a truhlou */
+.daily-ticket{
+  display:flex; align-items:center; gap:12px; padding:12px 12px 12px 14px; border-radius:20px;
+  background:var(--surface); border:1px solid var(--line);
+}
+.daily-ticket.ready{ border-color:rgba(45,212,191,0.45); box-shadow:0 0 24px -12px rgba(45,212,191,0.8); }
+.daily-ticket-icon{
+  width:46px; height:46px; border-radius:14px; flex:none; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#FDE68A,#F0B429); color:#3b2400; transform:rotate(-8deg);
+}
+.daily-ticket-icon .ico{ width:26px; height:26px; }
+.daily-ticket-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; color:#fff; }
+.daily-ticket-text strong{ font-family:'Unbounded',sans-serif; font-size:0.9rem; }
+.daily-ticket-text span{ font-size:0.8rem; font-weight:600; color:rgba(255,255,255,0.75); }
+
+/* ozdoby Spooky rámečků — mávání netopýřích křídel a houpající se pavouk */
+.frame-decor .fd-flap, .frame-decor .fd-dangle{ transform-box:fill-box; transform-origin:50% 50%; }
+@keyframes fd-flap{ 0%,100%{ transform:scaleY(1) translateY(0); } 50%{ transform:scaleY(0.55) translateY(-2px); } }
+@keyframes fd-dangle{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(5px); } }
+.frame-decor .fd-flap{ animation:fd-flap 0.5s ease-in-out infinite; }
+.frame-decor .fd-dangle{ animation:fd-dangle 2.8s ease-in-out infinite; }
+/* odpočet časově omezené truhly */
+.case-timer{
+  display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px;
+  background:rgba(249,115,22,0.16); color:#FDBA74; font-weight:800; font-size:0.74rem;
+}
+.case-timer .ico{ width:13px; height:13px; }

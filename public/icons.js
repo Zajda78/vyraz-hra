@@ -30,6 +30,9 @@ const ICON_PATHS = {
   lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   ticket: '<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v2M14 11v2M14 16v2"/>',
   copy: '<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  logout: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
   sad: '<circle cx="12" cy="12" r="9"/><path d="M8.6 16.4c1.8-1.7 5-1.7 6.8 0"/><path d="M9 9.8h.01M15 9.8h.01" stroke-width="2.8"/>',
   brush: '<path d="M18.4 3.6a2.1 2.1 0 0 1 3 3L12.2 15.8l-3-3z"/><path d="M9.2 12.8c-2.6-.1-4.3 1.5-4.3 3.6 0 1.4-.7 2.4-1.9 3 1 .6 2.4 1 3.9 1 2.9 0 5.1-1.9 5.3-4.6"/>',
   chat: '<path d="M12 4c4.7 0 8.5 3 8.5 6.8s-3.8 6.7-8.5 6.7c-1 0-1.9-.1-2.8-.4L4.5 19.5l1.2-3.6C4.3 14.7 3.5 12.8 3.5 10.8 3.5 7 7.3 4 12 4z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" stroke-width="2.6"/>',
@@ -66,6 +69,36 @@ const MODE_GLYPHS = {
     <path d="M12 3.5c5 0 9 3.2 9 7.2S17 18 12 18c-1 0-2-.1-3-.4L4 20l1.3-3.9C3.8 14.8 3 12.9 3 10.7 3 6.7 7 3.5 12 3.5z" fill="#fff"/>
     <circle cx="8.3" cy="10.8" r="1.3" fill="#7a2a3a"/><circle cx="12" cy="10.8" r="1.3" fill="#7a2a3a"/><circle cx="15.7" cy="10.8" r="1.3" fill="#7a2a3a"/>`,
 };
+
+// Plné bílé glyfy pro sady otázek (Classic / Spicy / Family / School) — stejný styl jako módy.
+const PACK_GLYPHS = {
+  classic: `
+    <circle cx="12" cy="12" r="9" fill="#fff"/>
+    <path d="M8.6 9.6h.01M15.4 9.6h.01" stroke="#4a1560" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M7.8 13.4c2.2 2.9 6.2 2.9 8.4 0" stroke="#4a1560" stroke-width="1.8" stroke-linecap="round" fill="none"/>`,
+  spicy: `
+    <path d="M7.4 8.6c2.4-1.3 5.2-.6 6.6 1.8l1.6 2.9c1.3 2.4 3.2 4.1 5.6 5.2-4 2.4-9.8 1.7-13.2-2.3C5.9 13.8 5.4 10.3 7.4 8.6z" fill="#fff"/>
+    <path d="M6.2 9.8c.1-2 2-3.5 4.1-3.3 1.2.1 2.2.8 2.8 1.8" stroke="#fff" stroke-width="1.9" stroke-linecap="round" fill="none" stroke-opacity="0.8"/>
+    <path d="M9.6 6.6c-.4-1.7.3-3.2 1.8-4.1" stroke="#fff" stroke-width="1.9" stroke-linecap="round" fill="none"/>
+    <path d="M9.6 12.2c1 2.3 3 3.9 5.4 4.5" stroke="#7f1d1d" stroke-width="1.3" stroke-linecap="round" fill="none" stroke-opacity="0.4"/>`,
+  family: `
+    <circle cx="6.8" cy="5.8" r="2.5" fill="#fff" fill-opacity="0.8"/>
+    <path d="M2.6 20v-5.3a4.2 4.2 0 0 1 8.4 0V20z" fill="#fff" fill-opacity="0.8"/>
+    <circle cx="17.2" cy="5.8" r="2.5" fill="#fff" fill-opacity="0.8"/>
+    <path d="M13 20v-5.3a4.2 4.2 0 0 1 8.4 0V20z" fill="#fff" fill-opacity="0.8"/>
+    <circle cx="12" cy="11.6" r="2.1" fill="#fff" stroke="#0c4a6e" stroke-width="1.1"/>
+    <path d="M8.9 20.5v-2.8a3.1 3.1 0 0 1 6.2 0v2.8z" fill="#fff" stroke="#0c4a6e" stroke-width="1.1"/>`,
+  school: `
+    <path d="M9.3 5V4.2a2.7 2.7 0 0 1 5.4 0V5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M5 10.8a7 7 0 0 1 14 0v8.4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" fill="#fff"/>
+    <path d="M5 11.6h14" stroke="#1e3a8a" stroke-width="1.3" stroke-opacity="0.45"/>
+    <rect x="8.2" y="14.2" width="7.6" height="4.6" rx="1.4" fill="#1e3a8a" fill-opacity="0.3"/>
+    <path d="M12 11.6v2.6" stroke="#1e3a8a" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>`,
+};
+
+function packGlyph(pack) {
+  return `<svg class="pack-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">${PACK_GLYPHS[pack] || ''}</svg>`;
+}
 
 function modeTile(mode) {
   return `<div class="mode-tile"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">${MODE_GLYPHS[mode]}</svg></div>`;

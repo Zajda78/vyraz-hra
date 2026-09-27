@@ -5,62 +5,106 @@
 
 const SHOP_START_COINS = 250;
 
-// Vzácnosti: weight = šance v procentech, refund = kolik mincí vrátí
-// duplikát (věc, kterou už máš).
+// Vzácnosti: refund = kolik mincí vrátí duplikát (věc, kterou už máš).
+// Šance na jednotlivé vzácnosti má každá truhla vlastní (viz CASES v case.js).
 const RARITIES = {
-  common: { label: 'Běžná', color: '#60A5FA', weight: 55, refund: 15 },
-  rare: { label: 'Vzácná', color: '#A855F7', weight: 28, refund: 35 },
-  epic: { label: 'Epická', color: '#EC4899', weight: 13, refund: 75 },
-  legendary: { label: 'Legendární', color: '#F0B429', weight: 4, refund: 200 },
+  common: { label: 'Common', color: '#60A5FA', refund: 15 },
+  rare: { label: 'Rare', color: '#A855F7', refund: 35 },
+  epic: { label: 'Epic', color: '#EC4899', refund: 75 },
+  legendary: { label: 'Legendary', color: '#F0B429', refund: 200 },
 };
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'];
 
 const SHOP_SECTIONS = [
   {
     id: 'frame',
-    title: 'Rámečky fotek',
+    title: 'Photo frames',
     items: [
-      { id: 'frame-ice', name: 'Led', rarity: 'common', style: 'linear-gradient(135deg,#E0F2FE,#7DD3FC,#38BDF8)' },
-      { id: 'frame-forest', name: 'Les', rarity: 'common', style: 'linear-gradient(135deg,#86EFAC,#22C55E,#15803D)' },
+      { id: 'frame-ice', name: 'Ice', rarity: 'common', style: 'linear-gradient(135deg,#E0F2FE,#7DD3FC,#38BDF8)' },
+      { id: 'frame-forest', name: 'Forest', rarity: 'common', style: 'linear-gradient(135deg,#86EFAC,#22C55E,#15803D)' },
       { id: 'frame-neon', name: 'Neon', rarity: 'rare', style: 'linear-gradient(135deg,#F472B6,#C084FC,#22D3EE)' },
-      { id: 'frame-night', name: 'Půlnoc', rarity: 'rare', style: 'linear-gradient(135deg,#1E3A8A,#6366F1,#A5B4FC)' },
-      { id: 'frame-gold', name: 'Zlato', rarity: 'epic', style: 'linear-gradient(135deg,#FDE68A,#F0B429,#B45309)' },
-      { id: 'frame-fire', name: 'Plameny', rarity: 'epic', style: 'linear-gradient(0deg,#DC2626,#F97316,#FDE047)' },
-      { id: 'frame-rainbow', name: 'Duha', rarity: 'legendary', style: 'conic-gradient(#F87171,#FBBF24,#34D399,#60A5FA,#A78BFA,#F87171)' },
-      { id: 'frame-sunset', name: 'Západ slunce', rarity: 'common', style: 'linear-gradient(135deg,#FDBA74,#F472B6)' },
-      { id: 'frame-mint', name: 'Máta', rarity: 'common', style: 'linear-gradient(135deg,#A7F3D0,#34D399)' },
-      { id: 'frame-grape', name: 'Hrozen', rarity: 'common', style: 'linear-gradient(135deg,#C4B5FD,#8B5CF6)' },
-      { id: 'frame-ocean', name: 'Oceán', rarity: 'rare', style: 'linear-gradient(135deg,#22D3EE,#2563EB,#1E3A8A)' },
-      { id: 'frame-candy', name: 'Cukrová vata', rarity: 'rare', style: 'linear-gradient(135deg,#F9A8D4,#C4B5FD,#93C5FD)' },
+      { id: 'frame-night', name: 'Midnight', rarity: 'rare', style: 'linear-gradient(135deg,#1E3A8A,#6366F1,#A5B4FC)' },
+      { id: 'frame-gold', name: 'Gold', rarity: 'epic', style: 'linear-gradient(135deg,#FDE68A,#F0B429,#B45309)' },
+      { id: 'frame-fire', name: 'Flames', rarity: 'epic', style: 'linear-gradient(0deg,#DC2626,#F97316,#FDE047)' },
+      { id: 'frame-rainbow', name: 'Rainbow', rarity: 'legendary', style: 'conic-gradient(#F87171,#FBBF24,#34D399,#60A5FA,#A78BFA,#F87171)' },
+      { id: 'frame-sunset', name: 'Sunset', rarity: 'common', style: 'linear-gradient(135deg,#FDBA74,#F472B6)' },
+      { id: 'frame-mint', name: 'Mint', rarity: 'common', style: 'linear-gradient(135deg,#A7F3D0,#34D399)' },
+      { id: 'frame-grape', name: 'Grape', rarity: 'common', style: 'linear-gradient(135deg,#C4B5FD,#8B5CF6)' },
+      { id: 'frame-ocean', name: 'Ocean', rarity: 'rare', style: 'linear-gradient(135deg,#22D3EE,#2563EB,#1E3A8A)' },
+      { id: 'frame-candy', name: 'Cotton Candy', rarity: 'rare', style: 'linear-gradient(135deg,#F9A8D4,#C4B5FD,#93C5FD)' },
       { id: 'frame-toxic', name: 'Toxic', rarity: 'rare', style: 'linear-gradient(135deg,#BEF264,#22C55E,#14532D)' },
-      { id: 'frame-lava', name: 'Láva', rarity: 'epic', style: 'linear-gradient(160deg,#FACC15,#EF4444 45%,#7F1D1D)' },
-      { id: 'frame-aurora', name: 'Polární záře', rarity: 'epic', style: 'linear-gradient(135deg,#34D399,#22D3EE,#A78BFA,#F472B6)' },
-      { id: 'frame-chrome', name: 'Chrom', rarity: 'epic', style: 'linear-gradient(135deg,#F8FAFC,#94A3B8 30%,#F1F5F9 55%,#64748B 80%,#E2E8F0)' },
-      { id: 'frame-galaxy', name: 'Galaxie', rarity: 'legendary', style: 'conic-gradient(from 200deg,#1E1B4B,#7C3AED,#EC4899,#22D3EE,#1E1B4B)' },
-      { id: 'frame-diamond', name: 'Diamant', rarity: 'legendary', style: 'conic-gradient(#E0F2FE,#A5F3FC,#F5D0FE,#FFFFFF,#BAE6FD,#E9D5FF,#E0F2FE)' },
+      { id: 'frame-lava', name: 'Lava', rarity: 'epic', style: 'linear-gradient(160deg,#FACC15,#EF4444 45%,#7F1D1D)' },
+      { id: 'frame-aurora', name: 'Aurora', rarity: 'epic', style: 'linear-gradient(135deg,#34D399,#22D3EE,#A78BFA,#F472B6)' },
+      { id: 'frame-chrome', name: 'Chrome', rarity: 'epic', style: 'linear-gradient(135deg,#F8FAFC,#94A3B8 30%,#F1F5F9 55%,#64748B 80%,#E2E8F0)' },
+      { id: 'frame-galaxy', name: 'Galaxy', rarity: 'legendary', style: 'conic-gradient(from 200deg,#1E1B4B,#7C3AED,#EC4899,#22D3EE,#1E1B4B)' },
+      { id: 'frame-diamond', name: 'Diamond', rarity: 'legendary', style: 'conic-gradient(#E0F2FE,#A5F3FC,#F5D0FE,#FFFFFF,#BAE6FD,#E9D5FF,#E0F2FE)' },
+      { id: 'frame-sand', name: 'Sand', rarity: 'common', style: 'linear-gradient(135deg,#FDE68A,#D6B370)' },
+      { id: 'frame-rose', name: 'Rose', rarity: 'common', style: 'linear-gradient(135deg,#FECDD3,#FB7185)' },
+      { id: 'frame-slate', name: 'Slate', rarity: 'common', style: 'linear-gradient(135deg,#CBD5E1,#64748B)' },
+      { id: 'frame-sakura', name: 'Sakura', rarity: 'rare', style: 'linear-gradient(135deg,#FFF1F2,#F9A8D4,#EC4899)' },
+      { id: 'frame-mango', name: 'Mango', rarity: 'rare', style: 'linear-gradient(135deg,#FDE047,#FB923C)' },
+      { id: 'frame-deepsea', name: 'Deep Sea', rarity: 'rare', style: 'linear-gradient(135deg,#22D3EE,#1E3A8A,#0F172A)' },
+      { id: 'frame-frost', name: 'Frost', rarity: 'epic', style: 'linear-gradient(135deg,#FFFFFF,#BAE6FD,#60A5FA)' },
+      { id: 'frame-love', name: 'Love', rarity: 'epic', style: 'linear-gradient(135deg,#FDA4AF,#F43F5E,#BE123C)' },
+      { id: 'frame-electric', name: 'Lightning', rarity: 'epic', style: 'linear-gradient(135deg,#FEF08A,#FACC15 40%,#3B82F6)' },
+      { id: 'frame-music', name: 'Music', rarity: 'epic', style: 'linear-gradient(135deg,#A78BFA,#EC4899,#F59E0B)' },
+      { id: 'frame-king', name: 'King', rarity: 'legendary', style: 'linear-gradient(135deg,#7C3AED,#FDE68A 45%,#F59E0B 55%,#7C3AED)' },
+      { id: 'frame-phoenix', name: 'Phoenix', rarity: 'legendary', style: 'linear-gradient(0deg,#7F1D1D,#F97316 40%,#FDE047 75%,#FFF7ED)' },
+      { id: 'frame-sweets', name: 'Sweets', rarity: 'legendary', style: 'conic-gradient(#F9A8D4,#FDE68A,#A7F3D0,#BFDBFE,#F9A8D4)' },
+      // Spooky (halloweenská sada — Spooky Chest)
+      { id: 'frame-pumpkin', name: 'Pumpkin', rarity: 'common', style: 'linear-gradient(135deg,#FDBA74,#F97316,#C2410C)' },
+      { id: 'frame-moss', name: 'Moss', rarity: 'common', style: 'linear-gradient(135deg,#A3E635,#4D7C0F)' },
+      { id: 'frame-bone', name: 'Bone', rarity: 'common', style: 'linear-gradient(135deg,#FAFAF9,#D6D3D1,#A8A29E)' },
+      { id: 'frame-bat', name: 'Bat Wing', rarity: 'rare', style: 'linear-gradient(135deg,#8B5CF6,#4C1D95,#1E1B4B)' },
+      { id: 'frame-slime', name: 'Slime', rarity: 'rare', style: 'linear-gradient(160deg,#ECFCCB,#A3E635 40%,#65A30D 75%,#365314)' },
+      { id: 'frame-blood', name: 'Blood Moon', rarity: 'rare', style: 'linear-gradient(135deg,#FCA5A5,#DC2626,#450A0A)' },
+      { id: 'frame-ghost', name: 'Ghost', rarity: 'epic', style: 'linear-gradient(135deg,#FFFFFF,#E2E8F0 45%,#A78BFA)' },
+      { id: 'frame-witch', name: 'Witch', rarity: 'epic', style: 'linear-gradient(135deg,#86EFAC,#7C3AED 55%,#2E1065)' },
+      { id: 'frame-spider', name: 'Spider', rarity: 'epic', style: 'linear-gradient(135deg,#6B7280,#1F2937 50%,#9CA3AF)' },
+      { id: 'frame-haunted', name: 'Haunted', rarity: 'legendary', style: 'conic-gradient(from 45deg,#F97316,#7C3AED,#1E1B4B,#7C3AED,#F97316)' },
+      { id: 'frame-vampire', name: 'Vampire', rarity: 'legendary', style: 'linear-gradient(160deg,#FECACA,#DC2626 35%,#7F1D1D 65%,#18181B)' },
     ],
   },
   {
     id: 'name',
-    title: 'Barva jména',
+    title: 'Name color',
     items: [
-      { id: 'name-violet', name: 'Fialová', rarity: 'common', color: '#C084FC' },
-      { id: 'name-mint', name: 'Mátová', rarity: 'common', color: '#5EEAD4' },
-      { id: 'name-pink', name: 'Růžová', rarity: 'common', color: '#F9A8D4' },
-      { id: 'name-gold', name: 'Zlatá', rarity: 'rare', color: '#FBBF24' },
-      { id: 'name-ice', name: 'Ledová', rarity: 'rare', gradient: 'linear-gradient(90deg,#E0F2FE,#38BDF8)' },
-      { id: 'name-fire', name: 'Ohnivá', rarity: 'epic', gradient: 'linear-gradient(90deg,#FDE047,#F97316,#DC2626)' },
-      { id: 'name-rainbow', name: 'Duhová', rarity: 'legendary', gradient: 'linear-gradient(90deg,#F87171,#FBBF24,#34D399,#60A5FA,#A78BFA)' },
-      { id: 'name-sky', name: 'Nebeská', rarity: 'common', color: '#7DD3FC' },
-      { id: 'name-lime', name: 'Limetková', rarity: 'common', color: '#BEF264' },
-      { id: 'name-peach', name: 'Broskvová', rarity: 'common', color: '#FDBA74' },
-      { id: 'name-sunset', name: 'Západ slunce', rarity: 'rare', gradient: 'linear-gradient(90deg,#FDBA74,#F472B6)' },
-      { id: 'name-toxic', name: 'Toxická', rarity: 'rare', gradient: 'linear-gradient(90deg,#BEF264,#22C55E)' },
-      { id: 'name-candy', name: 'Cukrová', rarity: 'rare', gradient: 'linear-gradient(90deg,#F9A8D4,#C4B5FD,#93C5FD)' },
-      { id: 'name-aurora', name: 'Polární záře', rarity: 'epic', gradient: 'linear-gradient(90deg,#34D399,#22D3EE,#A78BFA)' },
-      { id: 'name-chrome', name: 'Chromová', rarity: 'epic', gradient: 'linear-gradient(90deg,#F8FAFC,#94A3B8,#F1F5F9,#94A3B8)' },
-      { id: 'name-galaxy', name: 'Galaktická', rarity: 'legendary', gradient: 'linear-gradient(90deg,#A78BFA,#EC4899,#22D3EE)' },
-      { id: 'name-diamond', name: 'Diamantová', rarity: 'legendary', gradient: 'linear-gradient(90deg,#E0F2FE,#A5F3FC,#F5D0FE,#FFFFFF,#BAE6FD)' },
+      { id: 'name-violet', name: 'Violet', rarity: 'common', color: '#C084FC' },
+      { id: 'name-mint', name: 'Mint', rarity: 'common', color: '#5EEAD4' },
+      { id: 'name-pink', name: 'Pink', rarity: 'common', color: '#F9A8D4' },
+      { id: 'name-gold', name: 'Golden', rarity: 'rare', color: '#FBBF24' },
+      { id: 'name-ice', name: 'Icy', rarity: 'rare', gradient: 'linear-gradient(90deg,#E0F2FE,#38BDF8)' },
+      { id: 'name-fire', name: 'Fiery', rarity: 'epic', gradient: 'linear-gradient(90deg,#FDE047,#F97316,#DC2626)' },
+      { id: 'name-rainbow', name: 'Rainbow', rarity: 'legendary', gradient: 'linear-gradient(90deg,#F87171,#FBBF24,#34D399,#60A5FA,#A78BFA)' },
+      { id: 'name-sky', name: 'Sky', rarity: 'common', color: '#7DD3FC' },
+      { id: 'name-lime', name: 'Lime', rarity: 'common', color: '#BEF264' },
+      { id: 'name-peach', name: 'Peach', rarity: 'common', color: '#FDBA74' },
+      { id: 'name-sunset', name: 'Sunset', rarity: 'rare', gradient: 'linear-gradient(90deg,#FDBA74,#F472B6)' },
+      { id: 'name-toxic', name: 'Toxic', rarity: 'rare', gradient: 'linear-gradient(90deg,#BEF264,#22C55E)' },
+      { id: 'name-candy', name: 'Candy', rarity: 'rare', gradient: 'linear-gradient(90deg,#F9A8D4,#C4B5FD,#93C5FD)' },
+      { id: 'name-aurora', name: 'Aurora', rarity: 'epic', gradient: 'linear-gradient(90deg,#34D399,#22D3EE,#A78BFA)' },
+      { id: 'name-chrome', name: 'Chrome', rarity: 'epic', gradient: 'linear-gradient(90deg,#F8FAFC,#94A3B8,#F1F5F9,#94A3B8)' },
+      { id: 'name-galaxy', name: 'Galactic', rarity: 'legendary', gradient: 'linear-gradient(90deg,#A78BFA,#EC4899,#22D3EE)' },
+      { id: 'name-diamond', name: 'Diamond', rarity: 'legendary', gradient: 'linear-gradient(90deg,#E0F2FE,#A5F3FC,#F5D0FE,#FFFFFF,#BAE6FD)' },
+      { id: 'name-coral', name: 'Coral', rarity: 'common', color: '#FB7185' },
+      { id: 'name-sand', name: 'Sandy', rarity: 'common', color: '#E7C98A' },
+      { id: 'name-sakura', name: 'Sakura', rarity: 'rare', gradient: 'linear-gradient(90deg,#FFF1F2,#F9A8D4)' },
+      { id: 'name-deepsea', name: 'Deep Sea', rarity: 'rare', gradient: 'linear-gradient(90deg,#22D3EE,#3B82F6)' },
+      { id: 'name-mango', name: 'Mango', rarity: 'rare', gradient: 'linear-gradient(90deg,#FDE047,#FB923C)' },
+      { id: 'name-frost', name: 'Frosty', rarity: 'epic', gradient: 'linear-gradient(90deg,#FFFFFF,#BAE6FD,#60A5FA)' },
+      { id: 'name-love', name: 'Lovestruck', rarity: 'epic', gradient: 'linear-gradient(90deg,#FDA4AF,#F43F5E)' },
+      { id: 'name-electric', name: 'Electric', rarity: 'epic', gradient: 'linear-gradient(90deg,#FEF08A,#FACC15,#3B82F6)' },
+      { id: 'name-king', name: 'Royal', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FDE68A,#F59E0B,#FDE68A)' },
+      { id: 'name-phoenix', name: 'Phoenix', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FDE047,#F97316,#DC2626)' },
+      // Spooky (halloweenská sada — Spooky Chest)
+      { id: 'name-pumpkin', name: 'Pumpkin', rarity: 'common', color: '#FB923C' },
+      { id: 'name-bone', name: 'Bone', rarity: 'common', color: '#E7E5E4' },
+      { id: 'name-slime', name: 'Slimy', rarity: 'rare', gradient: 'linear-gradient(90deg,#ECFCCB,#A3E635,#65A30D)' },
+      { id: 'name-bat', name: 'Batty', rarity: 'rare', gradient: 'linear-gradient(90deg,#C4B5FD,#8B5CF6)' },
+      { id: 'name-ghost', name: 'Ghostly', rarity: 'epic', gradient: 'linear-gradient(90deg,#FFFFFF,#C4B5FD,#FFFFFF,#E2E8F0)' },
+      { id: 'name-witch', name: 'Witchy', rarity: 'epic', gradient: 'linear-gradient(90deg,#86EFAC,#A855F7,#86EFAC)' },
+      { id: 'name-haunted', name: 'Haunted', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FDBA74,#F97316,#A855F7,#F97316)' },
+      { id: 'name-vampire', name: 'Vampire', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FECACA,#EF4444,#B91C1C,#EF4444)' },
     ],
   },
 ];
@@ -70,20 +114,20 @@ const ALL_ITEMS = SHOP_SECTIONS.flatMap((s) => s.items.map((i) => ({ ...i, secti
 
 // Ceník — jeden kurz pro všechno: zhruba 100 mincí = 1 €.
 // Větší balíčky mincí mají bonus navíc, ať se vyplatí.
-// Truhly stojí 80–400 mincí (≈ 0,80–4 €), dohraná hra dá 5–20 mincí.
+// Truhly stojí 50–250 mincí (≈ €0.50–2.50), dohraná hra dá 3–13 mincí, denně +30 zdarma.
 const COIN_RATE_EUR = 0.01; // cena 1 mince v eurech (podle nejmenšího balíčku)
 
 const COIN_PACKS = [
-  { coins: 100, price: '0,99 €' },
-  { coins: 550, price: '4,99 €', bonus: 10, tag: 'Oblíbené' },
-  { coins: 1200, price: '9,99 €', bonus: 20 },
-  { coins: 2600, price: '19,99 €', bonus: 30, tag: 'Nejvýhodnější' },
+  { coins: 100, price: '€0.99' },
+  { coins: 550, price: '€4.99', bonus: 10, tag: 'Popular' },
+  { coins: 1200, price: '€9.99', bonus: 20 },
+  { coins: 2600, price: '€19.99', bonus: 30, tag: 'Best value' },
 ];
 
-const NO_ADS_PRICE = '2,99 €';
+const NO_ADS_PRICE = '€2.99';
 
 function formatEur(value) {
-  return `${value.toFixed(2).replace('.', ',')} €`;
+  return `€${value.toFixed(2)}`;
 }
 
 function shopLoad() {
@@ -106,11 +150,8 @@ function shopItemPreview(section, item) {
   if (section.id === 'frame') {
     return `<div class="frame-preview" style="background:${item.style}"><div class="frame-inner">${icon('camera')}</div>${frameDecorHtml(item)}</div>`;
   }
-  const name = escapeHtml(getSavedName() || 'Jméno');
-  const style = item.gradient
-    ? `background:${item.gradient}; -webkit-background-clip:text; background-clip:text; color:transparent;`
-    : `color:${item.color};`;
-  return `<div class="name-preview"><span style="${style}">${name}</span></div>`;
+  const name = escapeHtml(getSavedName() || 'Name');
+  return `<div class="name-preview"><span style="${nameStyleFor(item)}">${name}</span></div>`;
 }
 
 function sectionOf(item) {
@@ -133,9 +174,7 @@ function backToShop() {
 }
 
 function itemCountLabel(n) {
-  if (n === 1) return '1 věc';
-  if (n >= 2 && n <= 4) return `${n} věci`;
-  return `${n} věcí`;
+  return n === 1 ? '1 item' : `${n} items`;
 }
 
 function renderShopScreen() {
@@ -145,11 +184,13 @@ function renderShopScreen() {
   document.body.classList.add('home-bg', 'has-bottom-nav');
   const data = shopLoad();
 
-  const casesHtml = CASES.map((c) => `
-    <div class="case-card" style="--case-glow:${c.glow}">
-      <button class="case-info-btn" data-case="${c.id}" title="Co může padnout" aria-label="Co může padnout">?</button>
+  const casesHtml = CASES.filter((c) => !c.adChest && isCaseAvailable(c)).map((c) => `
+    <div class="case-card ${c.isNew ? 'is-new' : ''}" style="--case-glow:${c.glow}">
+      ${c.isNew ? '<span class="case-new-tag">NEW</span>' : ''}
+      <button class="case-info-btn" data-case="${c.id}" title="What's inside" aria-label="What's inside">?</button>
       <div class="case-art">${caseSvg(c)}</div>
       <h3>${c.name}</h3>
+      ${c.endsAt ? `<div class="case-timer">${icon('timer')} ${caseTimeLeft(c)}</div>` : ''}
       <button class="case-open-btn" data-case="${c.id}">${COIN_SVG}<span class="num">${c.price}</span></button>
     </div>
   `).join('');
@@ -159,7 +200,7 @@ function renderShopScreen() {
       ${p.tag ? `<span class="coin-pack-tag">${p.tag}</span>` : ''}
       <div class="coin-pack-icon">${COIN_SVG}</div>
       <div class="coin-pack-amount num">${p.coins}</div>
-      ${p.bonus ? `<div class="coin-pack-bonus">+${p.bonus} % navíc</div>` : ''}
+      ${p.bonus ? `<div class="coin-pack-bonus">+${p.bonus}% extra</div>` : ''}
       <div class="coin-pack-price">${p.price}</div>
     </button>
   `).join('');
@@ -173,22 +214,25 @@ function renderShopScreen() {
     <div class="screen">
       <button class="inventory-btn" id="inventory-btn">
         <div class="inventory-btn-icon">${icon('backpack')}</div>
-        <div class="inventory-btn-text"><strong>Inventář</strong><span>${itemCountLabel(data.owned.length)}</span></div>
+        <div class="inventory-btn-text"><strong>Inventory</strong><span>${itemCountLabel(data.owned.length)}</span></div>
         <div class="inventory-btn-arrow">${icon('chevron')}</div>
       </button>
 
-      <div class="section-eyebrow">NABÍDKA</div>
-      <div id="shop-pack">${partyPackCardHtml({ compact: true })}</div>
+      ${dailyRewardsHtml()}
 
-      <div class="section-eyebrow">TRUHLY</div>
+      <div class="section-eyebrow">OFFERS</div>
+      <div id="shop-pack">${partyPackCardHtml({ compact: true })}</div>
+      <div id="shop-qpacks">${questionPacksCardHtml({ compact: true })}</div>
+
+      <div class="section-eyebrow">CHESTS</div>
       <div class="case-grid">${casesHtml}</div>
 
-      <div class="section-eyebrow">MINCE</div>
+      <div class="section-eyebrow">COINS</div>
       <div class="coin-packs">${packsHtml}</div>
 
       <button class="no-ads-card" id="no-ads-btn">
         <div class="no-ads-icon">${icon('noAds')}</div>
-        <div class="no-ads-text"><strong>Bez reklam</strong><span>Navždy</span></div>
+        <div class="no-ads-text"><strong>No ads</strong><span>Forever</span></div>
         <div class="no-ads-price">${NO_ADS_PRICE}</div>
       </button>
     </div>
@@ -197,7 +241,9 @@ function renderShopScreen() {
 
   wireBottomNav();
   document.getElementById('inventory-btn').onclick = openInventory;
+  wireDailyRewards();
   wirePackBuy(document.getElementById('shop-pack'), renderShopScreen);
+  wireQuestionPacksBuy(document.getElementById('shop-qpacks'), renderShopScreen);
   // truhla se po ťuknutí zatřese; "Otevřít" ji nejdřív zatřese a pak otevře
   const shake = (card) => {
     card.classList.remove('shake');
@@ -221,7 +267,7 @@ function renderShopScreen() {
   });
   document.querySelectorAll('.case-info-btn').forEach((btn) => { btn.onclick = () => showCaseContents(btn.dataset.case); });
 
-  const notYet = () => showToast('Platby zatím nefungují — tohle je prototyp.');
+  const notYet = () => showToast('Payments aren\'t live yet — this is a prototype.');
   document.querySelectorAll('.coin-pack').forEach((b) => { b.onclick = notYet; });
   document.getElementById('no-ads-btn').onclick = notYet;
 }
@@ -250,7 +296,12 @@ function equippedItem(data, sectionId) {
 
 function nameStyleFor(item) {
   if (!item) return 'color:#fff;';
-  if (item.gradient) return `background:${item.gradient}; -webkit-background-clip:text; background-clip:text; color:transparent;`;
+  if (item.gradient) {
+    const base = `background:${item.gradient}; -webkit-background-clip:text; background-clip:text; color:transparent;`;
+    // epické a legendární barvy jména se pomalu přelévají
+    const animated = item.rarity === 'epic' || item.rarity === 'legendary';
+    return animated ? `${base} background-size:220% 100%; animation:name-shimmer 3.5s ease-in-out infinite alternate;` : base;
+  }
   return `color:${item.color};`;
 }
 
@@ -261,10 +312,10 @@ function looksPreviewHtml(data) {
   return `
     <div class="looks-card">
       <div class="looks-frame" style="background:${frame ? frame.style : 'rgba(255,255,255,0.12)'}">
-        <div class="looks-photo">${escapeHtml((getSavedName() || '?').charAt(0).toUpperCase())}</div>
+        <div class="looks-photo">${getAvatar() ? `<img class="avatar-img" src="${getAvatar()}" alt="">` : escapeHtml((getSavedName() || '?').charAt(0).toUpperCase())}</div>
         ${frameDecorHtml(frame)}
       </div>
-      <div class="looks-name" style="${nameStyleFor(nameItem)}">${escapeHtml(getSavedName() || 'Jméno')}</div>
+      <div class="looks-name" style="${nameStyleFor(nameItem)}">${escapeHtml(getSavedName() || 'Name')}</div>
     </div>`;
 }
 
@@ -273,14 +324,14 @@ function inventoryTileHtml(section, item, equipped) {
     ? shopItemPreview(section, item)
     : section.id === 'frame'
       ? `<div class="frame-preview" style="background:rgba(255,255,255,0.12)"><div class="frame-inner">${icon('camera')}</div></div>`
-      : `<div class="name-preview"><span style="color:#fff">${escapeHtml(getSavedName() || 'Jméno')}</span></div>`;
+      : `<div class="name-preview"><span style="color:#fff">${escapeHtml(getSavedName() || 'Name')}</span></div>`;
   return `
     <button class="shop-item inv-item ${equipped ? 'is-equipped' : ''} ${item ? 'has-rarity' : ''}" data-section="${section.id}" data-id="${item ? item.id : ''}" style="${item ? `--rc:${RARITIES[item.rarity].color}` : ''}">
       ${preview}
-      <div class="shop-item-name">${item ? item.name : 'Výchozí'}</div>
+      <div class="shop-item-name">${item ? item.name : 'Default'}</div>
       ${equipped
-        ? `<span class="shop-state equipped">${icon('check')} Nasazeno</span>`
-        : `<span class="shop-state owned">Nasadit</span>`}
+        ? `<span class="shop-state equipped">${icon('check')} Equipped</span>`
+        : `<span class="shop-state owned">Equip</span>`}
     </button>`;
 }
 
@@ -303,8 +354,8 @@ function renderInventoryScreen() {
   app.innerHTML = `
     <div class="home-top">
       <div class="lobby-top" style="margin-bottom:0">
-        <button id="inv-back" class="back-btn" title="Zpět do shopu">${icon('back')}</button>
-        <div class="brand"><h1>Inventář</h1></div>
+        <button id="inv-back" class="back-btn" title="Back to shop">${icon('back')}</button>
+        <div class="brand"><h1>Inventory</h1></div>
       </div>
       ${coinBadgeHtml(data.coins)}
     </div>
@@ -312,7 +363,7 @@ function renderInventoryScreen() {
     <div class="screen">
       ${looksPreviewHtml(data)}
       ${sectionsHtml}
-      ${data.owned.length === 0 ? `<button class="btn btn-primary btn-block" id="inv-to-shop">${icon('bag')} Otevřít bednu v shopu</button>` : ''}
+      ${data.owned.length === 0 ? `<button class="btn btn-primary btn-block" id="inv-to-shop">${icon('bag')} Open a chest in the shop</button>` : ''}
     </div>
     ${bottomNavHtml('shop')}
   `;

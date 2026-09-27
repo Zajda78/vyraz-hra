@@ -7,7 +7,51 @@
 
 function myLooks() {
   const d = shopLoad();
-  return { frame: d.equipped.frame || null, name: d.equipped.name || null };
+  return { frame: d.equipped.frame || null, name: d.equipped.name || null, avatar: getAvatar() };
+}
+
+// ------------------------------------------------------- profilovka ---
+// Uložená jako malý čtvercový JPEG (data URL) v tomhle telefonu; posílá se
+// serveru spolu se vzhledem, takže ji vidí i ostatní hráči.
+
+const AVATAR_SIZE = 112;
+
+function getAvatar() {
+  try { return localStorage.getItem('vyraz_avatar') || null; } catch { return null; }
+}
+
+function setAvatar(dataUrl) {
+  try {
+    if (dataUrl) localStorage.setItem('vyraz_avatar', dataUrl);
+    else localStorage.removeItem('vyraz_avatar');
+  } catch { /* ignore */ }
+  sendHello();
+}
+
+// Načte vybraný obrázek, ořízne ho na čtverec ze středu a zmenší.
+function fileToAvatar(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight);
+      const canvas = document.createElement('canvas');
+      canvas.width = AVATAR_SIZE;
+      canvas.height = AVATAR_SIZE;
+      canvas.getContext('2d').drawImage(
+        img,
+        (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side,
+        0, 0, AVATAR_SIZE, AVATAR_SIZE,
+      );
+      URL.revokeObjectURL(url);
+      // server bere profilovky do ~24 000 znaků — detailní fotku uložit v nižší kvalitě
+      let dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+      if (dataUrl.length > 22000) dataUrl = canvas.toDataURL('image/jpeg', 0.55);
+      resolve(dataUrl);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')); };
+    img.src = url;
+  });
 }
 
 function findShopItem(sectionId, itemId) {
@@ -31,9 +75,11 @@ function avatarHtml(name, looks, size) {
   const frame = findShopItem('frame', looks && looks.frame);
   const letter = escapeHtml((name || '?').charAt(0).toUpperCase());
   const pad = Math.max(2, Math.round(size * 0.055));
+  // profilovka jen z data URL obrázku — nic jiného se do src nepustí
+  const avatar = looks && typeof looks.avatar === 'string' && looks.avatar.startsWith('data:image/') ? looks.avatar : null;
   return `
     <div class="framed-avatar" style="width:${size}px; height:${size}px; padding:${pad}px; border-radius:${Math.round(size * 0.24)}px; background:${frame ? frame.style : 'rgba(255,255,255,0.14)'}">
-      <div class="framed-avatar-inner" style="border-radius:${Math.round(size * 0.19)}px; font-size:${Math.round(size * 0.4)}px">${letter}</div>
+      <div class="framed-avatar-inner" style="border-radius:${Math.round(size * 0.19)}px; font-size:${Math.round(size * 0.4)}px">${avatar ? `<img class="avatar-img" src="${avatar}" alt="">` : letter}</div>
       ${frameDecorHtml(frame)}
     </div>`;
 }
@@ -61,7 +107,7 @@ function framedAvatarHtml(size) {
 }
 
 // Jméno v nasazené barvě.
-function styledNameHtml(fallback = 'Jméno') {
+function styledNameHtml(fallback = 'Name') {
   const data = shopLoad();
   return `<span class="styled-name" style="${nameStyleFor(equippedItem(data, 'name'))}">${escapeHtml(getSavedName() || fallback)}</span>`;
 }
@@ -72,18 +118,15 @@ function profileCardHtml() {
     <div class="profile-card" id="profile-card" role="button" tabindex="0">
       ${framedAvatarHtml(48)}
       <div class="profile-card-text">
-        ${getSavedName() ? `Tvoje jméno je ${styledNameHtml()}` : 'Nastav si jméno'}
+        ${getSavedName() ? `Your name is ${styledNameHtml()}` : 'Set your name'}
       </div>
-      <button id="change-name-btn" class="chip-btn chip-icon" title="Upravit profil" aria-label="Upravit profil">${icon('pencil')}</button>
+      <button id="change-name-btn" class="chip-btn chip-icon" title="Profile" aria-label="Open profile">${icon('pencil')}</button>
     </div>`;
 }
 
 function wireProfileCard() {
-  document.getElementById('profile-card').onclick = (e) => {
-    if (e.target.closest('#change-name-btn')) return;
-    openProfile();
-  };
-  document.getElementById('change-name-btn').onclick = showEditProfileModal;
+  // celá karta i tužka otevřou profil (úprava jména a vzhledu je v profilu)
+  document.getElementById('profile-card').onclick = openProfile;
 }
 
 let profileOpen = false;
@@ -92,12 +135,14 @@ function openProfile() {
   profileOpen = true;
   renderStartScreen();
   window.scrollTo(0, 0);
+  animateScreenIn(1);
 }
 
 function closeProfile() {
   profileOpen = false;
   renderStartScreen();
   window.scrollTo(0, 0);
+  animateScreenIn(-1);
 }
 
 function renderProfileScreen() {
@@ -110,15 +155,15 @@ function renderProfileScreen() {
 
   app.innerHTML = `
     <div class="lobby-top">
-      <button id="profile-back" class="back-btn" title="Zpět">${icon('back')}</button>
-      <div class="brand"><h1>Profil</h1></div>
+      <button id="profile-back" class="back-btn" title="Back">${icon('back')}</button>
+      <div class="brand"><h1>Profile</h1></div>
     </div>
 
     <div class="screen">
       <div class="profile-hero">
         ${framedAvatarHtml(128)}
         <div class="profile-hero-name">
-          ${styledNameHtml('Bez jména')}
+          ${styledNameHtml('No name')}
           <button id="profile-rename" class="chip-btn chip-icon" title="Upravit profil" aria-label="Upravit profil">${icon('pencil')}</button>
         </div>
       </div>
@@ -126,17 +171,17 @@ function renderProfileScreen() {
       <div class="profile-stats">
         <div class="profile-stat">
           <div class="profile-stat-value">${COIN_SVG}<span class="num">${data.coins}</span></div>
-          <div class="profile-stat-label">Mince</div>
+          <div class="profile-stat-label">Coins</div>
         </div>
         <div class="profile-stat">
           <div class="profile-stat-value">${icon('backpack')}<span class="num">${data.owned.length} / ${totalItems}</span></div>
-          <div class="profile-stat-label">Sbírka</div>
+          <div class="profile-stat-label">Collection</div>
           <div class="profile-progress"><div style="width:${pct}%"></div></div>
         </div>
       </div>
 
-      <button class="btn btn-primary btn-block" id="profile-edit-looks">${icon('backpack')} Upravit vzhled</button>
-      <button class="btn btn-ghost btn-block" id="profile-shop">${icon('bag')} Otevřít bednu v shopu</button>
+      <button class="btn btn-primary btn-block" id="profile-edit-looks">${icon('backpack')} Edit look</button>
+      <button class="btn btn-ghost btn-block" id="profile-shop">${icon('bag')} Open a chest in the shop</button>
     </div>
     ${bottomNavHtml('games')}
   `;
@@ -175,19 +220,28 @@ function editProfileBodyHtml(nameDraft) {
   }).join('');
 
   return `
-    <div class="x-close-row"><button class="x-close" id="edit-profile-close" aria-label="Zavřít">${icon('close')}</button></div>
-    <h2>Upravit profil</h2>
+    <div class="x-close-row"><button class="x-close" id="edit-profile-close" aria-label="Close">${icon('close')}</button></div>
+    <h2>Edit profile</h2>
     <div class="edit-profile-preview">
       ${avatarHtml(nameDraft || '?', myLooks(), 88)}
-      ${playerNameHtml(nameDraft || 'Jméno', myLooks())}
+      ${playerNameHtml(nameDraft || 'Name', myLooks())}
+    </div>
+    <div class="avatar-actions">
+      <label class="chip-btn avatar-btn">${icon('image')} ${getAvatar() ? 'Change photo' : 'Add photo'}
+        <input type="file" accept="image/*" id="avatar-file" hidden>
+      </label>
+      <label class="chip-btn avatar-btn">${icon('camera')} Selfie
+        <input type="file" accept="image/*" capture="user" id="avatar-selfie" hidden>
+      </label>
+      ${getAvatar() ? `<button class="chip-btn avatar-btn" id="avatar-remove">${icon('close')} Remove</button>` : ''}
     </div>
     <div class="field">
-      <input id="edit-profile-name" maxlength="20" value="${escapeHtml(nameDraft)}" placeholder="Tvoje jméno">
+      <input id="edit-profile-name" maxlength="20" value="${escapeHtml(nameDraft)}" placeholder="Your name">
     </div>
-    <button id="edit-profile-save" class="btn btn-primary btn-block">Uložit jméno</button>
+    <button id="edit-profile-save" class="btn btn-primary btn-block">Save name</button>
     <div class="edit-profile-inventory">
       ${sectionsHtml}
-      ${data.owned.length === 0 ? `<button class="btn btn-ghost btn-block" id="edit-profile-shop">${icon('bag')} Otevřít truhlu v shopu</button>` : ''}
+      ${data.owned.length === 0 ? `<button class="btn btn-ghost btn-block" id="edit-profile-shop">${icon('bag')} Open a chest in the shop</button>` : ''}
     </div>
   `;
 }
@@ -217,12 +271,28 @@ function showEditProfileModal() {
     input.addEventListener('input', () => {
       nameDraft = input.value;
       const preview = sheet.querySelector('.edit-profile-preview');
-      preview.innerHTML = `${avatarHtml(nameDraft.trim() || '?', myLooks(), 88)}${playerNameHtml(nameDraft.trim() || 'Jméno', myLooks())}`;
+      preview.innerHTML = `${avatarHtml(nameDraft.trim() || '?', myLooks(), 88)}${playerNameHtml(nameDraft.trim() || 'Name', myLooks())}`;
     });
+
+    const onPicked = async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        setAvatar(await fileToAvatar(file));
+        showToast('Profile photo updated');
+      } catch {
+        showError('Couldn\'t load that image.');
+      }
+      render();
+    };
+    sheet.querySelector('#avatar-file').addEventListener('change', onPicked);
+    sheet.querySelector('#avatar-selfie').addEventListener('change', onPicked);
+    const remove = sheet.querySelector('#avatar-remove');
+    if (remove) remove.onclick = () => { setAvatar(null); render(); };
 
     sheet.querySelector('#edit-profile-save').onclick = () => {
       const name = nameDraft.trim();
-      if (!name) return showError('Napiš prosím nějaké jméno.');
+      if (!name) return showError('Please enter a name.');
       localStorage.setItem('vyraz_name', name);
       closeModal();
       goHome();
