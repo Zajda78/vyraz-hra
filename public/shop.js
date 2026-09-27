@@ -3,7 +3,7 @@
 // Kosmetika se nedá koupit přímo — padá jen z bedny (viz case.js).
 // Mince se utrácí výhradně za kosmetiku, nikdy za herní výhodu.
 
-const SHOP_START_COINS = 250;
+const SHOP_START_COINS = 0; // nový hráč začíná bez mincí — první si vydělá hrou nebo denní odměnou
 
 // Vzácnosti: refund = kolik mincí vrátí duplikát (věc, kterou už máš).
 // Šance na jednotlivé vzácnosti má každá truhla vlastní (viz CASES v case.js).
