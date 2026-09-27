@@ -1482,3 +1482,82 @@ body.no-scroll{ overflow:hidden; }
   background:rgba(249,115,22,0.16); color:#FDBA74; font-weight:800; font-size:0.74rem;
 }
 .case-timer .ico{ width:13px; height:13px; }
+
+/* ----------------------------------------------------------- SNAP HUNT --- */
+
+.mode-card-hunt{ --c1:#38BDF8; --c2:#6366F1; --base:#111a3d; }
+.rules-tab-hunt{ --c1:#38BDF8; --c2:#6366F1; }
+.mode-color-hunt{ --c1:#38BDF8; --c2:#6366F1; }
+.pack-mode:nth-child(3) .mode-tile{ --c1:#38BDF8; --c2:#6366F1; }
+/* Party Pack má teď 3 módy + „More new modes" — dlaždice o kousek užší, ať se vejdou */
+.pack-card:not(.qp-card) .pack-modes{ gap:8px; }
+.pack-card:not(.qp-card) .pack-mode{ width:72px; }
+
+/* tlačítko pro přepnutí foťáku vedle spouště */
+.shutter-row{ position:relative; }
+.flip-cam-btn{
+  position:absolute; right:calc(50% - 110px); top:50%; transform:translateY(-50%);
+  width:48px; height:48px; border-radius:50%; border:1px solid var(--line);
+  background:var(--surface-2); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.flip-cam-btn .ico{ width:24px; height:24px; }
+.flip-cam-btn:active{ transform:translateY(-50%) scale(0.92); }
+
+/* žánry Snap Huntu — barva vybrané dlaždice a štítku ve hře (school už je výš) */
+.pack-chip-anywhere.active{ background:linear-gradient(135deg,#38BDF8,#6366F1); box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(99,102,241,0.75), inset 0 -3px 0 rgba(0,0,0,0.18); }
+.pack-chip-home.active{ background:linear-gradient(135deg,#FB923C,#E11D48); box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(225,29,72,0.7), inset 0 -3px 0 rgba(0,0,0,0.18); }
+.pack-chip-outdoors.active{ background:linear-gradient(135deg,#4ADE80,#15803D); box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(34,197,94,0.7), inset 0 -3px 0 rgba(0,0,0,0.18); }
+.pack-chip-party.active{ background:linear-gradient(135deg,#F472B6,#A855F7); box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(236,72,153,0.7), inset 0 -3px 0 rgba(0,0,0,0.18); }
+.pack-chip-food.active{ background:linear-gradient(135deg,#FACC15,#EA580C); box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(234,88,12,0.7), inset 0 -3px 0 rgba(0,0,0,0.18); }
+.pack-badge-home{ background:linear-gradient(135deg,#FB923C,#E11D48); }
+.pack-badge-outdoors{ background:linear-gradient(135deg,#4ADE80,#15803D); }
+.pack-badge-party{ background:linear-gradient(135deg,#F472B6,#A855F7); }
+.pack-badge-food{ background:linear-gradient(135deg,#FACC15,#EA580C); }
+#picker-hunt-pack{ grid-template-columns:repeat(3, 1fr); }
+/* dlaždice se nesmí roztáhnout přes mřížku; trojmístné časy (120s) menším písmem */
+.option-chip{ min-width:0; padding:0; }
+#picker-hunt-seconds .option-chip{ font-size:0.88rem; }
+
+/* ------------------------------------------------------ MENU MÓDŮ --- */
+/* módy ve skupinách: face games jako mřížka 2×2, snap anything přes celou šířku */
+.mode-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.mode-grid.wide{ grid-template-columns:1fr; }
+.mode-card.compact{ padding:14px 14px 12px; border-radius:20px; display:flex; }
+.mode-card.compact .mode-card-content{ display:flex; flex-direction:column; width:100%; }
+.mode-card.compact .mode-tile{ width:42px; height:42px; border-radius:12px; margin-bottom:12px; }
+.mode-card.compact .mode-tile svg{ width:25px; height:25px; }
+.mode-card.compact h3{ font-size:0.98rem; margin-bottom:4px; }
+.mode-card.compact p{ max-width:none; font-size:0.8rem; line-height:1.35; color:rgba(255,255,255,0.72); flex:1; }
+.mode-card.compact .ribbon{ top:12px; right:12px; padding:4px 8px; font-size:0.6rem; }
+.mode-card.compact .mode-icon-bg{ width:78px; height:66px; bottom:-8px; right:-8px; }
+.mode-players{
+  display:inline-flex; align-items:center; gap:5px; align-self:flex-start; margin-top:10px;
+  padding:3px 9px; border-radius:999px; background:rgba(255,255,255,0.08);
+  color:#fff; font-weight:700; font-size:0.74rem;
+}
+.mode-players .ico{ width:14px; height:14px; }
+.mode-new-tag{
+  display:inline-block; margin-left:8px; padding:3px 8px; border-radius:999px; vertical-align:3px;
+  background:linear-gradient(135deg,#38BDF8,#6366F1); color:#fff;
+  font-family:'Unbounded',sans-serif; font-size:0.58rem; font-weight:800; letter-spacing:.08em;
+}
+/* postupné vyjetí dlaždic — i uvnitř mřížek */
+.mode-grid .mode-card:nth-child(2){ animation-delay:.08s; }
+.mode-grid .mode-card:nth-child(3){ animation-delay:.14s; }
+.mode-grid .mode-card:nth-child(4){ animation-delay:.2s; }
+/* nadpis skupiny módů — u Party Packu vpravo zlaté tlačítko na odemčení / „Owned" */
+.mode-group-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; }
+.mode-group-head .section-eyebrow{ margin:0 2px; }
+.mode-group-unlock{
+  display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border:none; border-radius:999px; cursor:pointer;
+  background:linear-gradient(135deg, #FDE68A, #F0B429 55%, #D97706); color:#3b2400;
+  font-family:'IBM Plex Sans',sans-serif; font-weight:800; font-size:0.72rem; letter-spacing:.06em;
+  box-shadow:0 4px 14px -4px rgba(240,180,41,0.7);
+}
+.mode-group-unlock .ico{ width:13px; height:13px; }
+.mode-group-unlock:active{ transform:scale(0.95); }
+.mode-group-owned{ display:inline-flex; align-items:center; gap:5px; color:#86EFAC; font-weight:700; font-size:0.78rem; }
+.mode-group-owned .ico{ width:15px; height:15px; }
+.mode-grid .mode-card.wide{ grid-column:1 / -1; }
+/* v okně s nabídkou je vpravo nahoře křížek — štítek slevy proto vlevo */
+.modal-sheet .pack-discount{ right:auto; left:14px; }

@@ -3,7 +3,7 @@
 // v jeho lobby ho hrají zdarma. Nákup se zatím jen nasimuluje (žádná
 // skutečná platba), odemčení se drží v localStorage jako mince.
 
-const PAID_MODES = ['draw', 'impostor'];
+const PAID_MODES = ['draw', 'impostor', 'hunt'];
 
 // Hodnota balíčku = módy zvlášť + mince podle kurzu. Sleva se z toho
 // dopočítá sama, ať cena, přeškrtnutá hodnota a procenta vždycky sedí.
@@ -14,7 +14,7 @@ const PARTY_PACK = {
   name: 'Party Pack',
   priceEur: 3.99,
   coins: 200,
-  modes: ['draw', 'impostor'],
+  modes: ['draw', 'impostor', 'hunt'],
 };
 PARTY_PACK.worthEur = PARTY_PACK.modes.length * MODE_PRICE_EUR + PARTY_PACK.coins * COIN_RATE_EUR;
 PARTY_PACK.discount = Math.round((1 - PARTY_PACK.priceEur / PARTY_PACK.worthEur) * 100);
@@ -62,12 +62,13 @@ function ownsPartyPack() {
   return (shopLoad().unlocks || []).includes(PARTY_PACK.id);
 }
 
-function modeRibbonHtml(mode) {
+// compact = malá dlaždice v menu — štítek musí být kratší, ať nepřekryje ikonu
+function modeRibbonHtml(mode, { compact = false } = {}) {
   if (!PAID_MODES.includes(mode)) return `<div class="ribbon">FREE</div>`;
   if (isModeUnlocked(mode)) return `<div class="ribbon ribbon-party">PARTY</div>`;
   const tickets = getTickets(mode);
-  if (tickets > 0) return `<div class="ribbon ribbon-ticket">${icon('ticket')} ${tickets}× GAME</div>`;
-  return `<div class="ribbon ribbon-locked">${icon('lock')} PARTY PACK</div>`;
+  if (tickets > 0) return `<div class="ribbon ribbon-ticket">${icon('ticket')} ${tickets}×${compact ? '' : ' GAME'}</div>`;
+  return `<div class="ribbon ribbon-locked">${icon('lock')} ${compact ? 'PARTY' : 'PARTY PACK'}</div>`;
 }
 
 function buyPartyPack() {

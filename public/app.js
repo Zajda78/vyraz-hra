@@ -4,6 +4,7 @@ let ws = null;
 let lastState = null;
 let mountedKey = null;
 let cameraStream = null;
+let cameraFacing = 'user'; // 'user' = selfie, 'environment' = zadní foťák
 let submittedLocally = false;
 let votedLocallyFor = null;
 let drawDoneLocally = false;
@@ -187,6 +188,60 @@ const MODE_ICON_PALETTE = `
     <circle cx="43" cy="65" r="8" stroke="currentColor" stroke-width="5"/>
   </svg>`;
 
+const MODE_ICON_LOUPE = `
+  <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="52" cy="44" r="32" stroke="currentColor" stroke-width="6"/>
+    <path d="M36 36 A18 18 0 0 1 52 26" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    <path d="M76 68 L104 94" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
+  </svg>`;
+
+// Menu módů na úvodní obrazovce — rozdělené na hry zdarma a Party Pack.
+// Uvnitř skupiny jsou nejdřív hry s obličejem (kompaktní dlaždice po dvou),
+// módy „fotíš cokoli“ (wide) jdou přes celou šířku.
+const MODE_MENU = [
+  {
+    title: 'FREE GAMES',
+    modes: [
+      { id: 'classic', name: 'Reaction', tagline: 'React to the prompt — best face wins', players: 3, bg: () => MODE_ICON_CAMERA },
+      { id: 'caption', name: 'Main Character', tagline: 'One photo, everyone captions it', players: 3, bg: () => MODE_ICON_SPEECH },
+    ],
+  },
+  {
+    title: 'PARTY PACK',
+    partyPack: true, // u nadpisu tlačítko na odemčení / „Owned“
+    modes: [
+      { id: 'draw', name: 'Doodle', tagline: 'Snap a selfie, doodle on it, vote', players: 3, bg: () => MODE_ICON_PALETTE },
+      { id: 'impostor', name: 'Impostor', tagline: 'One player got a different prompt', players: 3, bg: () => MODE_ICON_SPY },
+      { id: 'hunt', name: 'Snap Hunt', wide: true, isNew: true, tagline: 'A task drops — like "something blue". Hunt it down, snap it and vote for the best shot.', players: 3, bg: () => MODE_ICON_LOUPE },
+    ],
+  },
+];
+
+function modeMenuHtml() {
+  return MODE_MENU.map((group) => `
+    <div class="mode-group-head">
+      <div class="section-eyebrow">${group.title}</div>
+      ${group.partyPack
+        ? (ownsPartyPack()
+          ? `<span class="mode-group-owned">${icon('checkCircle')} Owned</span>`
+          : `<button class="mode-group-unlock" id="unlock-party-pack">${icon('lock')} Unlock</button>`)
+        : ''}
+    </div>
+    <div class="mode-grid">
+      ${group.modes.map((m) => `
+        <div class="mode-card mode-card-${m.id} ${m.wide ? 'wide' : 'compact'} ${isModeUnlocked(m.id) ? '' : 'is-locked'}" data-mode="${m.id}">
+          <div class="mode-icon-bg">${m.bg()}</div>
+          ${group.partyPack && !isModeUnlocked(m.id) ? modeRibbonHtml(m.id, { compact: !m.wide }) : ''}
+          <div class="mode-card-content">
+            ${modeTile(m.id)}
+            <h3>${m.name}${m.isNew ? '<span class="mode-new-tag">NEW</span>' : ''}</h3>
+            <p>${escapeHtml(m.tagline)}</p>
+            <span class="mode-players">${icon('users')} ${m.players}+</span>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
 const MODE_ICON_SPEECH = `
   <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M60 8 C90 8 114 26 114 48 C114 70 90 88 60 88 C52 88 44 87 37 84 L14 94 L22 74 C12 66 6 57 6 48 C6 26 30 8 60 8 Z" stroke="currentColor" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
@@ -199,6 +254,7 @@ function modeDisplayName(mode) {
   if (mode === 'draw') return 'Doodle';
   if (mode === 'caption') return 'Main Character';
   if (mode === 'impostor') return 'Impostor';
+  if (mode === 'hunt') return 'Snap Hunt';
   return 'Reaction';
 }
 
@@ -321,46 +377,7 @@ function renderGamesScreen() {
         </div>
       </div>
 
-      <div class="section-eyebrow">CREATE A GAME</div>
-      <div class="mode-card" data-mode="classic">
-        <div class="mode-icon-bg">${MODE_ICON_CAMERA}</div>
-        <div class="ribbon">FREE</div>
-        <div class="mode-card-content">
-          ${modeTile('classic')}
-          <h3>Reaction</h3>
-          <p>A prompt drops, everyone snaps their reaction and you vote on the best face.</p>
-        </div>
-      </div>
-
-      <div class="mode-card mode-card-draw ${isModeUnlocked('draw') ? '' : 'is-locked'}" data-mode="draw">
-        <div class="mode-icon-bg">${MODE_ICON_PALETTE}</div>
-        ${modeRibbonHtml('draw')}
-        <div class="mode-card-content">
-          ${modeTile('draw')}
-          <h3>Doodle</h3>
-          <p>Snap a photo, then doodle on it with your finger — then everyone votes, just like in Reaction.</p>
-        </div>
-      </div>
-
-      <div class="mode-card mode-card-caption" data-mode="caption">
-        <div class="mode-icon-bg">${MODE_ICON_SPEECH}</div>
-        <div class="ribbon">FREE</div>
-        <div class="mode-card-content">
-          ${modeTile('caption')}
-          <h3>Main Character</h3>
-          <p>One player snaps a photo, everyone else writes a caption and they pick the winner.</p>
-        </div>
-      </div>
-
-      <div class="mode-card mode-card-impostor ${isModeUnlocked('impostor') ? '' : 'is-locked'}" data-mode="impostor">
-        <div class="mode-icon-bg">${MODE_ICON_SPY}</div>
-        ${modeRibbonHtml('impostor')}
-        <div class="mode-card-content">
-          ${modeTile('impostor')}
-          <h3>Impostor</h3>
-          <p>Everyone gets the same prompt — except the impostor. Can you spot them from the photos?</p>
-        </div>
-      </div>
+      ${modeMenuHtml()}
 
     </div>
     ${bottomNavHtml('games')}
@@ -401,6 +418,9 @@ function renderGamesScreen() {
       create();
     };
   });
+
+  const unlockPack = document.getElementById('unlock-party-pack');
+  if (unlockPack) unlockPack.onclick = () => showPartyPackOffer(null);
 
   document.getElementById('rules-btn').onclick = () => showRulesModal();
   document.getElementById('settings-btn').onclick = () => showSettingsModal(renderStartScreen);
@@ -500,7 +520,7 @@ function showSettingsModal(onSaved) {
 
 const RULES_BY_MODE = {
   classic: [
-    'The host creates a lobby and shares the code with friends.',
+    'The host creates a lobby and shares the code with friends — you need at least 3 players.',
     'Each round a prompt drops about a random player in the lobby. The host picks the question pack — Classic, Spicy, Family or School.',
     'Everyone has 30 seconds to snap their reaction.',
     'Miss it and you get a sad face instead of a photo — "Too slow!!".',
@@ -509,7 +529,7 @@ const RULES_BY_MODE = {
     'After the last round, whoever has the most points wins.',
   ],
   draw: [
-    'The host creates a lobby and shares the code with friends.',
+    'The host creates a lobby and shares the code with friends — you need at least 3 players.',
     'Each round a prompt drops about a random player in the lobby. The host picks the question pack — Classic, Spicy, Family or School.',
     'Everyone has 30 seconds to snap their reaction.',
     'Then you get a moment to doodle on your photo with your finger (the host sets how long).',
@@ -518,7 +538,7 @@ const RULES_BY_MODE = {
     'After the last round, whoever has the most points wins.',
   ],
   caption: [
-    'The host creates a lobby and shares the code with friends.',
+    'The host creates a lobby and shares the code with friends — you need at least 3 players.',
     'Each round a different player is the main character — everyone gets a turn.',
     'The main character snaps a photo, with no time limit.',
     'Everyone else writes a funny caption for it (the host sets the time).',
@@ -527,7 +547,7 @@ const RULES_BY_MODE = {
     'After the last round, whoever has the most points wins.',
   ],
   impostor: [
-    'The host creates a lobby — you need at least 3 players — and picks the question pack: Classic, Spicy, Family or School.',
+    'The host creates a lobby, shares the code — you need at least 3 players — and picks the question pack: Classic, Spicy, Family or School.',
     'Each round everyone gets the same photo prompt, except one random player — the impostor — who gets a similar but different one.',
     'Nobody knows who the impostor is — not even the impostor! They find out at the reveal.',
     'Everyone has 30 seconds to snap a photo.',
@@ -535,12 +555,21 @@ const RULES_BY_MODE = {
     'If the impostor gets the most votes, everyone else wins: +100 pts and +3 coins each.',
     'If they escape (a tie counts too), the impostor wins: +250 pts and +10 coins.',
   ],
+  hunt: [
+    'The host creates a lobby and shares the code with friends — you need at least 3 players.',
+    'Each round a task drops — like "something blue" or "the weirdest thing in your bag". The host picks what to hunt: Anywhere, Home, School, Outdoors, Party or Food.',
+    'Everyone hunts it down and snaps a photo before time runs out (the host sets how long). The back camera is on — tap the flip button for a selfie.',
+    'Miss it and you get a sad face instead of a photo — "Too slow!!".',
+    'All photos are revealed at once and you vote for the best one — no voting for yourself.',
+    'Points by ranking — 1st place gets 100 pts, the rest a little less. Same votes = same points.',
+    'After the last round, whoever has the most points wins.',
+  ],
 };
 
 function showRulesModal(initialMode = 'classic') {
-  const modes = ['classic', 'draw', 'caption', 'impostor'];
+  const modes = ['classic', 'draw', 'caption', 'impostor', 'hunt'];
   openModal(`
-    <h2>Jak se hraje</h2>
+    <h2>How to play</h2>
     <div class="rules-tabs">
       ${modes.map((m) => `
         <button class="rules-tab rules-tab-${m}" data-mode="${m}">
@@ -569,6 +598,26 @@ function showRulesModal(initialMode = 'classic') {
 const ROUND_OPTIONS = [3, 5, 10, 15, 20];
 const DRAW_SECONDS_OPTIONS = [10, 15, 20, 30, 45];
 const CAPTION_SECONDS_OPTIONS = [20, 30, 40, 60, 90];
+const HUNT_SECONDS_OPTIONS = [30, 45, 60, 90, 120];
+
+// Žánry Snap Huntu — co se bude hledat. Všechny zdarma v rámci módu.
+const HUNT_PACK_INFO = {
+  anywhere: { label: 'Anywhere' },
+  home: { label: 'Home' },
+  school: { label: 'School' },
+  outdoors: { label: 'Outdoors' },
+  party: { label: 'Party' },
+  food: { label: 'Food' },
+};
+
+function huntPackPickerHtml(current) {
+  return `<div class="pack-picker" id="picker-hunt-pack">
+    ${Object.entries(HUNT_PACK_INFO).map(([id, p]) => `
+      <button class="pack-chip pack-chip-${id} ${id === current ? 'active' : ''}" data-hunt-pack="${id}">
+        <span class="pack-chip-glyph">${packGlyph(id)}</span><span class="pack-chip-label">${p.label}</span>
+      </button>`).join('')}
+  </div>`;
+}
 
 // Sada otázek (Classic / Spicy / Family / School) — stejný styl dlaždic, jen s textem.
 // Spicy, Family a School jsou v nabídce Question Packs (zámek, dokud je hostitel nemá).
@@ -583,6 +632,10 @@ function packPickerHtml(current) {
 }
 
 function promptPackBadge(state) {
+  if (state.mode === 'hunt') {
+    const h = HUNT_PACK_INFO[state.huntPack];
+    return h && state.huntPack !== 'anywhere' ? `<span class="spicy-badge pack-badge-${state.huntPack}">${packGlyph(state.huntPack)} ${h.label}</span>` : '';
+  }
   if (state.mode === 'caption' || !state.promptPack || state.promptPack === 'classic') return '';
   const p = QUESTION_PACK_INFO[state.promptPack];
   return p ? `<span class="spicy-badge pack-badge-${state.promptPack}">${packGlyph(state.promptPack)} ${p.label}</span>` : '';
@@ -636,7 +689,7 @@ function renderLobbyScreen(state) {
       </div>
 
       ${state.isHost ? `
-        ${state.mode !== 'caption' ? `
+        ${state.mode !== 'caption' && state.mode !== 'hunt' ? `
           <div class="card setting-card">
             <h3 class="setting-title">${icon('chat')} Question pack</h3>
             ${packPickerHtml(state.promptPack)}
@@ -652,6 +705,17 @@ function renderLobbyScreen(state) {
           <div class="card setting-card">
             <h3 class="setting-title">${icon('brush')} Doodle time</h3>
             ${optionPicker('draw-seconds', DRAW_SECONDS_OPTIONS, state.drawSeconds, 's')}
+          </div>
+        ` : ''}
+
+        ${state.mode === 'hunt' ? `
+          <div class="card setting-card">
+            <h3 class="setting-title">${icon('search')} What to hunt</h3>
+            ${huntPackPickerHtml(state.huntPack)}
+          </div>
+          <div class="card setting-card">
+            <h3 class="setting-title">${icon('timer')} Hunt time</h3>
+            ${optionPicker('hunt-seconds', HUNT_SECONDS_OPTIONS, state.huntSeconds, 's')}
           </div>
         ` : ''}
 
@@ -677,6 +741,10 @@ function renderLobbyScreen(state) {
     wireOptionPicker('rounds', (v) => send({ type: 'set_rounds', rounds: v }));
     wireOptionPicker('draw-seconds', (v) => send({ type: 'set_draw_settings', seconds: v }));
     wireOptionPicker('caption-seconds', (v) => send({ type: 'set_caption_settings', seconds: v }));
+    wireOptionPicker('hunt-seconds', (v) => send({ type: 'set_hunt_settings', seconds: v }));
+    document.querySelectorAll('#picker-hunt-pack .pack-chip').forEach((b) => {
+      b.onclick = () => send({ type: 'set_hunt_settings', pack: b.dataset.huntPack });
+    });
     document.querySelectorAll('#picker-pack .pack-chip').forEach((b) => {
       b.onclick = () => {
         const pack = b.dataset.pack;
@@ -734,18 +802,37 @@ async function buildCameraView(state) {
         <div class="flash" id="flash-el"></div>
       </div>
       <div class="shutter-row">
-        <button id="shutter-btn" class="shutter" title="Vyfotit"></button>
+        <button id="shutter-btn" class="shutter" title="Take photo"></button>
+        ${state.mode === 'hunt' ? `<button id="flip-btn" class="flip-cam-btn" aria-label="Flip camera">${icon('flip')}</button>` : ''}
       </div>
     </div>
   `;
 
+  cameraFacing = state.mode === 'hunt' ? 'environment' : 'user';
+  await startCameraStream();
+
+  document.getElementById('shutter-btn').onclick = () => capturePhoto();
+  const flip = document.getElementById('flip-btn');
+  if (flip) {
+    flip.onclick = async () => {
+      cameraFacing = cameraFacing === 'user' ? 'environment' : 'user';
+      stopCamera();
+      await startCameraStream();
+    };
+  }
+}
+
+// Spustí kameru podle cameraFacing do #cam-video.
+async function startCameraStream() {
   const video = document.getElementById('cam-video');
+  if (!video) return;
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
+      video: { facingMode: cameraFacing, width: { ideal: 640 }, height: { ideal: 640 } },
       audio: false,
     });
     video.srcObject = cameraStream;
+    video.classList.toggle('rear', cameraFacing === 'environment');
   } catch (err) {
     document.querySelector('.camera-wrap').innerHTML = `
       <div class="missed" style="justify-content:center;">
@@ -753,8 +840,6 @@ async function buildCameraView(state) {
         <span>Couldn't access the camera.<br>Check your browser permissions.</span>
       </div>`;
   }
-
-  document.getElementById('shutter-btn').onclick = () => capturePhoto();
 }
 
 function capturePhoto() {
@@ -768,8 +853,11 @@ function capturePhoto() {
   const side = Math.min(video.videoWidth, video.videoHeight);
   const sx = (video.videoWidth - side) / 2;
   const sy = (video.videoHeight - side) / 2;
-  ctx.translate(size, 0);
-  ctx.scale(-1, 1);
+  // selfie se zrcadlí (jako v zrcadle), zadní foťák ne — jinak by byl text obráceně
+  if (!video.classList.contains('rear')) {
+    ctx.translate(size, 0);
+    ctx.scale(-1, 1);
+  }
   ctx.drawImage(video, sx, sy, side, side, 0, 0, size, size);
   const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
 
@@ -1302,8 +1390,9 @@ function buildPodiumHtml(players) {
 }
 
 // Minimální počet hráčů pro start — Impostor ve dvou nedává smysl.
-function minPlayersFor(mode) {
-  return mode === 'impostor' ? 3 : 2;
+// všechny módy se hrají od 3 hráčů (hlídá to i server)
+function minPlayersFor() {
+  return 3;
 }
 
 // Mince za dohranou hru: server pošle kolik, připíšou se jen jednou

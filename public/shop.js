@@ -3,6 +3,17 @@
 // Kosmetika se nedá koupit přímo — padá jen z bedny (viz case.js).
 // Mince se utrácí výhradně za kosmetiku, nikdy za herní výhodu.
 
+// Reset postupu pro všechny: když se PROGRESS_VERSION zvýší, každému hráči
+// se při dalším otevření hry jednou smažou mince, skiny, odemčené balíčky,
+// vstupenky a denní odměny. Jméno, profilovka a přátelé zůstanou.
+const PROGRESS_VERSION = 2; // 2 = reset při vydání 27. 9. 2026
+try {
+  if (Number(localStorage.getItem('vyraz_progress_version') || 1) < PROGRESS_VERSION) {
+    localStorage.removeItem('vyraz_shop');
+    localStorage.setItem('vyraz_progress_version', String(PROGRESS_VERSION));
+  }
+} catch { /* bez localStorage není co mazat */ }
+
 const SHOP_START_COINS = 0; // nový hráč začíná bez mincí — první si vydělá hrou nebo denní odměnou
 
 // Vzácnosti: refund = kolik mincí vrátí duplikát (věc, kterou už máš).

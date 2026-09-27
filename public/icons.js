@@ -35,6 +35,8 @@ const ICON_PATHS = {
   play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>',
   sad: '<circle cx="12" cy="12" r="9"/><path d="M8.6 16.4c1.8-1.7 5-1.7 6.8 0"/><path d="M9 9.8h.01M15 9.8h.01" stroke-width="2.8"/>',
   brush: '<path d="M18.4 3.6a2.1 2.1 0 0 1 3 3L12.2 15.8l-3-3z"/><path d="M9.2 12.8c-2.6-.1-4.3 1.5-4.3 3.6 0 1.4-.7 2.4-1.9 3 1 .6 2.4 1 3.9 1 2.9 0 5.1-1.9 5.3-4.6"/>',
+  flip: '<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><path d="M15.5 12.5a3.5 3.5 0 0 0-6.3-1.6"/><path d="M8.5 14.5a3.5 3.5 0 0 0 6.3 1.6"/><path d="M9 9.5v1.6h1.6M15 17.5v-1.6h-1.6"/>',
+  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/>',
   chat: '<path d="M12 4c4.7 0 8.5 3 8.5 6.8s-3.8 6.7-8.5 6.7c-1 0-1.9-.1-2.8-.4L4.5 19.5l1.2-3.6C4.3 14.7 3.5 12.8 3.5 10.8 3.5 7 7.3 4 12 4z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" stroke-width="2.6"/>',
 };
 
@@ -65,6 +67,11 @@ const MODE_GLYPHS = {
     <path d="M2.8 10.2 Q12 13.8 21.2 10.2 L21.2 11.6 Q12 15.6 2.8 11.6 Z" fill="#fff" fill-opacity="0.85"/>
     <path d="M5.5 15.8 Q12 12.8 18.5 15.8 Q17.6 20.2 14.2 19 L12 17.9 L9.8 19 Q6.4 20.2 5.5 15.8 Z" fill="#fff"/>
     <circle cx="9.2" cy="16.4" r="1.05" fill="#4c1030"/><circle cx="14.8" cy="16.4" r="1.05" fill="#4c1030"/>`,
+  hunt: `
+    <circle cx="10.5" cy="10" r="6.8" fill="#fff"/>
+    <circle cx="10.5" cy="10" r="4.4" fill="#1e2a6b" fill-opacity="0.55"/>
+    <path d="M7.9 8.4a3 3 0 0 1 2.4-1.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M15.4 15l5.2 5.2" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>`,
   caption: `
     <path d="M12 3.5c5 0 9 3.2 9 7.2S17 18 12 18c-1 0-2-.1-3-.4L4 20l1.3-3.9C3.8 14.8 3 12.9 3 10.7 3 6.7 7 3.5 12 3.5z" fill="#fff"/>
     <circle cx="8.3" cy="10.8" r="1.3" fill="#7a2a3a"/><circle cx="12" cy="10.8" r="1.3" fill="#7a2a3a"/><circle cx="15.7" cy="10.8" r="1.3" fill="#7a2a3a"/>`,
@@ -95,6 +102,35 @@ const PACK_GLYPHS = {
     <rect x="8.2" y="14.2" width="7.6" height="4.6" rx="1.4" fill="#1e3a8a" fill-opacity="0.3"/>
     <path d="M12 11.6v2.6" stroke="#1e3a8a" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.6"/>`,
 };
+
+// Žánry Snap Huntu (school se sdílí se sadou otázek School)
+Object.assign(PACK_GLYPHS, {
+  anywhere: `
+    <circle cx="10.5" cy="10" r="6.8" fill="#fff"/>
+    <circle cx="10.5" cy="10" r="4.4" fill="#1e2a6b" fill-opacity="0.55"/>
+    <path d="M7.9 8.4a3 3 0 0 1 2.4-1.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M15.4 15l5.2 5.2" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>`,
+  home: `
+    <path d="M3.5 11.2L12 4l8.5 7.2" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M5.8 10v9.5a1 1 0 0 0 1 1h10.4a1 1 0 0 0 1-1V10L12 5z" fill="#fff"/>
+    <rect x="10" y="14" width="4" height="6.5" rx="0.8" fill="#7c2d12" fill-opacity="0.45"/>
+    <rect x="15.6" y="4.8" width="2.4" height="4" rx="0.5" fill="#fff"/>`,
+  outdoors: `
+    <path d="M12 2.8c3.4 0 6.2 2.6 6.2 5.9 0 1-.3 2-.8 2.8 1.2.9 2 2.3 2 3.8 0 2.6-2.3 4.7-5.2 4.7H9.8C6.9 20 4.6 17.9 4.6 15.3c0-1.5.8-2.9 2-3.8-.5-.8-.8-1.8-.8-2.8 0-3.3 2.8-5.9 6.2-5.9z" fill="#fff"/>
+    <path d="M12 11v10.5" stroke="#14532d" stroke-opacity="0.55" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M12 15l-2.6-2.2M12 13.5l2.4-2" stroke="#14532d" stroke-opacity="0.55" stroke-width="1.5" stroke-linecap="round"/>`,
+  party: `
+    <path d="M3.5 20.5L8 7.5l8.5 8.5z" fill="#fff"/>
+    <path d="M6.3 12.4l4.9 4.9M5 16.3l2.4 2.4" stroke="#831843" stroke-opacity="0.5" stroke-width="1.4" stroke-linecap="round"/>
+    <path d="M13 4.5c.4 1.4-.2 2.4-1.2 3M17.5 9.8c1.2-.8 2.4-.8 3.3 0" stroke="#fff" stroke-width="1.7" stroke-linecap="round" fill="none"/>
+    <circle cx="16.5" cy="4.5" r="1.3" fill="#fff"/><circle cx="20" cy="6.5" r="1" fill="#fff"/><circle cx="19.5" cy="13.5" r="1.1" fill="#fff"/>`,
+  food: `
+    <path d="M12 21.5L3.8 7.2a15 15 0 0 1 16.4 0z" fill="#fff"/>
+    <path d="M3.8 7.2a15 15 0 0 1 16.4 0l-1 1.8a13 13 0 0 0-14.4 0z" fill="#fff" stroke="#7c2d12" stroke-opacity="0.4" stroke-width="1"/>
+    <circle cx="10" cy="11" r="1.6" fill="#b91c1c" fill-opacity="0.7"/>
+    <circle cx="14" cy="12.5" r="1.4" fill="#b91c1c" fill-opacity="0.7"/>
+    <circle cx="11.8" cy="16" r="1.2" fill="#b91c1c" fill-opacity="0.7"/>`,
+});
 
 function packGlyph(pack) {
   return `<svg class="pack-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">${PACK_GLYPHS[pack] || ''}</svg>`;

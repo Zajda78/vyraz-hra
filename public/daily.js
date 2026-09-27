@@ -40,7 +40,7 @@ function claimDailyTicket() {
   d.tickets.any = (d.tickets.any || 0) + 1;
   d.daily = { ...(d.daily || {}), ticket: todayKey() };
   shopSave(d);
-  showToast('Free ticket! Play one game of Doodle or Impostor');
+  showToast('Free ticket! Play one game of any Party Pack mode');
   renderShopScreen();
 }
 
@@ -100,7 +100,7 @@ function dailyRewardsHtml() {
         <div class="daily-ticket-icon">${icon('ticket')}</div>
         <div class="daily-ticket-text">
           <strong>Daily Ticket</strong>
-          <span>1 free game of Doodle or Impostor</span>
+          <span>1 free game of any Party Pack mode</span>
         </div>
         ${canClaimDailyTicket()
           ? `<button class="daily-btn" id="daily-ticket-btn">Claim</button>`

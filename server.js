@@ -20,9 +20,13 @@ const CAPTION_SECONDS_DEFAULT = 40;
 const CAPTION_SECONDS_MIN = 10;
 const CAPTION_SECONDS_MAX = 180;
 const CAPTION_WIN_POINTS = 100;
+// --- Snap Hunt --- čas na hledání a vyfocení (hostitel vybírá v lobby)
+const HUNT_SECONDS_DEFAULT = 60;
+const HUNT_SECONDS_MIN = 15;
+const HUNT_SECONDS_MAX = 180;
 
 // --- Impostor ---
-const IMPOSTOR_MIN_PLAYERS = 3;
+const MIN_PLAYERS = 3; // všechny módy se hrají od 3 hráčů
 const IMPOSTOR_VOTE_SECONDS = 30;
 const IMPOSTOR_CIV_WIN_POINTS = 100; // každý z ostatních, když impostora odhalí
 const IMPOSTOR_WIN_POINTS = 250; // impostor, když ho neodhalí
@@ -302,6 +306,177 @@ const SCHOOL_IMPOSTOR_PAIRS = [
   ['Your face when you fall asleep in class', 'Your face when you wake up late for school'],
 ];
 
+// Mód Snap Hunt — zadání, co mají všichni najít a vyfotit (bez jména hráče,
+// bez sad otázek). Hráči můžou fotit zadním foťákem.
+const HUNT_PROMPTS = [
+  'Something blue',
+  'The weirdest thing in your bag or pocket',
+  'Your shoes right now',
+  'Something older than you',
+  'The messiest spot near you',
+  'Something round',
+  'The coolest thing in the room',
+  'Something that makes a noise',
+  'Your favourite snack',
+  'Something with a face on it (that isn\'t a person)',
+  'A tiny thing that looks huge up close',
+  'Something that smells amazing',
+  'The ugliest thing you can find',
+  'Something soft',
+  'Something with a number on it',
+  'The sky right now',
+  'Something that starts with the letter B',
+  'Your drink right now',
+  'Something shiny',
+  'Something that could be a hat',
+  'The most random object around you',
+  'Something green',
+  'A plant (real or fake)',
+  'Something you\'d save in a fire',
+  'Something that doesn\'t belong where it is',
+  'A cable or a charger',
+  'Something with stripes',
+  'The oldest thing in your wallet or bag',
+  'Something that looks like an animal',
+  'The best view you can find in 60 seconds',
+  'Something red',
+  'A spoon, fork or anything you eat with',
+  'Something heart-shaped',
+  'A book, magazine or anything with words',
+  'Your hand doing a cool pose',
+  'Something that looks expensive',
+  'Something that looks cheap but isn\'t',
+  'A light source',
+  'Something that\'s a pair',
+  'The strangest texture near you',
+];
+
+// Žánry Snap Huntu — hostitel vybírá v lobby, co se bude hledat.
+// Všechny jsou součástí módu (žádný extra nákup).
+const HUNT_HOME_PROMPTS = [
+  'The weirdest thing in your fridge',
+  'Your pillow',
+  'Something in your house that\'s older than you',
+  'The most useless thing you own',
+  'Your toothbrush',
+  'A remote control',
+  'Something that shouldn\'t be on the floor',
+  'The best mug in the house',
+  'Something that belongs to someone else',
+  'Your favourite blanket or hoodie',
+  'A plant or something green indoors',
+  'The messiest drawer you can find',
+  'Something with a plug',
+  'A photo or picture on the wall',
+  'Your comfiest spot at home',
+  'Something that makes you laugh',
+  'A pair of socks',
+  'The biggest spoon you can find',
+  'Something you forgot you had',
+  'A key',
+];
+
+const HUNT_SCHOOL_PROMPTS = [
+  'Your pencil case',
+  'The most chewed pen you can find',
+  'A ruler',
+  'Your school bag',
+  'The best doodle in your notebook',
+  'Something the teacher would confiscate',
+  'The clock on the wall',
+  'Something with a formula on it',
+  'A textbook page with a picture',
+  'Your lunch or snack',
+  'A rubber or eraser',
+  'The weirdest thing in your locker or desk',
+  'A water bottle',
+  'Something from the science lab',
+  'A map or globe',
+  'A piece of chalk or a marker',
+  'The ugliest handwriting you can find',
+  'Your timetable',
+  'Something that starts with the first letter of your name',
+  'The window view from your classroom',
+];
+
+const HUNT_OUTDOORS_PROMPTS = [
+  'The coolest leaf you can find',
+  'A bird (or anything with wings)',
+  'The sky right now',
+  'A flower',
+  'Something that looks like a face',
+  'A funny sign',
+  'The tallest thing you can see',
+  'A car of your favourite colour',
+  'A rock with character',
+  'Your shadow',
+  'Something wet',
+  'A dog (or any animal)',
+  'The best tree around',
+  'Something someone lost',
+  'A puddle, pond or any water',
+  'A bench',
+  'The most colourful thing outside',
+  'Something that moves in the wind',
+  'A cloud that looks like something',
+  'Your shoes on the ground',
+];
+
+const HUNT_PARTY_PROMPTS = [
+  'The best drink at this party',
+  'Someone\'s most dramatic pose',
+  'The snack that\'s disappearing fastest',
+  'A group of 3 people doing the same pose',
+  'The most sparkly thing here',
+  'Someone mid-laugh',
+  'The best outfit in the room',
+  'Something that shouldn\'t be at a party',
+  'A cup with a name on it',
+  'The coolest shoes here',
+  'The DJ, speaker or whoever controls the music',
+  'The best dance move',
+  'A balloon, candle or any decoration',
+  'Two people high-fiving',
+  'The messiest table',
+  'The host of the party',
+  'Someone\'s phone lock screen (with permission!)',
+  'The best hair in the room',
+  'A selfie with 3 people',
+  'Something that\'s pink',
+];
+
+const HUNT_FOOD_PROMPTS = [
+  'The weirdest snack you can find',
+  'Something sweet',
+  'Something spicy',
+  'A fruit',
+  'A vegetable',
+  'The most colourful food near you',
+  'Something with cheese',
+  'Your favourite cereal or breakfast',
+  'A food that looks like a face',
+  'Something crunchy',
+  'The oldest thing in the fridge',
+  'A sauce or ketchup',
+  'Something you\'d never eat',
+  'Chocolate',
+  'Bread in any form',
+  'A drink that isn\'t water',
+  'The fanciest-looking food around',
+  'Something round and edible',
+  'A snack with a funny name',
+  'Your dream meal (or a picture of it)',
+];
+
+const HUNT_PACKS = {
+  anywhere: HUNT_PROMPTS,
+  home: HUNT_HOME_PROMPTS,
+  school: HUNT_SCHOOL_PROMPTS,
+  outdoors: HUNT_OUTDOORS_PROMPTS,
+  party: HUNT_PARTY_PROMPTS,
+  food: HUNT_FOOD_PROMPTS,
+};
+
 // Sady otázek, ze kterých hostitel vybírá v lobby (Main Character žádné nemá).
 // Spicy, Family a School jsou placené (Question Packs) — hlídá to zatím jen klient.
 const PROMPT_PACKS = {
@@ -382,7 +557,7 @@ function friendStatus(code) {
 function newLobby(hostId) {
   return {
     hostId,
-    mode: 'classic', // classic | draw | caption | impostor — nastaví se při create_lobby, dál se nemění
+    mode: 'classic', // classic | draw | caption | impostor | hunt — nastaví se při create_lobby, dál se nemění
     phase: 'lobby', // lobby | submitting | drawing | voting | impostor_voting | subject_photo | captioning | judging | results | gameover
     totalRounds: 5,
     drawEnabled: false,
@@ -396,6 +571,8 @@ function newLobby(hostId) {
     votes: new Map(), // voterId -> targetId
     drawDone: new Set(), // hráči, kteří dokreslili (nebo neměli co)
     cardOrder: [], // shuffled player ids for this round's reveal
+    huntSeconds: HUNT_SECONDS_DEFAULT, // Snap Hunt — čas na hledání a vyfocení
+    huntPack: 'anywhere', // Snap Hunt — žánr (anywhere | home | school | outdoors | party | food)
     // --- Main character (mode: 'caption') ---
     captionSeconds: CAPTION_SECONDS_DEFAULT, // jediná fáze s časovým limitem — psaní popisků
     subjectOrder: [], // pořadí hráčů, kdo bude objekt fotky, zamíchané při startu hry
@@ -418,7 +595,7 @@ function newLobby(hostId) {
 }
 
 function pickPrompt(lobby) {
-  const prompts = PROMPT_PACKS[lobby.promptPack].prompts;
+  const prompts = lobby.mode === 'hunt' ? HUNT_PACKS[lobby.huntPack] : PROMPT_PACKS[lobby.promptPack].prompts;
   const remaining = prompts.filter((t) => !lobby.usedPrompts.has(t));
   const pool = remaining.length ? remaining : prompts;
   const chosen = pool[crypto.randomInt(pool.length)];
@@ -463,8 +640,10 @@ function startRound(lobby) {
   lobby.cardOrder = [];
   lobby.lastRoundResult = null;
   lobby.phase = 'submitting';
-  lobby.deadlineAt = Date.now() + SUBMIT_SECONDS * 1000;
-  lobby.timer = setTimeout(() => afterSubmitting(lobby), SUBMIT_SECONDS * 1000);
+  // Snap Hunt potřebuje víc času — věc se musí najít, ne jen udělat obličej
+  const seconds = lobby.mode === 'hunt' ? lobby.huntSeconds : SUBMIT_SECONDS;
+  lobby.deadlineAt = Date.now() + seconds * 1000;
+  lobby.timer = setTimeout(() => afterSubmitting(lobby), seconds * 1000);
   broadcast(lobby);
 }
 
@@ -938,6 +1117,8 @@ function publicState(lobby, viewerId) {
     drawEnabled: lobby.drawEnabled,
     drawSeconds: lobby.drawSeconds,
     captionSeconds: lobby.captionSeconds,
+    huntSeconds: lobby.huntSeconds,
+    huntPack: lobby.huntPack,
     promptPack: lobby.promptPack,
     prompt: promptFor(lobby, viewerId),
     // impostor o své roli neví — dozví se ji až ve výsledcích kola
@@ -1217,7 +1398,7 @@ wss.on('connection', (ws) => {
       const newCode = code();
       lobby = newLobby(null);
       lobby.code = newCode;
-      lobby.mode = ['draw', 'caption', 'impostor'].includes(msg.mode) ? msg.mode : 'classic';
+      lobby.mode = ['draw', 'caption', 'impostor', 'hunt'].includes(msg.mode) ? msg.mode : 'classic';
       lobby.drawEnabled = lobby.mode === 'draw';
       playerId = id();
       lobby.hostId = playerId;
@@ -1298,7 +1479,7 @@ wss.on('connection', (ws) => {
       return;
     }
 
-    if (msg.type === 'set_prompt_pack' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode !== 'caption') {
+    if (msg.type === 'set_prompt_pack' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode !== 'caption' && lobby.mode !== 'hunt') {
       if (PROMPT_PACKS[msg.pack]) lobby.promptPack = msg.pack;
       broadcast(lobby);
       return;
@@ -1312,10 +1493,18 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'set_hunt_settings' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode === 'hunt') {
+      if (HUNT_PACKS[msg.pack]) lobby.huntPack = msg.pack;
+      if (msg.seconds != null) {
+        lobby.huntSeconds = Math.max(HUNT_SECONDS_MIN, Math.min(HUNT_SECONDS_MAX, Number(msg.seconds) || HUNT_SECONDS_DEFAULT));
+      }
+      broadcast(lobby);
+      return;
+    }
+
     if (msg.type === 'start_game' && playerId === lobby.hostId && lobby.phase === 'lobby') {
-      if (lobby.players.size < 2) return sendError(ws, 'You need at least 2 players.');
-      if (lobby.mode === 'impostor' && connectedPlayers(lobby).length < IMPOSTOR_MIN_PLAYERS) {
-        return sendError(ws, `Impostor needs at least ${IMPOSTOR_MIN_PLAYERS} players.`);
+      if (connectedPlayers(lobby).length < MIN_PLAYERS) {
+        return sendError(ws, `You need at least ${MIN_PLAYERS} players.`);
       }
       lobby.gameId = id();
       for (const p of lobby.players.values()) {
