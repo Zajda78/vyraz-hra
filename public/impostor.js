@@ -51,6 +51,7 @@ function buildImpostorVotingView(state) {
   document.querySelectorAll('.ivote-card[data-id]').forEach((el) => {
     el.onclick = () => {
       send({ type: 'cast_vote', targetId: el.dataset.id });
+      playSfx('vote');
       markImpostorVote(el.dataset.id);
     };
   });

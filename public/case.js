@@ -335,26 +335,11 @@ function showCaseContents(caseId) {
 }
 
 // ----------------------------------------------------------- zvuky ---
+// (soubory v sfx/, přehrává playSfx ze sounds.js)
 
-let caseAudio = null;
-function caseSound(freq, duration, type = 'square', volume = 0.04) {
-  try {
-    if (!caseAudio) caseAudio = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = caseAudio.createOscillator();
-    const gain = caseAudio.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime(volume, caseAudio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, caseAudio.currentTime + duration);
-    osc.connect(gain).connect(caseAudio.destination);
-    osc.start();
-    osc.stop(caseAudio.currentTime + duration);
-  } catch { /* bez zvuku */ }
-}
-
-function revealSound(rarity) {
-  const notes = { common: [523], rare: [523, 659], epic: [523, 659, 784], legendary: [523, 659, 784, 1047] }[rarity];
-  notes.forEach((f, i) => setTimeout(() => caseSound(f, 0.35, 'triangle', 0.08), i * 110));
+function revealSound(rarity, duplicate) {
+  playSfx(`reveal-${rarity}`);
+  if (duplicate) setTimeout(() => playSfx('coins'), 500); // vrácené mince za duplikát
 }
 
 // ------------------------------------------------------- otevírání ---
@@ -380,7 +365,7 @@ function openCase(caseId, { free = false } = {}) {
   const d = shopLoad();
   if (!free && d.coins < caseDef.price) return showToast('Not enough coins.');
 
-  if (!free) d.coins -= caseDef.price;
+  if (!free && !isDevMode()) d.coins -= caseDef.price;
   const won = rollItem(caseDef);
   const duplicate = d.owned.includes(won.id);
   const refund = duplicate ? RARITIES[won.rarity].refund : 0;
@@ -392,6 +377,7 @@ function openCase(caseId, { free = false } = {}) {
 }
 
 function showCaseOverlay(caseDef, won, duplicate, refund) {
+  playSfx('chest-open');
   closeCaseOverlay();
   const strip = Array.from({ length: STRIP_LENGTH }, (_, i) => (i === STRIP_WIN_INDEX ? won : rollItem(caseDef)));
 
@@ -429,7 +415,7 @@ function showCaseOverlay(caseDef, won, duplicate, refund) {
     // cvaknutí pokaždé, když pod značkou projede další karta
     const under = Math.floor((x + windowWidth / 2) / STRIP_STEP);
     if (under !== lastTick) {
-      if (lastTick !== -1) caseSound(1400, 0.03);
+      if (lastTick !== -1) playSfx('chest-tick');
       lastTick = under;
     }
     if (t < 1) requestAnimationFrame(frame);
@@ -442,7 +428,7 @@ function showReveal(caseDef, won, duplicate, refund) {
   const overlay = document.getElementById('case-overlay');
   if (!overlay) return;
   overlay.querySelector('.strip-card.is-win').classList.add('highlight');
-  revealSound(won.rarity);
+  revealSound(won.rarity, duplicate);
 
   const rarity = RARITIES[won.rarity];
   const coins = shopLoad().coins;

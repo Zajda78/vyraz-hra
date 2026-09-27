@@ -57,6 +57,8 @@ function wireSocketEvents(socket) {
       showError(msg.message);
     } else if (msg.type === 'info') {
       showToast(msg.message);
+    } else if (handleDevMessage(msg)) {
+      // vývojářský režim (dev.js)
     } else {
       handleFriendMessage(msg);
     }
@@ -208,7 +210,7 @@ const MODE_MENU = [
   },
   {
     title: 'PARTY PACK',
-    partyPack: true, // u nadpisu tlačítko na odemčení / „Owned“
+    partyPack: true, // placené módy — zlaté štítky u zamčených
     modes: [
       { id: 'draw', name: 'Doodle', tagline: 'Snap a selfie, doodle on it, vote', players: 3, bg: () => MODE_ICON_PALETTE },
       { id: 'impostor', name: 'Impostor', tagline: 'One player got a different prompt', players: 3, bg: () => MODE_ICON_SPY },
@@ -221,11 +223,6 @@ function modeMenuHtml() {
   return MODE_MENU.map((group) => `
     <div class="mode-group-head">
       <div class="section-eyebrow">${group.title}</div>
-      ${group.partyPack
-        ? (ownsPartyPack()
-          ? `<span class="mode-group-owned">${icon('checkCircle')} Owned</span>`
-          : `<button class="mode-group-unlock" id="unlock-party-pack">${icon('lock')} Unlock</button>`)
-        : ''}
     </div>
     <div class="mode-grid">
       ${group.modes.map((m) => `
@@ -293,6 +290,7 @@ document.addEventListener('click', (e) => {
 let homeTab = 'games';
 
 function renderStartScreen() {
+  stopLobbyMusic(); // mimo lobby hudba nehraje
   sendHello(); // jméno/vzhled se mohly změnit — ať to přátelé vidí aktuální
   if (homeTab === 'shop') return renderShopScreen();
   if (homeTab === 'friends') return renderFriendsScreen();
@@ -359,7 +357,7 @@ function renderGamesScreen() {
 
   app.innerHTML = `
     <div class="home-top">
-      <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>face-it</h1></div>
+      <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>face-it</h1>${devBadgeHtml()}</div>
       <div class="home-actions">
         <button id="rules-btn" class="text-btn">Rules</button>
         <button id="settings-btn" class="icon-btn" title="Settings">${icon('gear')}</button>
@@ -419,11 +417,8 @@ function renderGamesScreen() {
     };
   });
 
-  const unlockPack = document.getElementById('unlock-party-pack');
-  if (unlockPack) unlockPack.onclick = () => showPartyPackOffer(null);
-
   document.getElementById('rules-btn').onclick = () => showRulesModal();
-  document.getElementById('settings-btn').onclick = () => showSettingsModal(renderStartScreen);
+  document.getElementById('settings-btn').onclick = () => showSettingsModal();
   wireProfileCard();
 }
 
@@ -478,29 +473,20 @@ function showNameModal(onReady) {
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
 }
 
-function showSettingsModal(onSaved) {
+// Nastavení — jen povolení kamery (jméno se mění v profilu přes tužku).
+function showSettingsModal() {
   const modal = openModal(`
+    <div class="x-close-row"><button class="x-close" id="modal-settings-close" aria-label="Close">${icon('close')}</button></div>
     <h2>Settings</h2>
-    <div class="field">
-      <input id="modal-settings-name" maxlength="20" value="${escapeHtml(getSavedName())}" placeholder="e.g. Alex">
-    </div>
-
-    <div class="field">
-      <label>Camera</label>
-      <button id="modal-camera-test" class="btn btn-ghost btn-block" type="button">${icon('camera')} Allow camera access</button>
-      <p class="camera-status" id="modal-camera-status"></p>
-    </div>
-
-    <button id="modal-settings-save" class="btn btn-primary btn-block">Save</button>
-    <button class="modal-close" id="modal-settings-close">Close</button>
+    ${volumeSlidersHtml()}
+    <button id="modal-camera-test" class="btn btn-primary btn-block" type="button">${icon('camera')} Allow camera access</button>
+    <p class="camera-status" id="modal-camera-status"></p>
   `);
-  modal.querySelector('#modal-settings-save').onclick = () => {
-    const name = modal.querySelector('#modal-settings-name').value.trim();
-    if (name) localStorage.setItem('vyraz_name', name);
-    closeModal();
-    if (onSaved) onSaved();
-  };
-  modal.querySelector('#modal-settings-close').onclick = closeModal;
+  wireVolumeSliders(modal);
+  // ukázka hudby hraje jen během posouvání — po zavření nastavení ztichne
+  const closeSettings = () => { stopLobbyMusic(); closeModal(); };
+  modal.querySelector('#modal-settings-close').onclick = closeSettings;
+  document.getElementById('modal-backdrop').addEventListener('click', (e) => { if (e.target.id === 'modal-backdrop') stopLobbyMusic(); });
 
   modal.querySelector('#modal-camera-test').onclick = async () => {
     const statusEl = modal.querySelector('#modal-camera-status');
@@ -726,6 +712,7 @@ function renderLobbyScreen(state) {
           </div>
         ` : ''}
 
+        ${addBotButtonHtml(state)}
         <button id="start-btn" class="btn btn-primary btn-block" ${players.length < minPlayersFor(state.mode) ? 'disabled' : ''}>
           ${players.length < minPlayersFor(state.mode)
             ? `Need at least ${minPlayersFor(state.mode)} players`
@@ -742,6 +729,7 @@ function renderLobbyScreen(state) {
     wireOptionPicker('draw-seconds', (v) => send({ type: 'set_draw_settings', seconds: v }));
     wireOptionPicker('caption-seconds', (v) => send({ type: 'set_caption_settings', seconds: v }));
     wireOptionPicker('hunt-seconds', (v) => send({ type: 'set_hunt_settings', seconds: v }));
+    wireAddBot();
     document.querySelectorAll('#picker-hunt-pack .pack-chip').forEach((b) => {
       b.onclick = () => send({ type: 'set_hunt_settings', pack: b.dataset.huntPack });
     });
@@ -865,6 +853,7 @@ function capturePhoto() {
   if (flash) { flash.classList.add('on'); setTimeout(() => flash.classList.remove('on'), 350); }
 
   send({ type: 'submit_photo', photoDataUrl: dataUrl });
+  playSfx('shutter');
   stopCamera();
 
   if (lastState && lastState.phase === 'subject_photo') {
@@ -1042,6 +1031,7 @@ function buildJudgingView(state) {
         el.classList.remove('disabled');
         el.classList.add('picked');
         send({ type: 'pick_caption', authorId: el.getAttribute('data-id') });
+        playSfx('vote');
       };
     });
   }
@@ -1225,6 +1215,7 @@ function buildVotingView(state) {
       const targetId = el.getAttribute('data-id');
       votedLocallyFor = targetId;
       send({ type: 'cast_vote', targetId });
+      playSfx('vote');
       document.querySelectorAll('.vote-card[data-id]').forEach((c) => {
         c.classList.toggle('selected', c === el);
         if (c !== el) c.classList.add('disabled');
@@ -1405,6 +1396,7 @@ function creditGameReward(reward) {
   const d = shopLoad();
   d.coins += reward.total;
   shopSave(d);
+  setTimeout(() => playSfx('coins'), 1300); // až po fanfáře za konec hry
   done.push(reward.gameId);
   try { localStorage.setItem('vyraz_rewarded', JSON.stringify(done.slice(-50))); } catch { /* ignore */ }
 }
@@ -1475,7 +1467,11 @@ function renderApp(state) {
       && lastState.code === state.code && !isModeUnlocked(state.mode)) {
     useTicket(state.mode);
   }
+  playPhaseSounds(lastState, state);
   lastState = state;
+
+  if (state.phase === 'lobby') playLobbyMusic();
+  else stopLobbyMusic();
 
   if (state.phase === 'lobby') return renderLobbyScreen(state);
 
@@ -1556,7 +1552,42 @@ setInterval(() => {
   const remaining = Math.max(0, Math.ceil((lastState.deadlineAt - Date.now()) / 1000));
   el.innerHTML = `${icon('timer')}<span>${remaining}s</span>`;
   el.classList.toggle('low', remaining <= 5);
+  timerSounds(lastState.deadlineAt, remaining);
 }, 250);
+
+// Tiknutí každou vteřinu v posledních 5 s a zvuk, když čas vyprší —
+// každé zvuky jen jednou pro danou vteřinu a daný odpočet.
+let tickDeadline = null;
+let tickLastSecond = null;
+let timeUpPlayedFor = null; // pro který odpočet už zazněl konec času
+function timerSounds(deadlineAt, remaining) {
+  if (tickDeadline !== deadlineAt) { tickDeadline = deadlineAt; tickLastSecond = remaining; return; }
+  if (remaining === tickLastSecond) return;
+  tickLastSecond = remaining;
+  if (remaining === 0) playTimeUp(deadlineAt);
+  else if (remaining <= 5) playSfx('timer-tick');
+}
+
+function playTimeUp(deadlineAt) {
+  if (timeUpPlayedFor === deadlineAt) return;
+  timeUpPlayedFor = deadlineAt;
+  playSfx('time-up');
+}
+
+// Zvuky při přechodech mezi fázemi (porovná předchozí a nový stav).
+function playPhaseSounds(prev, state) {
+  if (!prev || prev.code !== state.code) return; // právě jsem se připojil — nic
+  // Server přepne fázi přesně ve chvíli, kdy vyprší čas — odpočet tedy „0 s“
+  // nikdy neukáže. Konec času poznáme tak, že skončil předchozí odpočet.
+  // (Když všichni stihnou dřív, fáze se přepne před koncem a zvuk nezazní.)
+  if (prev.deadlineAt && prev.deadlineAt !== state.deadlineAt && Date.now() >= prev.deadlineAt - 600) {
+    playTimeUp(prev.deadlineAt);
+  }
+  if (prev.phase === 'lobby' && state.phase === 'lobby' && state.players.length > prev.players.length) playSfx('player-join');
+  if (prev.phase === 'lobby' && state.phase !== 'lobby') playSfx('game-start');
+  if (state.phase === 'results' && prev.phase !== 'results') playSfx('round-results');
+  if (state.phase === 'gameover' && prev.phase !== 'gameover') playSfx('win');
+}
 
 renderStartScreen();
 connect();

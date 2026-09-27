@@ -6,7 +6,7 @@
 // Reset postupu pro všechny: když se PROGRESS_VERSION zvýší, každému hráči
 // se při dalším otevření hry jednou smažou mince, skiny, odemčené balíčky,
 // vstupenky a denní odměny. Jméno, profilovka a přátelé zůstanou.
-const PROGRESS_VERSION = 3; // 2 = reset 27. 9. 2026, 3 = druhý reset 27. 9. 2026
+const PROGRESS_VERSION = 4; // 2, 3, 4 = resety 27. 9. 2026 (dev postup vyraz_shop_dev se nemaže)
 try {
   if (Number(localStorage.getItem('vyraz_progress_version') || 1) < PROGRESS_VERSION) {
     localStorage.removeItem('vyraz_shop');
@@ -141,16 +141,21 @@ function formatEur(value) {
   return `€${value.toFixed(2)}`;
 }
 
+// V dev režimu je postup uložený zvlášť a mincí je pořád kolem milionu.
+function shopKey() {
+  return isDevMode() ? 'vyraz_shop_dev' : 'vyraz_shop';
+}
+
 function shopLoad() {
-  try {
-    const data = JSON.parse(localStorage.getItem('vyraz_shop') || 'null');
-    if (data) return data;
-  } catch { /* ignore */ }
-  return { coins: SHOP_START_COINS, owned: [], equipped: {} };
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(shopKey()) || 'null'); } catch { /* ignore */ }
+  data = data || { coins: SHOP_START_COINS, owned: [], equipped: {} };
+  if (isDevMode() && data.coins < DEV_COINS / 2) data.coins = DEV_COINS;
+  return data;
 }
 
 function shopSave(data) {
-  try { localStorage.setItem('vyraz_shop', JSON.stringify(data)); } catch { /* ignore */ }
+  try { localStorage.setItem(shopKey(), JSON.stringify(data)); } catch { /* ignore */ }
 }
 
 function coinBadgeHtml(coins) {
@@ -224,7 +229,7 @@ function renderShopScreen() {
 
     <div class="screen">
       <button class="inventory-btn" id="inventory-btn">
-        <div class="inventory-btn-icon">${icon('backpack')}</div>
+        <div class="inventory-btn-icon">${icon('hanger')}</div>
         <div class="inventory-btn-text"><strong>Inventory</strong><span>${itemCountLabel(data.owned.length)}</span></div>
         <div class="inventory-btn-arrow">${icon('chevron')}</div>
       </button>
@@ -276,7 +281,8 @@ function renderShopScreen() {
       setTimeout(() => openCase(btn.dataset.case), 450);
     };
   });
-  document.querySelectorAll('.case-info-btn').forEach((btn) => { btn.onclick = () => showCaseContents(btn.dataset.case); });
+  // jen truhly v sekci CHESTS — Daily Chest má vlastní "?" (daily.js), ten nepřepisovat
+  document.querySelectorAll('.case-info-btn[data-case]').forEach((btn) => { btn.onclick = () => showCaseContents(btn.dataset.case); });
 
   const notYet = () => showToast('Payments aren\'t live yet — this is a prototype.');
   document.querySelectorAll('.coin-pack').forEach((b) => { b.onclick = notYet; });

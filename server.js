@@ -10,6 +10,15 @@ const path = require('path');
 const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
+
+// ------------------------------------------------- Vývojářský režim ---
+// Jen pro autora hry přes tajný odkaz ?dev=KLÍČ. Repozitář je veřejný,
+// proto tu není klíč, ale jen jeho SHA-256 otisk (z otisku se klíč zjistit nedá).
+const DEV_KEY_HASH = 'a83f8574e55c4995848d7edca809e9b130f8346f49232693dee3594c2708615c';
+function isDevKey(key) {
+  return typeof key === 'string' && key.length >= 16
+    && crypto.createHash('sha256').update(key).digest('hex') === DEV_KEY_HASH;
+}
 const SUBMIT_SECONDS = 30;
 const VOTE_SECONDS = 20;
 const RESULTS_AUTO_ADVANCE_SECONDS = 15;
@@ -1242,6 +1251,7 @@ const wss = new WebSocket.Server({ server });
 const HEARTBEAT_MS = 25_000;
 
 wss.on('connection', (ws) => {
+  let isDev = false; // vývojářský režim (ověřený tajný klíč)
   let lobby = null;
   let playerId = null;
   let me = null; // kód přítele tohohle zařízení (po zprávě "hello")
@@ -1332,6 +1342,19 @@ wss.on('connection', (ws) => {
     try {
       msg = JSON.parse(raw.toString());
     } catch {
+      return;
+    }
+
+    if (msg.type === 'dev_login') {
+      isDev = isDevKey(msg.key);
+      ws.send(JSON.stringify({ type: isDev ? 'dev_ok' : 'dev_denied' }));
+      return;
+    }
+
+    if (msg.type === 'dev_add_bot') {
+      if (!isDev || !lobby || playerId !== lobby.hostId || lobby.phase !== 'lobby') return;
+      if (lobby.players.size >= 10) return sendError(ws, 'The lobby is full.');
+      spawnBot(lobby.code, [...lobby.players.values()].map((p) => p.name));
       return;
     }
 
@@ -1623,6 +1646,69 @@ const heartbeatTimer = setInterval(() => {
 }, HEARTBEAT_MS);
 
 wss.on('close', () => clearInterval(heartbeatTimer));
+
+// ------------------------------------------------------ Boti (dev) ---
+// Bot je obyčejný hráč připojený přes WebSocket k tomuhle serveru — hraje
+// podle stejných pravidel jako lidi. Fotí jen smajlíka, hlasuje náhodně.
+
+const BOT_NAMES = ['Bot Bob', 'Bot Anna', 'Bot Max', 'Bot Lily', 'Bot Tom', 'Bot Zoe', 'Bot Leo', 'Bot Mia', 'Bot Sam'];
+const BOT_CAPTIONS = [
+  'When the WiFi password is wrong again', 'Me pretending to understand', 'POV: you just woke up',
+  'That face when the pizza arrives', 'Main character energy', 'Plot twist incoming',
+  'Trying to look cool, failing', 'Monday morning mood', 'Instant regret', 'When they say "one more game"',
+];
+const BOT_COLORS = ['#8B5CF6', '#22D3EE', '#F472B6', '#34D399', '#FB923C', '#60A5FA'];
+
+function botPhoto() {
+  const bg = BOT_COLORS[crypto.randomInt(BOT_COLORS.length)];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="${bg}"/><circle cx="120" cy="120" r="70" fill="#FDE047"/><circle cx="96" cy="104" r="9" fill="#1F1235"/><circle cx="144" cy="104" r="9" fill="#1F1235"/><path d="M88 138 Q120 168 152 138" stroke="#1F1235" stroke-width="9" fill="none" stroke-linecap="round"/></svg>`;
+  return 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
+}
+
+function spawnBot(code, takenNames) {
+  const name = BOT_NAMES.find((n) => !takenNames.includes(n)) || `Bot ${crypto.randomInt(100)}`;
+  const bws = new WebSocket(`ws://127.0.0.1:${PORT}`);
+  const done = new Set(); // co už bot v daném kole udělal (ať nic neposílá dvakrát)
+  const later = (key, fn) => {
+    if (done.has(key)) return;
+    done.add(key);
+    setTimeout(() => { if (bws.readyState === WebSocket.OPEN) fn(); }, 800 + crypto.randomInt(1500));
+  };
+  const out = (obj) => bws.send(JSON.stringify(obj));
+  let hostGoneSince = null;
+
+  bws.on('open', () => out({ type: 'join_lobby', code, name, looks: {} }));
+  bws.on('message', (raw) => {
+    let m;
+    try { m = JSON.parse(raw.toString()); } catch { return; }
+    if (m.type === 'error') return bws.close();
+    if (m.type !== 'state') return;
+    const r = `${m.round}`;
+
+    // když hostitel zmizí na víc než minutu, bot odejde taky
+    const host = (m.players || []).find((p) => p.isHost);
+    if (!host || !host.connected) {
+      hostGoneSince = hostGoneSince || Date.now();
+      if (Date.now() - hostGoneSince > 60000) return bws.close();
+    } else hostGoneSince = null;
+
+    if (m.phase === 'submitting' && !m.youSubmitted) later(`photo-${r}`, () => out({ type: 'submit_photo', photoDataUrl: botPhoto() }));
+    if (m.phase === 'subject_photo' && m.isSubject) later(`subject-${r}`, () => out({ type: 'submit_photo', photoDataUrl: botPhoto() }));
+    if (m.phase === 'drawing' && !m.youDone) later(`draw-${r}`, () => out({ type: 'finish_drawing' }));
+    if ((m.phase === 'voting' || m.phase === 'impostor_voting') && !m.youVoted) {
+      const options = (m.cards || []).filter((c) => !c.isOwn && !c.missed);
+      if (options.length) later(`vote-${m.phase}-${r}`, () => out({ type: 'cast_vote', targetId: options[crypto.randomInt(options.length)].id }));
+    }
+    if (m.phase === 'captioning' && !m.isSubject && !m.youCaptioned) {
+      later(`caption-${r}`, () => out({ type: 'submit_caption', text: BOT_CAPTIONS[crypto.randomInt(BOT_CAPTIONS.length)] }));
+    }
+    if (m.phase === 'judging' && m.isSubject && m.captionCards?.length) {
+      later(`judge-${r}`, () => out({ type: 'pick_caption', authorId: m.captionCards[crypto.randomInt(m.captionCards.length)].id }));
+    }
+  });
+  bws.on('error', () => { /* bot se prostě nepřipojí */ });
+  setTimeout(() => bws.close(), 3 * 60 * 60 * 1000); // pojistka: nejdéle 3 hodiny
+}
 
 server.listen(PORT, () => {
   console.log(`face-it running on http://localhost:${PORT}`);

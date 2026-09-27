@@ -174,13 +174,13 @@ function renderProfileScreen() {
           <div class="profile-stat-label">Coins</div>
         </div>
         <div class="profile-stat">
-          <div class="profile-stat-value">${icon('backpack')}<span class="num">${data.owned.length} / ${totalItems}</span></div>
+          <div class="profile-stat-value">${icon('hanger')}<span class="num">${data.owned.length} / ${totalItems}</span></div>
           <div class="profile-stat-label">Collection</div>
           <div class="profile-progress"><div style="width:${pct}%"></div></div>
         </div>
       </div>
 
-      <button class="btn btn-primary btn-block" id="profile-edit-looks">${icon('backpack')} Edit look</button>
+      <button class="btn btn-primary btn-block" id="profile-edit-looks">${icon('hanger')} Edit look</button>
       <button class="btn btn-ghost btn-block" id="profile-shop">${icon('bag')} Open a chest in the shop</button>
     </div>
     ${bottomNavHtml('games')}

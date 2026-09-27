@@ -65,6 +65,7 @@ function claimDailyCoins() {
   if (!canClaimDailyCoins()) return;
   const d = shopLoad();
   d.coins += DAILY_COINS;
+  playSfx('coins');
   d.daily = { ...(d.daily || {}), coins: todayKey() };
   shopSave(d);
   showToast(`+${DAILY_COINS} coins — see you tomorrow!`);

@@ -36,6 +36,7 @@ function isFriend(code) {
 // každém připojení a při změně jména/vzhledu.
 function sendHello() {
   send({ type: 'hello', friendCode: getFriendCode(), name: getSavedName() || 'Player', looks: myLooks() });
+  sendDevLogin(); // jen když má tohle zařízení vývojářský klíč
 }
 
 // Poslední známý stav přátel ze serveru: kód → { online, name, looks, lobby }

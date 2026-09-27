@@ -54,12 +54,12 @@ function canHostMode(mode) {
 }
 
 function isModeUnlocked(mode) {
-  if (!PAID_MODES.includes(mode)) return true;
+  if (!PAID_MODES.includes(mode) || isDevMode()) return true;
   return (shopLoad().unlocks || []).includes(PARTY_PACK.id);
 }
 
 function ownsPartyPack() {
-  return (shopLoad().unlocks || []).includes(PARTY_PACK.id);
+  return isDevMode() || (shopLoad().unlocks || []).includes(PARTY_PACK.id);
 }
 
 // compact = malá dlaždice v menu — štítek musí být kratší, ať nepřekryje ikonu
@@ -144,11 +144,11 @@ QUESTION_PACKS.worthEur = QUESTION_PACKS.packs.length * PACK_PRICE_EUR + QUESTIO
 QUESTION_PACKS.discount = Math.round((1 - QUESTION_PACKS.priceEur / QUESTION_PACKS.worthEur) * 100);
 
 function ownsQuestionPacks() {
-  return (shopLoad().unlocks || []).includes(QUESTION_PACKS.id);
+  return isDevMode() || (shopLoad().unlocks || []).includes(QUESTION_PACKS.id);
 }
 
 function isPackUnlocked(pack) {
-  return pack === 'classic' || ownsQuestionPacks();
+  return pack === 'classic' || ownsQuestionPacks() || isDevMode();
 }
 
 function questionPacksCardHtml({ compact = false } = {}) {
