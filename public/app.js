@@ -212,7 +212,7 @@ const MODE_MENU = [
     modes: [
       { id: 'draw', name: 'Doodle', tagline: 'Snap a selfie, doodle on it, vote', players: 3, bg: () => MODE_ICON_PALETTE },
       { id: 'impostor', name: 'Impostor', tagline: 'One player got a different prompt', players: 3, bg: () => MODE_ICON_SPY },
-      { id: 'hunt', name: 'Snap Hunt', wide: true, isNew: true, tagline: 'A task drops — like "something blue". Hunt it down, snap it and vote for the best shot.', players: 3, bg: () => MODE_ICON_LOUPE },
+      { id: 'hunt', name: 'Snap Hunt', wide: true, tagline: 'A task drops — like "something blue". Hunt it down, snap it and vote for the best shot.', players: 3, bg: () => MODE_ICON_LOUPE },
     ],
   },
 ];

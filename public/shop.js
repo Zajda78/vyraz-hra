@@ -6,7 +6,7 @@
 // Reset postupu pro všechny: když se PROGRESS_VERSION zvýší, každému hráči
 // se při dalším otevření hry jednou smažou mince, skiny, odemčené balíčky,
 // vstupenky a denní odměny. Jméno, profilovka a přátelé zůstanou.
-const PROGRESS_VERSION = 2; // 2 = reset při vydání 27. 9. 2026
+const PROGRESS_VERSION = 3; // 2 = reset 27. 9. 2026, 3 = druhý reset 27. 9. 2026
 try {
   if (Number(localStorage.getItem('vyraz_progress_version') || 1) < PROGRESS_VERSION) {
     localStorage.removeItem('vyraz_shop');
