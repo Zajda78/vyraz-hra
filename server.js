@@ -1137,6 +1137,7 @@ function publicState(lobby, viewerId) {
       isYou: p.id === viewerId,
       looks: publicLooks(p),
       friendCode: p.friendCode || null,
+      isBot: !!p.isBot,
     }));
 
   const base = {
@@ -1310,6 +1311,7 @@ wss.on('connection', (ws) => {
       score: 0,
       ws,
       connected: true,
+      isBot: msg.botKey === BOT_JOIN_KEY, // bot z vývojářského režimu (jde přejmenovat)
     });
     setPresenceLobby(lobby.code);
     broadcast(lobby);
@@ -1429,6 +1431,16 @@ wss.on('connection', (ws) => {
       if (!isDev || !lobby || playerId !== lobby.hostId || lobby.phase !== 'lobby') return;
       if (lobby.players.size >= 10) return sendError(ws, 'The lobby is full.');
       spawnBot(lobby.code, [...lobby.players.values()].map((p) => p.name));
+      return;
+    }
+
+    if (msg.type === 'dev_rename_bot') {
+      if (!isDev || !lobby || playerId !== lobby.hostId) return;
+      const bot = lobby.players.get(msg.playerId);
+      const name = String(msg.name || '').trim().slice(0, 20);
+      if (!bot || !bot.isBot || !name) return;
+      bot.name = name;
+      broadcast(lobby);
       return;
     }
 

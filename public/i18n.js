@@ -302,6 +302,8 @@ const DICT_ROWS = [
   ["You can't vote for yourself.", 'Pro sebe hlasovat nemůžeš.', 'No puedes votarte a ti mismo.'],
   ["You can't vote for that card.", 'Pro tuhle kartu hlasovat nemůžeš.', 'No puedes votar esa carta.'],
   ['Developer mode on', 'Vývojářský režim zapnut', 'Modo desarrollador activado'],
+  ['Rename bot', 'Přejmenovat bota', 'Renombrar bot'],
+  ['Bot name', 'Jméno bota', 'Nombre del bot'],
   ['PHOTO FRAMES', 'RÁMEČKY FOTEK', 'MARCOS DE FOTO'],
   ['NAME COLOR', 'BARVA JMÉNA', 'COLOR DEL NOMBRE'],
   ['Waiting for', 'Čeká se na hráče', 'Esperando a'],

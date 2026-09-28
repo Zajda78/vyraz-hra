@@ -1925,3 +1925,12 @@ body.no-scroll{ overflow:hidden; }
 
 /* Sweets — sladká růžovo-modrá záře místo zlaté */
 .halo-frame-sweets{ background:linear-gradient(135deg, #FF5FA2, #7DD3FC 50%, #FF5FA2); }
+
+/* tužka u bota v lobby (vývojářský režim) */
+.rename-bot-btn{
+  width:28px; height:28px; border-radius:50%; cursor:pointer; flex:none;
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#C4B5FD;
+  display:flex; align-items:center; justify-content:center;
+}
+.rename-bot-btn .ico{ width:14px; height:14px; }
+.rename-bot-btn:active{ transform:scale(0.9); }

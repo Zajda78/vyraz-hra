@@ -65,4 +65,34 @@ function addBotButtonHtml(state) {
 function wireAddBot() {
   const btn = document.getElementById('add-bot-btn');
   if (btn) btn.onclick = () => send({ type: 'dev_add_bot' });
+  document.querySelectorAll('[data-rename-bot]').forEach((b) => {
+    b.onclick = () => showRenameBotModal(b.dataset.renameBot, b.dataset.name);
+  });
+}
+
+// Tužka u bota v lobby (jen vývojář, který je hostitel).
+function renameBotButtonHtml(state, p) {
+  if (!isDevMode() || !state.isHost || !p.isBot) return '';
+  return `<button class="rename-bot-btn" data-rename-bot="${p.id}" data-name="${escapeHtml(p.name)}" aria-label="Rename bot">${icon('pencil')}</button>`;
+}
+
+function showRenameBotModal(botId, currentName) {
+  const modal = openModal(`
+    <div class="x-close-row"><button class="x-close" id="rename-bot-close" aria-label="Close">${icon('close')}</button></div>
+    <h2>Rename bot</h2>
+    <div class="field"><input id="rename-bot-input" maxlength="20" value="${escapeHtml(currentName)}" placeholder="Bot name"></div>
+    <button class="btn btn-primary btn-block" id="rename-bot-save">Save name</button>
+  `);
+  const input = modal.querySelector('#rename-bot-input');
+  const save = () => {
+    const name = input.value.trim();
+    if (!name) return showToast('Please enter a name.');
+    send({ type: 'dev_rename_bot', playerId: botId, name });
+    closeModal();
+  };
+  modal.querySelector('#rename-bot-save').onclick = save;
+  modal.querySelector('#rename-bot-close').onclick = closeModal;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
+  input.focus();
+  input.select();
 }

@@ -717,6 +717,7 @@ function renderLobbyScreen(state) {
                 ${!p.isYou && p.friendCode && !isFriend(p.friendCode) && !getSentRequests().some((r) => r.code === p.friendCode)
                   ? `<button class="add-friend-mini" data-add-friend="${p.friendCode}" data-name="${escapeHtml(p.name)}" aria-label="Add friend">${icon('plus')}</button>`
                   : ''}
+                ${renameBotButtonHtml(state, p)}
                 ${state.isHost && !p.isYou
                   ? `<button class="kick-btn" data-kick="${p.id}" data-name="${escapeHtml(p.name)}" aria-label="Remove from lobby">${icon('close')}</button>`
                   : ''}
