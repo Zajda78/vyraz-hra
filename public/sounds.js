@@ -16,9 +16,11 @@ const SFX_VOLUME = {
   'player-join': 0.5, coins: 0.6,
 };
 
-// Hudba v lobby — „Chill Night" (Pixabay, bez nutnosti uvádět autora).
-const LOBBY_MUSIC_SRC = 'sfx/lobby-music.mp3';
-const LOBBY_MUSIC_VOLUME = 0.5; // hlasitost při posuvníku na 100 %
+// Hudba: v celé hře hraje hlavní skladba („Chill Night", Pixabay), v lobby
+// vlastní skladba sfx/lobby-music.mp3. Dokud lobby skladba chybí, hraje
+// v lobby dál ta hlavní. Mezi skladbami se plynule přejde.
+const MUSIC_TRACKS = { main: 'sfx/main-music.mp3', lobby: 'sfx/lobby-music.mp3' };
+const MUSIC_VOLUME = 0.5; // hlasitost při posuvníku na 100 %
 
 // Hlasitost z posuvníků v nastavení (0–1). Výchozí: hudba 60 %, zvuky 100 %.
 const VOLUME_DEFAULTS = { music: 0.6, sfx: 1 };
@@ -35,11 +37,15 @@ function setVolume(kind, value) {
   try { all = JSON.parse(localStorage.getItem('vyraz_volume') || '{}'); } catch { /* ignore */ }
   all[kind] = Math.max(0, Math.min(1, value));
   try { localStorage.setItem('vyraz_volume', JSON.stringify(all)); } catch { /* ignore */ }
-  if (kind === 'music' && lobbyMusic) lobbyMusic.volume = musicVolume();
+  if (kind === 'music') {
+    if (getVolume('music') === 0) stopMusic();
+    else if (playingTrack && musicPlayers[playingTrack]) musicPlayers[playingTrack].volume = musicVolume();
+    else playMusic(wantedTrack);
+  }
 }
 
 function musicVolume() {
-  return LOBBY_MUSIC_VOLUME * getVolume('music');
+  return MUSIC_VOLUME * getVolume('music');
 }
 
 let audioCtx = null;
@@ -62,7 +68,10 @@ function ensureAudio() {
 }
 
 // první dotyk kamkoli odemkne zvuk (capture = dřív než obsluha tlačítka)
-['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, ensureAudio, { capture: true, passive: true }));
+['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => {
+  ensureAudio();
+  if (!playingTrack) playMusic(wantedTrack);
+}, { capture: true, passive: true }));
 
 function playSfx(name, volume) {
   if (!audioCtx || !sfxBuffers[name]) return;
@@ -83,22 +92,59 @@ document.addEventListener('click', (e) => {
 
 // ---------------------------------------------------------------- hudba ---
 
-let lobbyMusic = null;
-let lobbyMusicMissing = false;
+const musicPlayers = {}; // skladba -> <audio>
+const musicMissing = {}; // skladby, které na serveru nejsou
+let wantedTrack = 'main'; // co má podle obrazovky hrát
+let playingTrack = null; // co opravdu hraje
 
-function playLobbyMusic() {
-  if (lobbyMusicMissing || getVolume('music') === 0) return;
-  if (!lobbyMusic) {
-    lobbyMusic = new Audio(LOBBY_MUSIC_SRC);
-    lobbyMusic.loop = true;
-    lobbyMusic.volume = musicVolume();
-    lobbyMusic.addEventListener('error', () => { lobbyMusicMissing = true; lobbyMusic = null; });
+function musicPlayer(track) {
+  if (musicMissing[track]) return null;
+  if (!musicPlayers[track]) {
+    const a = new Audio(MUSIC_TRACKS[track]);
+    a.loop = true;
+    a.volume = 0;
+    a.addEventListener('error', () => {
+      musicMissing[track] = true;
+      delete musicPlayers[track];
+      if (playingTrack === track) playingTrack = null;
+      playMusic(wantedTrack); // chybí lobby skladba → hraje hlavní
+    });
+    musicPlayers[track] = a;
   }
-  if (lobbyMusic.paused) lobbyMusic.play().catch(() => { /* prohlížeč zatím nedovolil přehrát */ });
+  return musicPlayers[track];
 }
 
-function stopLobbyMusic() {
-  if (lobbyMusic && !lobbyMusic.paused) lobbyMusic.pause();
+// plynulé zesílení / ztlumení
+function fadeMusic(a, to, ms, done) {
+  clearInterval(a._fade);
+  const from = a.volume;
+  const steps = Math.max(1, Math.round(ms / 40));
+  let i = 0;
+  a._fade = setInterval(() => {
+    i += 1;
+    a.volume = Math.max(0, Math.min(1, from + ((to - from) * i) / steps));
+    if (i >= steps) { clearInterval(a._fade); if (done) done(); }
+  }, 40);
+}
+
+function playMusic(track = 'main') {
+  wantedTrack = track;
+  if (getVolume('music') === 0) return;
+  const real = musicMissing[track] ? 'main' : track;
+  const next = musicPlayer(real);
+  if (!next) return;
+  if (playingTrack === real && !next.paused) return; // už hraje správná skladba
+  const prev = playingTrack && playingTrack !== real ? musicPlayers[playingTrack] : null;
+  playingTrack = real;
+  next.play()
+    .then(() => fadeMusic(next, musicVolume(), 700))
+    .catch(() => { if (playingTrack === real) playingTrack = null; }); // bez dotyku prohlížeč nepustí
+  if (prev) fadeMusic(prev, 0, 500, () => prev.pause());
+}
+
+function stopMusic() {
+  Object.values(musicPlayers).forEach((a) => { clearInterval(a._fade); a.pause(); });
+  playingTrack = null;
 }
 
 // --------------------------------------------- posuvníky v nastavení ---
@@ -125,7 +171,7 @@ function wireVolumeSliders(root) {
       root.querySelector(`#vol-${kind}-val`).textContent = `${el.value}%`;
       if (kind === 'music') {
         ensureAudio();
-        if (getVolume('music') > 0) playLobbyMusic(); else stopLobbyMusic();
+        if (getVolume('music') > 0) playMusic(wantedTrack); else stopMusic();
       }
     };
     el.onchange = () => { if (kind === 'sfx') playSfx('reveal-common'); };

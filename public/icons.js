@@ -21,12 +21,14 @@ const ICON_PATHS = {
   rounds: '<path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4.5h-4.5"/><path d="M12 8.5v3.5l2.5 1.5"/>',
   gamepad: '<path d="M7 7h10a5 5 0 0 1 4.9 6l-.8 4a2.6 2.6 0 0 1-4.5 1.2L14.5 16h-5l-2.1 2.2a2.6 2.6 0 0 1-4.5-1.2l-.8-4A5 5 0 0 1 7 7z"/><path d="M8 10.5v3M6.5 12h3"/><path d="M15.5 11h.01M17.5 13h.01" stroke-width="2.6"/>',
   bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 10V7a3 3 0 0 1 6 0v3"/>',
-  noAds: '<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8.5 14.5l1.5-5 1.5 5M9 13h2"/><path d="M14 9.5v5h1a2.5 2.5 0 0 0 0-5z"/><path d="M3 21L21 3"/>',
   backpack: '<path d="M6 10a6 6 0 0 1 12 0v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M9 4.5V4a3 3 0 0 1 6 0v.5"/><path d="M9 14h6v4H9z"/>',
   hanger: '<path d="M12 8.5V7.4a2.3 2.3 0 1 0-2.3-2.3"/><path d="M12 8.5l-8.3 6.7a1.3 1.3 0 0 0 .8 2.3h15a1.3 1.3 0 0 0 .8-2.3z"/>',
   sound: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
   music: '<path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
   soundOff: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
+  gift: '<rect x="3.5" y="9" width="17" height="11.5" rx="2"/><path d="M2.5 7.5h19V10h-19z"/><path d="M12 7.5v13"/><path d="M12 7.5C10.5 4 6.5 3.5 7 6c.3 1.4 3 1.5 5 1.5zM12 7.5c1.5-3.5 5.5-4 5-1.5-.3 1.4-3 1.5-5 1.5z"/>',
+  chest: '<path d="M4 11h16v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"/><path d="M4 11V8.5A3.5 3.5 0 0 1 7.5 5h9A3.5 3.5 0 0 1 20 8.5V11"/><rect x="10" y="9.5" width="4" height="4" rx="1"/>',
+  star: '<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
   chevron: '<path d="M9 5l7 7-7 7"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
   spy: '<path d="M7 10l1.4-5a1 1 0 0 1 1.4-.6L12 5.6l2.2-1.2a1 1 0 0 1 1.4.6L17 10"/><path d="M3 10.5c5 2 13 2 18 0"/><path d="M6 15.5c3.5-2 8.5-2 12 0-1 3-3.5 3.3-6 1.6-2.5 1.7-5 1.4-6-1.6z"/>',
@@ -143,6 +145,70 @@ function packGlyph(pack) {
 function modeTile(mode) {
   return `<div class="mode-tile"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">${MODE_GLYPHS[mode]}</svg></div>`;
 }
+
+// Ikonka „No ads" — nápis AD v červeném zákazovém kruhu (jako dopravní značka).
+const NO_ADS_SVG = `<svg class="no-ads-glyph" viewBox="0 0 24 24" aria-hidden="true">
+  <circle cx="12" cy="12" r="10.4" fill="#fff"/>
+  <text x="12" y="15.1" text-anchor="middle" font-family="Unbounded, sans-serif" font-weight="800" font-size="8.4" fill="#1F1235">AD</text>
+  <circle cx="12" cy="12" r="9.4" fill="none" stroke="#EF4444" stroke-width="2.6"/>
+  <path d="M5.4 5.4l13.2 13.2" stroke="#EF4444" stroke-width="2.6" stroke-linecap="round"/>
+</svg>`;
+
+// Mince pro obrázky balíčků (stejný styl jako COIN_SVG, jen na libovolné místo).
+function coinArt(cx, cy, r) {
+  const star = Array.from({ length: 10 }, (_, i) => {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const rr = i % 2 ? r * 0.2 : r * 0.46;
+    return `${(cx + Math.cos(a) * rr).toFixed(2)},${(cy - r * 0.07 + Math.sin(a) * rr).toFixed(2)}`;
+  }).join(' ');
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#F59E0B"/>
+    <circle cx="${cx}" cy="${cy - r * 0.08}" r="${r * 0.92}" fill="#FBBF24"/>
+    <circle cx="${cx}" cy="${cy - r * 0.08}" r="${r * 0.66}" fill="none" stroke="#B45309" stroke-opacity="0.45" stroke-width="${r * 0.12}"/>
+    <polygon points="${star}" fill="#B45309" fill-opacity="0.8"/>`;
+}
+
+function sparkleArt(cx, cy, r, fill = '#FFF7D6') {
+  const k = r * 0.28;
+  return `<path fill="${fill}" d="M${cx} ${cy - r} Q${cx + k} ${cy - k} ${cx + r} ${cy} Q${cx + k} ${cy + k} ${cx} ${cy + r} Q${cx - k} ${cy + k} ${cx - r} ${cy} Q${cx - k} ${cy - k} ${cx} ${cy - r}Z"/>`;
+}
+
+// Obrázky balíčků mincí: 1 mince → hromádka → bedna → trezor.
+const COIN_PACK_ART = {
+  coin: `<svg class="pack-art" viewBox="0 0 64 56" aria-hidden="true">${coinArt(32, 29, 17)}</svg>`,
+
+  pile: `<svg class="pack-art" viewBox="0 0 64 56" aria-hidden="true">
+    ${coinArt(32, 17, 10)}
+    ${coinArt(24, 29, 10)}${coinArt(40, 29, 10)}
+    ${coinArt(16, 41, 10)}${coinArt(32, 42, 10)}${coinArt(48, 41, 10)}
+    ${sparkleArt(53, 14, 4.5)}${sparkleArt(10, 22, 3)}
+  </svg>`,
+
+  box: `<svg class="pack-art" viewBox="0 0 64 56" aria-hidden="true">
+    ${coinArt(26, 15, 8)}${coinArt(40, 14, 8)}
+    ${coinArt(17, 21, 8.5)}${coinArt(32, 20, 9)}${coinArt(47, 21, 8.5)}
+    <rect x="7" y="24" width="50" height="28" rx="4" fill="#C2772E"/>
+    <rect x="7" y="24" width="50" height="7" rx="3" fill="#E0A458"/>
+    <path d="M9 37.5h46" stroke="#7C2D12" stroke-opacity="0.35" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M12 33c4 1 8 1 12 0M36 44c5 1 9 1 14 0" stroke="#7C2D12" stroke-opacity="0.25" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    <rect x="15" y="24" width="5" height="28" fill="#64748B"/><rect x="44" y="24" width="5" height="28" fill="#64748B"/>
+    <g fill="#CBD5E1"><circle cx="17.5" cy="28" r="1.1"/><circle cx="17.5" cy="48" r="1.1"/><circle cx="46.5" cy="28" r="1.1"/><circle cx="46.5" cy="48" r="1.1"/></g>
+    ${sparkleArt(56, 11, 4)}
+  </svg>`,
+
+  safe: `<svg class="pack-art" viewBox="0 0 64 56" aria-hidden="true">
+    <defs><linearGradient id="safe-body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#CBD5E1"/><stop offset="1" stop-color="#475569"/></linearGradient></defs>
+    <circle cx="32" cy="28" r="26" fill="#FBBF24" fill-opacity="0.18"/>
+    <rect x="10" y="50" width="7" height="4" rx="1" fill="#334155"/><rect x="47" y="50" width="7" height="4" rx="1" fill="#334155"/>
+    <rect x="8" y="4" width="48" height="47" rx="6" fill="url(#safe-body)"/>
+    <rect x="13" y="9" width="38" height="37" rx="4" fill="#64748B" stroke="#334155" stroke-width="1.5"/>
+    <circle cx="30" cy="27.5" r="9.5" fill="#E2E8F0" stroke="#334155" stroke-width="1.5"/>
+    <circle cx="30" cy="27.5" r="3.2" fill="#475569"/>
+    <path d="M30 18.8v2.6M30 33.6v2.6M21.3 27.5h2.6M36.1 27.5h2.6" stroke="#334155" stroke-width="1.4" stroke-linecap="round"/>
+    <rect x="43" y="21" width="4" height="13" rx="2" fill="#FBBF24" stroke="#B45309" stroke-width="1"/>
+    ${coinArt(12, 47, 7)}${coinArt(22, 50, 6)}${coinArt(52, 48, 6.5)}
+    ${sparkleArt(58, 8, 4.5)}${sparkleArt(6, 14, 3)}
+  </svg>`,
+};
 
 // Zlatá korunka pro vítěze kola.
 const CROWN_SVG = `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">

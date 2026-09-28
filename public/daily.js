@@ -1,5 +1,5 @@
 // Denní odměny — PROTOTYP. Každý den (podle data v telefonu) si hráč může
-// vzít pár mincí zdarma a jednou otevřít Daily Chest za zhlédnutí reklamy.
+// vzít pár mincí zdarma a jednou zatočit kolem štěstí za zhlédnutí reklamy.
 // Reklama je zatím jen napodobená; v appce ji nahradí rewarded video
 // (AdMob). Datum se bere z telefonu, takže to jde obejít změnou času —
 // v ostré verzi to musí hlídat server.
@@ -20,8 +20,9 @@ function canClaimDailyCoins() {
   return dailyState().coins !== todayKey();
 }
 
-function canOpenDailyChest() {
-  return dailyState().chest !== todayKey();
+// Kolo štěstí: jednou denně (ve vývojářském režimu kdykoli a bez reklamy).
+function canSpinWheel() {
+  return isDevMode() || dailyState().wheel !== todayKey();
 }
 
 // Denní vstupenka dává smysl, jen dokud hráč nemá Party Pack (pak má módy navždy).
@@ -30,7 +31,7 @@ function canClaimDailyTicket() {
 }
 
 function anyDailyAvailable() {
-  return canClaimDailyCoins() || canOpenDailyChest() || canClaimDailyTicket();
+  return canClaimDailyCoins() || canSpinWheel() || canClaimDailyTicket();
 }
 
 function claimDailyTicket() {
@@ -75,10 +76,8 @@ function claimDailyCoins() {
 // Karta s denními odměnami nahoře v shopu.
 function dailyRewardsHtml() {
   const coinsReady = canClaimDailyCoins();
-  const chestReady = canOpenDailyChest();
-  const daily = caseById('daily');
+  const wheelReady = canSpinWheel();
   return `
-    <div class="section-eyebrow">DAILY</div>
     <div class="daily-grid">
       <div class="daily-card ${coinsReady ? 'ready' : ''}">
         <div class="daily-art daily-coins-art">${COIN_SVG}${COIN_SVG}${COIN_SVG}</div>
@@ -87,12 +86,12 @@ function dailyRewardsHtml() {
           ? `<button class="daily-btn" id="daily-coins-btn">Claim ${COIN_SVG}<span class="num">+${DAILY_COINS}</span></button>`
           : `<div class="daily-wait">${icon('timer')} ${timeUntilReset()}</div>`}
       </div>
-      <div class="daily-card ${chestReady ? 'ready' : ''}">
-        <button class="case-info-btn" id="daily-info" title="What's inside" aria-label="What's inside">?</button>
-        <div class="case-art daily-chest-art">${caseSvg(daily)}</div>
-        <h3>Daily Chest</h3>
-        ${chestReady
-          ? `<button class="daily-btn ad" id="daily-chest-btn">${icon('play')} Watch ad</button>`
+      <div class="daily-card ${wheelReady ? 'ready' : ''}">
+        <button class="case-info-btn" id="daily-info" title="What's on the wheel" aria-label="What's on the wheel">?</button>
+        <div class="daily-wheel-art">${wheelSvg()}</div>
+        <h3>Lucky Wheel</h3>
+        ${wheelReady
+          ? `<button class="daily-btn ad" id="daily-chest-btn">${icon('play')} ${isDevMode() ? 'Spin' : 'Watch ad'}</button>`
           : `<div class="daily-wait">${icon('timer')} ${timeUntilReset()}</div>`}
       </div>
     </div>
@@ -113,18 +112,19 @@ function wireDailyRewards() {
   const coinsBtn = document.getElementById('daily-coins-btn');
   if (coinsBtn) coinsBtn.onclick = claimDailyCoins;
   const chestBtn = document.getElementById('daily-chest-btn');
-  if (chestBtn) chestBtn.onclick = startDailyChest;
+  if (chestBtn) chestBtn.onclick = startWheelSpin;
   const ticketBtn = document.getElementById('daily-ticket-btn');
   if (ticketBtn) ticketBtn.onclick = claimDailyTicket;
-  document.getElementById('daily-info').onclick = () => showCaseContents('daily');
+  document.getElementById('daily-info').onclick = showWheelOdds;
 }
 
-// Reklama → po jejím doběhnutí se otevře Daily Chest.
-function startDailyChest() {
-  if (!canOpenDailyChest()) return showToast(`Come back in ${timeUntilReset()}`);
+// Reklama → po jejím doběhnutí se zatočí kolem štěstí (dev režim bez reklamy).
+function startWheelSpin() {
+  if (!canSpinWheel()) return showToast(`Come back in ${timeUntilReset()}`);
+  if (isDevMode()) return openWheel();
   showFakeAd(() => {
-    markDaily('chest');
-    openCase('daily', { free: true });
+    markDaily('wheel');
+    openWheel();
   });
 }
 

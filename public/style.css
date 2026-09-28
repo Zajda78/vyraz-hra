@@ -1582,3 +1582,346 @@ body.no-scroll{ overflow:hidden; }
   font-family:'Unbounded',sans-serif; font-size:0.62rem; font-weight:800; letter-spacing:.08em;
 }
 #add-bot-btn .ico{ width:18px; height:18px; }
+
+/* ------------------------------------------------- ČERVENÉ KŘÍŽKY --- */
+/* všechny křížky (zavírání oken, odebrání přítele, odmítnutí, smazání fotky) jsou červené */
+.x-close{
+  background:linear-gradient(135deg,#F87171,#DC2626); border-color:rgba(255,255,255,0.25); color:#fff;
+  box-shadow:0 6px 16px -6px rgba(220,38,38,0.75);
+}
+.x-close:active{ background:linear-gradient(135deg,#EF4444,#B91C1C); }
+.friend-remove{ color:#F87171; }
+.friend-remove:active{ background:rgba(239,68,68,0.15); }
+#avatar-remove .ico{ color:#F87171; }
+
+/* menší zavírací křížky */
+.x-close{ width:32px; height:32px; }
+.x-close .ico{ width:15px; height:15px; stroke-width:2.8; }
+.x-close-row .x-close{ margin-top:-4px; margin-right:-4px; }
+
+/* ------------------------------------- SCHVALOVÁNÍ A VYHAZOVÁNÍ HRÁČŮ --- */
+.kick-btn{
+  width:28px; height:28px; border-radius:50%; cursor:pointer; flex:none; border:none;
+  background:linear-gradient(135deg,#F87171,#DC2626); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 10px -4px rgba(220,38,38,0.7);
+}
+.kick-btn .ico{ width:13px; height:13px; stroke-width:3; }
+.kick-btn:active{ transform:scale(0.9); }
+
+.join-requests{ border-color:rgba(52,211,153,0.45); background:linear-gradient(160deg, rgba(52,211,153,0.12), var(--surface) 70%); }
+.join-requests h3{ margin-bottom:12px; }
+.req-btn{
+  width:34px; height:34px; border-radius:50%; cursor:pointer; flex:none; border:none; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+}
+.req-btn .ico{ width:16px; height:16px; stroke-width:3; }
+.req-yes{ background:linear-gradient(135deg,#34D399,#059669); box-shadow:0 4px 10px -4px rgba(16,185,129,0.7); }
+.req-no{ background:linear-gradient(135deg,#F87171,#DC2626); box-shadow:0 4px 10px -4px rgba(220,38,38,0.7); }
+.req-btn:active{ transform:scale(0.9); }
+
+.join-pending{ position:relative; gap:14px; padding-top:40px; }
+.join-pending h2{ color:#fff; }
+.join-pending-host{ color:#fff; font-weight:600; }
+.join-pending-spinner{
+  width:54px; height:54px; border-radius:50%; margin:10px auto;
+  border:5px solid rgba(193,60,245,0.25); border-top-color:#C13CF5; animation:spin 0.9s linear infinite;
+}
+.btn-danger{ background:linear-gradient(135deg,#F87171,#DC2626); color:#fff; border:none; }
+.join-pending .x-close-row{ position:fixed; top:calc(16px + env(safe-area-inset-top)); right:16px; height:auto; }
+.join-pending{ min-height:70vh; justify-content:center; }
+
+/* ------------------------------------------------- ZÁLOŽKY V SHOPU --- */
+.shop-tabs{
+  position:sticky; top:0; z-index:6; display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;
+  padding:8px 0; margin:0 -2px; background:linear-gradient(var(--bg) 80%, transparent);
+}
+.shop-tab{
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  min-height:64px; border-radius:16px; border:none; cursor:pointer; background:#2A1552; color:#fff;
+  font-family:'Unbounded',sans-serif; font-weight:800; font-size:0.72rem;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25); transition:transform .12s ease, background .15s ease;
+}
+.shop-tab:active{ transform:scale(0.95); }
+.shop-tab.active{
+  background:#C13CF5;
+  box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(193,60,245,0.7), inset 0 -3px 0 rgba(0,0,0,0.18);
+}
+.shop-tab-icon{ display:flex; }
+.shop-tab-icon .ico, .shop-tab-icon .coin{ width:22px; height:22px; }
+.shop-tab-dot{
+  position:absolute; top:8px; right:10px; width:9px; height:9px; border-radius:50%;
+  background:#34D399; box-shadow:0 0 0 2px #2A1552, 0 0 8px rgba(52,211,153,0.8);
+}
+.shop-tab.active .shop-tab-dot{ box-shadow:0 0 0 2px #C13CF5, 0 0 8px rgba(52,211,153,0.8); }
+.shop-tab-body{ display:flex; flex-direction:column; gap:14px; animation:rise-in .3s ease both; }
+
+/* ikonka No ads — fialová dlaždice jako ostatní ikonky, uvnitř cedulka AD se znakem zákazu */
+.no-ads-icon{ background:linear-gradient(135deg,#A78BFA,#6D28D9); box-shadow:0 8px 18px -8px rgba(124,58,237,0.8); }
+.no-ads-glyph{ width:30px; height:30px; display:block; }
+
+/* obrázky balíčků mincí (mince / hromádka / bedna / trezor) — všechny stejně vysoké */
+.coin-pack-icon{ height:60px; display:flex; align-items:center; justify-content:center; }
+.coin-pack-icon .pack-art{ width:68px; height:60px; display:block; filter:drop-shadow(0 6px 10px rgba(0,0,0,0.35)); }
+
+/* křížky: šedé pozadí jako dřív, červený je jen samotný křížek */
+.x-close, .kick-btn, .req-no{
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#EF4444; box-shadow:none;
+}
+.x-close:active, .kick-btn:active, .req-no:active{ background:rgba(255,255,255,0.2); }
+.x-close .ico, .kick-btn .ico, .req-no .ico{ stroke-width:3.2; }
+
+/* Shop má teď 3 záložky (Coins jsou v Packs) */
+.shop-tabs{ grid-template-columns:repeat(3, 1fr); }
+
+/* ------------------------------------------------------ KOLO ŠTĚSTÍ --- */
+.daily-wheel-art{ width:96px; height:96px; }
+.daily-wheel-art .wheel-svg{ width:100%; height:100%; display:block; }
+.daily-card.ready .daily-wheel-art{ animation:wheel-idle 6s linear infinite; }
+@keyframes wheel-idle{ to{ transform:rotate(360deg); } }
+
+.wheel-wrap{ position:relative; width:min(86vw, 330px); aspect-ratio:1; }
+.wheel-wrap .wheel-svg{ width:100%; height:100%; display:block; filter:drop-shadow(0 12px 30px rgba(0,0,0,0.5)); }
+.wheel-pointer{
+  position:absolute; z-index:2; top:-10px; left:50%; transform:translateX(-50%);
+  width:0; height:0; border-left:16px solid transparent; border-right:16px solid transparent; border-top:30px solid #FBBF24;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,0.5));
+}
+.wheel-bulb{ fill:#FFF7D6; animation:wheel-bulb 0.9s steps(1) infinite; }
+.wheel-bulb.b2{ animation-delay:-0.45s; }
+@keyframes wheel-bulb{ 0%{ fill:#FFF7D6; } 50%{ fill:#B45309; } }
+.wheel-overlay .wheel-wrap.done{ width:min(50vw, 180px); transition:width .4s ease; }
+.wheel-reveal-art{ width:110px; height:96px; }
+.wheel-reveal-ticket{
+  width:96px; height:96px; border-radius:26px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#FDE68A,#F0B429); color:#78350F;
+}
+.wheel-reveal-ticket .ico{ width:52px; height:52px; }
+
+.wheel-odds-head{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:14px; }
+.wheel-mini{ width:120px; height:120px; }
+.wheel-mini .wheel-svg{ width:100%; height:100%; }
+.wheel-odds-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.wheel-odds-row{
+  display:flex; align-items:center; gap:12px; padding:8px 12px; border-radius:16px;
+  background:var(--surface-2); border:1px solid var(--line); border-left:4px solid var(--rc);
+}
+.wheel-odds-art{ width:44px; height:44px; flex:none; display:flex; align-items:center; justify-content:center; }
+.wheel-odds-art .frame-preview{ width:44px; height:44px; border-radius:12px; padding:4px; }
+.wheel-odds-art .frame-inner{ border-radius:9px; }
+.wheel-odds-art .frame-inner .ico{ width:16px; height:16px; }
+.wheel-odds-art .frame-decor{ display:none; }
+.wheel-odds-art .name-preview{ width:44px; height:44px; font-size:0.62rem; overflow:hidden; }
+.wheel-odds-coin .coin{ width:32px; height:32px; }
+.wheel-odds-ticket{ width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#FDE68A,#F0B429); color:#78350F; }
+.wheel-odds-ticket .ico{ width:24px; height:24px; }
+.wheel-odds-name{ flex:1; color:#fff; font-weight:700; display:flex; flex-direction:column; }
+.wheel-odds-name span{ font-size:0.72rem; font-weight:800; color:#FDE68A; letter-spacing:.04em; }
+.wheel-odds-chance{ font-family:'Unbounded',sans-serif; font-weight:800; color:#fff; }
+/* větší kolo při točení — skoro přes celou šířku (a nikdy vyšší než 70 % obrazovky) */
+.wheel-overlay .wheel-wrap{ width:min(96vw, 480px, 70vh); }
+.wheel-overlay .wheel-pointer{ top:-14px; border-left-width:20px; border-right-width:20px; border-top-width:38px; }
+.wheel-overlay .case-stage{ gap:16px; }
+.wheel-overlay .case-title{ font-size:1.5rem; }
+
+/* ---------------------------------------- MYTHIC: rámeček Fortune ------ */
+/* Animovaný okraj: vrstva přes okraj rámečku (maska nechá jen okraj, fotka uvnitř zůstane vidět). */
+@property --fa{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
+.frame-aura{
+  position:absolute; inset:0; z-index:2; pointer-events:none; border-radius:inherit; padding:inherit; box-sizing:border-box;
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.aura-fortune{
+  background:
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.95) 50%, transparent 65%) 0 0 / 260% 100% no-repeat,
+    conic-gradient(from var(--fa), #FDE047, #22C55E, #22D3EE, #A855F7, #FF3D7F, #FDE047);
+  animation:fortune-spin 3s linear infinite, fortune-shine 2.4s ease-in-out infinite;
+  box-shadow:0 0 14px 2px rgba(253,224,71,0.55);
+}
+@keyframes fortune-spin{ to{ --fa:360deg; } }
+@keyframes fortune-shine{ 0%{ background-position:150% 0, 0 0; } 60%,100%{ background-position:-60% 0, 0 0; } }
+/* pulzující zlatá záře kolem celého rámečku */
+.frame-preview:has(.aura-fortune), .framed-avatar:has(.aura-fortune), .photo-frame:has(.aura-fortune),
+.result-photo-frame:has(.aura-fortune), .looks-frame:has(.aura-fortune){ animation:fortune-glow 2s ease-in-out infinite; }
+@keyframes fortune-glow{
+  0%,100%{ box-shadow:0 0 10px 1px rgba(253,224,71,0.45), 0 0 22px 4px rgba(168,85,247,0.25); }
+  50%{ box-shadow:0 0 18px 4px rgba(253,224,71,0.8), 0 0 36px 10px rgba(255,61,127,0.35); }
+}
+/* třpytky obíhající kolem rámečku */
+.frame-decor .fd-orbit{ transform-box:view-box; transform-origin:50px 50px; animation:fd-orbit 7s linear infinite; }
+.frame-decor .fd-orbit.rev{ animation-duration:11s; animation-direction:reverse; }
+@keyframes fd-orbit{ to{ transform:rotate(360deg); } }
+.wheel-odds-art .frame-aura{ display:none; }
+
+/* výhra Mythic — duhové paprsky a pulzující štítek */
+.reveal-card.is-mythic .reveal-rays{
+  opacity:0.45; background:repeating-conic-gradient(from 0deg, #FDE047 0deg 8deg, transparent 8deg 18deg, #FF3D7F 18deg 26deg, transparent 26deg 36deg, #22D3EE 36deg 44deg, transparent 44deg 54deg);
+  animation:rays-spin 6s linear infinite;
+}
+.reveal-card.is-mythic{ border-color:#FF3D7F; box-shadow:0 0 40px -6px rgba(255,61,127,0.8), 0 0 80px -20px rgba(253,224,71,0.7); }
+.reveal-card.is-mythic .reveal-rarity{
+  background:linear-gradient(90deg,#FDE047,#FF3D7F,#A855F7,#22D3EE,#FDE047); background-size:300% 100%;
+  color:#fff; animation:mythic-label 2.5s linear infinite;
+}
+@keyframes mythic-label{ to{ background-position:300% 0; } }
+@media (prefers-reduced-motion: reduce){
+  .aura-fortune, .frame-decor .fd-orbit{ animation:none !important; }
+}
+
+/* ------------------------------------------- RYCHLÉ LOBBY (předběžné) --- */
+.lobby-pending .card, .lobby-pending .invite-btn, .lobby-pending #start-btn, .lobby-pending #add-bot-btn{ pointer-events:none; opacity:0.6; }
+.code-display.is-pending{ display:flex; justify-content:center; gap:10px; }
+.code-display.is-pending span{ width:14px; height:14px; border-radius:50%; background:#C4B5FD; align-self:center; animation:code-dot 0.9s ease-in-out infinite; }
+.code-display.is-pending span:nth-child(2){ animation-delay:.12s; }
+.code-display.is-pending span:nth-child(3){ animation-delay:.24s; }
+.code-display.is-pending span:nth-child(4){ animation-delay:.36s; }
+@keyframes code-dot{ 0%,100%{ transform:translateY(0); opacity:.5; } 50%{ transform:translateY(-6px); opacity:1; } }
+
+/* ------------------------------------ HEZČÍ RÁMEČKY PODLE VZÁCNOSTI --- */
+/* common: lesklý odlesk na okraji */
+.aura-common{
+  background:linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 35%, rgba(255,255,255,0) 65%, rgba(0,0,0,0.18));
+}
+/* rare: odlesk + občas přes okraj přejede lesk */
+.aura-rare{
+  background:
+    linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.85) 50%, transparent 62%) 0 0 / 260% 100% no-repeat,
+    linear-gradient(135deg, rgba(255,255,255,0.5), rgba(255,255,255,0) 40%, rgba(0,0,0,0.15));
+  animation:frame-shine 5s ease-in-out infinite;
+}
+/* epic: častější lesk + jemná záře */
+.aura-epic{
+  background:
+    linear-gradient(115deg, transparent 36%, rgba(255,255,255,0.95) 50%, transparent 64%) 0 0 / 260% 100% no-repeat,
+    linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 45%, rgba(0,0,0,0.12));
+  animation:frame-shine 3.2s ease-in-out infinite;
+  box-shadow:0 0 10px rgba(255,255,255,0.18);
+}
+/* legendary: rychlý lesk + pulzující zlatá záře kolem */
+.aura-legendary{
+  background:
+    linear-gradient(115deg, transparent 34%, rgba(255,255,255,1) 50%, transparent 66%) 0 0 / 240% 100% no-repeat,
+    linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 45%, rgba(0,0,0,0.1));
+  animation:frame-shine 2.4s ease-in-out infinite, legendary-glow 2.2s ease-in-out infinite;
+}
+@keyframes frame-shine{ 0%{ background-position:150% 0, 0 0; } 55%,100%{ background-position:-60% 0, 0 0; } }
+@keyframes legendary-glow{ 0%,100%{ box-shadow:0 0 8px 1px rgba(240,180,41,0.35); } 50%{ box-shadow:0 0 16px 4px rgba(240,180,41,0.7); } }
+@media (prefers-reduced-motion: reduce){ .aura-rare, .aura-epic, .aura-legendary{ animation:none !important; } }
+
+/* ------------------------------------------------ LÁVA (epic rámeček) --- */
+/* okraj „teče": žhavé barvy se posouvají dokola a okraj pulzuje oranžovou září */
+.aura-lava{
+  background:
+    radial-gradient(circle at 20% 30%, rgba(69,10,10,0.55) 0 8%, transparent 9%) 0 0 / 60% 60%,
+    linear-gradient(90deg, #7F1D1D, #DC2626, #F97316, #FDE047, #F97316, #DC2626, #7F1D1D) 0 0 / 300% 100%;
+  animation:lava-flow 5s linear infinite, lava-glow 1.6s ease-in-out infinite;
+}
+@keyframes lava-flow{ to{ background-position:60% 60%, 300% 0; } }
+@keyframes lava-glow{ 0%,100%{ box-shadow:0 0 8px 1px rgba(249,115,22,0.45); } 50%{ box-shadow:0 0 16px 4px rgba(239,68,68,0.7); } }
+.frame-decor .fd-pop{ transform-box:fill-box; transform-origin:50% 50%; animation:fd-pop 1.8s ease-out infinite; }
+@keyframes fd-pop{ 0%{ transform:scale(0.2); opacity:0; } 30%{ opacity:1; } 70%{ transform:scale(1); opacity:0.9; } 100%{ transform:scale(1.35); opacity:0; } }
+
+/* ------------------------------------------- RÁMEČKY VE HŘE (výsledky) --- */
+/* rámeček je uvnitř karty s mezerou a kulatými rohy, ozdoby se neořežou */
+.result-card{ overflow:visible; }
+.result-card > .photo, .result-card > .missed{ border-radius:14px 14px 0 0; }
+.result-card .result-photo-frame{ margin:8px 8px 0; border-radius:16px; padding:5px; }
+.result-card .result-photo-frame .photo{ border-radius:11px; }
+.result-card .frame-decor{ inset:-9%; }
+.result-card .crown{ z-index:5; }
+@media (prefers-reduced-motion: reduce){ .aura-lava, .frame-decor .fd-pop{ animation:none !important; } }
+
+/* ------------------------------------------------- VÝBĚR JAZYKA --- */
+.setting-block-title{ display:flex; align-items:center; gap:8px; color:#C4B5FD; font-weight:700; margin:4px 2px 10px; }
+.setting-block-title .ico{ width:18px; height:18px; }
+.lang-picker{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:16px; }
+.lang-chip{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-height:62px;
+  border-radius:16px; border:none; cursor:pointer; background:#2A1552; color:#fff;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,0.25); transition:transform .12s ease, background .15s ease;
+}
+.lang-chip b{ font-family:'Unbounded',sans-serif; font-weight:800; font-size:1rem; }
+.lang-chip span{ font-weight:700; font-size:0.74rem; color:rgba(255,255,255,0.85); }
+.lang-chip:active{ transform:scale(0.95); }
+.lang-chip.active{ background:#C13CF5; box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(193,60,245,0.7), inset 0 -3px 0 rgba(0,0,0,0.18); }
+
+/* ======================================= NOVÉ EFEKTY: láva, legendary, mythic ====== */
+
+/* rámečky s efekty drží záři za sebou (vlastní vrstva) */
+.frame-preview, .framed-avatar, .photo-frame, .result-photo-frame, .looks-frame{ isolation:isolate; }
+.frame-halo{ position:absolute; inset:-8%; z-index:-1; border-radius:inherit; pointer-events:none; filter:blur(9px); }
+
+/* LÁVA — žhavé barvy tečou po okraji shora dolů, okraj pulzuje */
+.aura-lava{
+  background:
+    radial-gradient(circle at 30% 40%, rgba(69,10,10,0.55) 0 7%, transparent 8%) 0 0 / 50% 40%,
+    linear-gradient(180deg, #7F1D1D, #DC2626 15%, #F97316 30%, #FDE047 42%, #F97316 55%, #DC2626 72%, #7F1D1D 88%, #DC2626) 0 0 / 100% 300%;
+  animation:lava-down 3.2s linear infinite, lava-glow 1.6s ease-in-out infinite;
+}
+@keyframes lava-down{ to{ background-position:0 120%, 0 300%; } }
+/* kapka se natahuje (roste dolů) a po odtržení se stáhne zpět */
+.frame-decor .lava-drip{ transform-box:fill-box; transform-origin:50% 0; animation:lava-drip 2.2s ease-in infinite; }
+@keyframes lava-drip{
+  0%{ transform:scaleY(0.25); } 55%{ transform:scaleY(1); } 62%{ transform:scaleY(1.15); }
+  66%{ transform:scaleY(0.45); } 100%{ transform:scaleY(0.25); }
+}
+/* odtržená kulička padá dolů a zmizí */
+.frame-decor .lava-drop{ transform-box:fill-box; transform-origin:50% 50%; animation:lava-fall 2.2s ease-in infinite; }
+@keyframes lava-fall{
+  0%,60%{ transform:translateY(-3px) scale(0.3); opacity:0; }
+  64%{ transform:translateY(0) scale(1); opacity:1; }
+  100%{ transform:translateY(22px) scale(0.55); opacity:0; }
+}
+
+/* LEGENDARY — kolem okraje obíhá světelná kometa, za rámečkem pulzuje zlatá záře */
+.aura-legendary{
+  background:
+    conic-gradient(from var(--fa), transparent 0 68%, rgba(255,255,255,0.15) 74%, rgba(255,247,214,0.95) 84%, #FFFFFF 87%, transparent 90%),
+    linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 45%, rgba(0,0,0,0.1));
+  animation:fortune-spin 2.2s linear infinite;
+  box-shadow:none;
+}
+.halo-legendary{
+  background:radial-gradient(closest-side, rgba(253,224,71,0.85), rgba(240,180,41,0.45) 55%, transparent 100%);
+  animation:halo-pulse 2.4s ease-in-out infinite;
+}
+@keyframes halo-pulse{ 0%,100%{ opacity:0.45; transform:scale(0.96); } 50%{ opacity:0.95; transform:scale(1.05); } }
+
+/* MYTHIC — duhový okraj se točí, proti němu obíhá bílá kometa, za rámečkem točící se duhová aura */
+.aura-fortune{
+  background:
+    conic-gradient(from calc(var(--fa) * -2), transparent 0 80%, rgba(255,255,255,0.95) 88%, transparent 94%),
+    conic-gradient(from var(--fa), #FDE047, #22C55E, #22D3EE, #A855F7, #FF3D7F, #FDE047);
+  animation:fortune-spin 3s linear infinite;
+}
+.halo-mythic{
+  inset:-12%;
+  background:conic-gradient(from var(--fa), #FDE047, #22C55E, #22D3EE, #A855F7, #FF3D7F, #FDE047);
+  filter:blur(12px);
+  animation:fortune-spin 3s linear infinite, halo-pulse 2s ease-in-out infinite;
+}
+/* staré pulzování stínem u Fortune nahradila aura */
+.frame-preview:has(.aura-fortune), .framed-avatar:has(.aura-fortune), .photo-frame:has(.aura-fortune),
+.result-photo-frame:has(.aura-fortune), .looks-frame:has(.aura-fortune){ animation:none; }
+.wheel-odds-art .frame-halo{ display:none; }
+@media (prefers-reduced-motion: reduce){
+  .aura-lava, .frame-decor .lava-drip, .frame-decor .lava-drop, .frame-halo, .aura-legendary, .aura-fortune{ animation:none !important; }
+}
+/* zlatá záře za legendary rámečkem — plná zlatá plocha rozmazaná do okolí */
+.halo-legendary{ inset:-7%; background:linear-gradient(135deg, #FDE68A, #F59E0B 50%, #FDE68A); filter:blur(10px); }
+/* legendary: slabší lesk, ať zůstanou vidět vlastní barvy rámečku — výraznější je jen kometa */
+.aura-legendary{
+  background:
+    conic-gradient(from var(--fa), transparent 0 70%, rgba(255,247,214,0.25) 76%, rgba(255,247,214,0.95) 85%, #FFFFFF 87%, transparent 90%),
+    linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0) 40%);
+}
+
+/* ---- bez bílého blikání (přání hráče): žádná kometa ani přejíždějící lesk, jen nehybný jemný odlesk ---- */
+.aura-rare{ background:linear-gradient(135deg, rgba(255,255,255,0.45), rgba(255,255,255,0) 40%, rgba(0,0,0,0.15)); animation:none; }
+.aura-epic{ background:linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 45%, rgba(0,0,0,0.12)); animation:none; }
+.aura-legendary{ background:linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0) 40%); animation:none; }
+.aura-fortune{ background:conic-gradient(from var(--fa), #FDE047, #22C55E, #22D3EE, #A855F7, #FF3D7F, #FDE047); animation:fortune-spin 3s linear infinite; }
+
+/* Sweets — sladká růžovo-modrá záře místo zlaté */
+.halo-frame-sweets{ background:linear-gradient(135deg, #FF5FA2, #7DD3FC 50%, #FF5FA2); }

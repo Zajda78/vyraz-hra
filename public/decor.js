@@ -34,20 +34,15 @@ const FRAME_DECOR = {
     </g>`,
 
   // Láva (epická) — kapky lávy stékající z dolní hrany + bublina v rohu
+  // okraj teče a žhne (animace .aura-lava v CSS), dole krátké kapky, nahoře praskající bublinky
   'frame-lava': () => `
-    <g class="fd-drip">
-      <path fill="#EF4444" d="M18 96 C18 104 22 110 26 110 C30 110 32 104 30 96 Z"/>
-      <circle cx="25" cy="104" r="2.2" fill="#FDE047" opacity="0.8"/>
-    </g>
-    <g class="fd-drip" style="animation-delay:-1.2s">
-      <path fill="#F97316" d="M58 96 C58 101 60 105 63 105 C66 105 67 101 66 96 Z"/>
-    </g>
-    <g class="fd-drip" style="animation-delay:-0.6s">
-      <path fill="#DC2626" d="M82 96 C81 106 85 113 89 113 C93 113 95 106 93 96 Z"/>
-      <circle cx="88" cy="106" r="2.4" fill="#FACC15" opacity="0.85"/>
-    </g>
-    <circle class="fd-bubble" cx="-2" cy="10" r="6" fill="#F97316"/>
-    <circle class="fd-bubble" style="animation-delay:-1s" cx="6" cy="-4" r="3.5" fill="#FACC15"/>`,
+    ${lavaDrip(24, 0, 7)}
+    ${lavaDrip(58, -0.9, 5)}
+    ${lavaDrip(86, -0.45, 8)}
+    ${lavaDrip(-1, -1.3, 5, true)}
+    <circle class="fd-pop" cx="20" cy="1" r="3.5" fill="#FDBA74"/>
+    <circle class="fd-pop" style="animation-delay:-0.8s" cx="52" cy="0" r="2.6" fill="#FDE047"/>
+    <circle class="fd-pop" style="animation-delay:-1.5s" cx="80" cy="1" r="3.2" fill="#FB923C"/>`,
 
   // Polární záře (epická) — barevné jiskřičky
   'frame-aurora': () => `
@@ -195,30 +190,64 @@ Object.assign(FRAME_DECOR, {
     ${sparkle(50, 106, 5, '#FDE047', -0.9)}`,
 
   // Sladkosti (legendární) — lízátko, bonbon a posypka
+  // Sladkosti (legendární) — donut s polevou a posypem, lízátko a zabalený bonbon
   'frame-sweets': () => `
     <g class="fd-float">
-      <rect x="99" y="10" width="2.6" height="20" rx="1.3" fill="#FFFFFF"/>
-      <circle cx="100" cy="4" r="10" fill="#F472B6"/>
-      <path d="M100 4 m-6 0 a6 6 0 1 1 6 6 a3.5 3.5 0 1 1 -3.5 -3.5" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="96" cy="4" r="9" fill="none" stroke="#E9A15B" stroke-width="9"/>
+      <circle cx="96" cy="4" r="9" fill="none" stroke="#FF5FA2" stroke-width="6.5"/>
+      <path d="M89 -1 a9 9 0 0 1 9 -5" stroke="#FFC2DA" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <g stroke-width="1.5" stroke-linecap="round">
+        <path d="M91 7l2 -1" stroke="#FDE047"/><path d="M99 11l1 -2" stroke="#7DD3FC"/><path d="M103 3l1 2" stroke="#86EFAC"/>
+        <path d="M100 -3l2 1" stroke="#FFFFFF"/><path d="M92 -3l1 2" stroke="#7DD3FC"/><path d="M104 -1l-1 -2" stroke="#FDE047"/>
+      </g>
     </g>
-    <g class="fd-float" style="animation-delay:-2s">
-      <path d="M-10 90 l6 -5 v10 z" fill="#FDE68A"/>
-      <path d="M14 90 l-6 -5 v10 z" fill="#FDE68A"/>
-      <ellipse cx="2" cy="90" rx="7" ry="5.5" fill="#60A5FA"/>
-      <path d="M-2 87 q4 3 8 0" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <g class="fd-float" style="animation-delay:-1.4s">
+      <path d="M2 100 L-6 112" stroke="#FFF7ED" stroke-width="2.6" stroke-linecap="round"/>
+      <circle cx="4" cy="94" r="10" fill="#FF5FA2"/>
+      <circle cx="4" cy="94" r="7.2" fill="#FFF0F6"/>
+      <circle cx="4" cy="94" r="4.6" fill="#7DD3FC"/>
+      <circle cx="4" cy="94" r="2.1" fill="#FFF0F6"/>
+      <path d="M-2 89 a8 8 0 0 1 7 -3" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="1.6" fill="none" stroke-linecap="round"/>
     </g>
-    <rect class="fd-twinkle" x="40" y="-8" width="6" height="2.4" rx="1.2" fill="#34D399" transform="rotate(30 43 -7)"/>
-    <rect class="fd-twinkle" style="animation-delay:-0.8s" x="64" y="104" width="6" height="2.4" rx="1.2" fill="#F472B6" transform="rotate(-25 67 105)"/>
-    <rect class="fd-twinkle" style="animation-delay:-1.5s" x="-9" y="40" width="6" height="2.4" rx="1.2" fill="#FBBF24" transform="rotate(70 -6 41)"/>
-    <rect class="fd-twinkle" style="animation-delay:-0.4s" x="104" y="60" width="6" height="2.4" rx="1.2" fill="#A78BFA" transform="rotate(-60 107 61)"/>`,
+    <g class="fd-float" style="animation-delay:-2.6s">
+      <path d="M-11 34 l5 4 -5 4z" fill="#FDE047"/>
+      <path d="M9 34 l-5 4 5 4z" fill="#FDE047"/>
+      <ellipse cx="-1" cy="38" rx="6.5" ry="5" fill="#A78BFA"/>
+      <path d="M-4 34 q2 4 0 8 M1 34 q2 4 0 8" stroke="#EDE9FE" stroke-width="1.3" fill="none"/>
+    </g>`,
 });
 
 // Ozdoba pro rámeček (item nebo id). Běžné a vzácné rámečky nemají nic.
+// Lávová kapka: z okraje se natáhne, odtrhne se kulička a spadne dolů.
+// x = místo na spodní hraně (side = na levém boku, kape podél něj), delay v s, s = velikost
+function lavaDrip(x, delay, s, side = false) {
+  const top = side ? 60 : 97;
+  const cx = side ? -1.5 : x;
+  const w = s * 0.55;
+  return `<g style="animation-delay:${delay}s">
+    <path class="lava-drip" style="animation-delay:${delay}s" fill="#F97316"
+      d="M${cx - w} ${top} C${cx - w} ${top + s * 0.9} ${cx - w * 0.35} ${top + s * 1.5} ${cx} ${top + s * 1.6} C${cx + w * 0.35} ${top + s * 1.5} ${cx + w} ${top + s * 0.9} ${cx + w} ${top} Z"/>
+    <path class="lava-drip" style="animation-delay:${delay}s" fill="#FDE047" opacity="0.75"
+      d="M${cx - w * 0.35} ${top} C${cx - w * 0.35} ${top + s * 0.6} ${cx} ${top + s * 1.1} ${cx} ${top + s * 1.1} C${cx} ${top + s * 1.1} ${cx + w * 0.35} ${top + s * 0.6} ${cx + w * 0.35} ${top} Z"/>
+    <circle class="lava-drop" style="animation-delay:${delay}s" cx="${cx}" cy="${top + s * 1.6}" r="${s * 0.42}" fill="#EF4444"/>
+  </g>`;
+}
+
+// Rámečky s animovaným okrajem (vrstva přes okraj rámečku, uvnitř fotka zůstane)
+const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava' };
+
 function frameDecorHtml(frame) {
   if (!frame) return '';
-  const make = FRAME_DECOR[typeof frame === 'string' ? frame : frame.id];
-  if (!make) return '';
-  return `<div class="frame-decor" aria-hidden="true"><svg viewBox="-12 -12 124 124">${make()}</svg></div>`;
+  const id = typeof frame === 'string' ? frame : frame.id;
+  const make = FRAME_DECOR[id];
+  // lesk / efekt okraje podle vzácnosti (Fortune má vlastní duhovou animaci)
+  const item = typeof frame === 'string' ? ALL_ITEMS.find((i) => i.id === frame) : frame;
+  const auraKind = FRAME_AURA[id] || (item && item.rarity);
+  const aura = auraKind ? `<div class="frame-aura aura-${auraKind}" aria-hidden="true"></div>` : '';
+  const rarity = item && item.rarity;
+  const halo = rarity === 'legendary' || rarity === 'mythic' ? `<div class="frame-halo halo-${rarity} halo-${id}" aria-hidden="true"></div>` : '';
+  if (!make) return halo + aura;
+  return `${halo}${aura}<div class="frame-decor" aria-hidden="true"><svg viewBox="-12 -12 124 124">${make()}</svg></div>`;
 }
 
 // ------------------------------------------------ Spooky (Spooky Chest) ---
@@ -342,4 +371,31 @@ Object.assign(FRAME_DECOR, {
       <path fill="#B91C1C" d="M62 96 C61 102 63 106 66 106 C69 106 70 102 69 96 Z"/>
     </g>
     ${sparkle(106, 60, 5, '#FCA5A5', -1.3)}`,
+});
+
+// Fortune (legendární, jen z kola štěstí) — čtyřlístek, mince a třpytky
+function clover(cx, cy, s, delay = 0) {
+  const leaf = (rot) => `<ellipse cx="${cx}" cy="${cy - s * 0.55}" rx="${s * 0.42}" ry="${s * 0.55}" transform="rotate(${rot} ${cx} ${cy})"/>`;
+  return `<g class="fd-float" style="animation-delay:${delay}s" fill="#22C55E" stroke="#14532D" stroke-width="0.8">
+    ${[0, 90, 180, 270].map(leaf).join('')}
+    <circle cx="${cx}" cy="${cy}" r="${s * 0.22}" fill="#86EFAC"/>
+    <path d="M${cx} ${cy} q${s * 0.4} ${s * 0.7} ${s * 0.9} ${s * 0.9}" stroke="#14532D" stroke-width="1.4" fill="none"/>
+  </g>`;
+}
+
+Object.assign(FRAME_DECOR, {
+  'frame-fortune': () => `
+    <g class="fd-orbit">
+      ${sparkle(50, -8, 6, '#FFFFFF', 0)}
+      ${sparkle(108, 50, 5, '#FDE047', -0.6)}
+      ${sparkle(50, 108, 6, '#F9A8D4', -1.2)}
+      ${sparkle(-8, 50, 5, '#86EFAC', -1.8)}
+    </g>
+    <g class="fd-orbit rev">
+      <circle cx="94" cy="8" r="1.8" fill="#FFFFFF"/><circle cx="6" cy="92" r="1.8" fill="#FDE047"/>
+      <circle cx="96" cy="94" r="1.4" fill="#C4B5FD"/><circle cx="4" cy="6" r="1.4" fill="#86EFAC"/>
+    </g>
+    ${clover(96, 6, 12, 0)}
+    <g class="fd-rise" style="animation-delay:-0.6s">${coinArt(2, 94, 8.5)}</g>
+    ${sparkle(-4, 24, 7, '#FDE047', -0.3)}`,
 });

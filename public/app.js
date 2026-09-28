@@ -48,6 +48,13 @@ function wireSocketEvents(socket) {
     const msg = JSON.parse(ev.data);
     if (msg.type === 'state') {
       if (msg.code && msg.code === leftLobbyCode) return;
+      if (cancelPendingCreate && msg.phase === 'lobby' && msg.isHost) {
+        cancelPendingCreate = false;
+        leftLobbyCode = msg.code;
+        send({ type: 'leave_lobby' });
+        return;
+      }
+      cancelPendingCreate = false;
       if (msg.phase !== 'submitting') submittedLocally = false;
       if (msg.phase !== 'drawing') drawDoneLocally = false;
       if (msg.phase !== 'voting') votedLocallyFor = null;
@@ -55,8 +62,20 @@ function wireSocketEvents(socket) {
       renderApp(msg);
     } else if (msg.type === 'error') {
       showError(msg.message);
+      if (mountedKey === 'lobby' && !lastState) renderStartScreen(); // lobby se nezaložilo
     } else if (msg.type === 'info') {
       showToast(msg.message);
+    } else if (msg.type === 'join_pending') {
+      renderJoinPendingScreen(msg);
+    } else if (msg.type === 'join_denied') {
+      if (mountedKey === 'join-pending') { showToast(msg.message); renderStartScreen(); }
+    } else if (msg.type === 'kicked') {
+      leftLobbyCode = msg.code;
+      closeModal();
+      clearSession();
+      lastState = null;
+      renderStartScreen();
+      showToast('The host removed you from the lobby.');
     } else if (handleDevMessage(msg)) {
       // vývojářský režim (dev.js)
     } else {
@@ -290,7 +309,7 @@ document.addEventListener('click', (e) => {
 let homeTab = 'games';
 
 function renderStartScreen() {
-  stopLobbyMusic(); // mimo lobby hudba nehraje
+  playMusic('main'); // mimo lobby hraje hlavní hudba
   sendHello(); // jméno/vzhled se mohly změnit — ať to přátelé vidí aktuální
   if (homeTab === 'shop') return renderShopScreen();
   if (homeTab === 'friends') return renderFriendsScreen();
@@ -410,7 +429,10 @@ function renderGamesScreen() {
   document.querySelectorAll('.mode-card').forEach((card) => {
     card.onclick = () => {
       const mode = card.getAttribute('data-mode');
-      const create = () => withName((name) => connect(() => send({ type: 'create_lobby', name, mode, looks: myLooks() })));
+      const create = () => withName((name) => {
+        renderLobbyScreen(pendingLobbyState(mode, name)); // hned, ať se nečeká na server
+        connect(() => send({ type: 'create_lobby', name, mode, looks: myLooks(), lang: getLang() }));
+      });
       // placený mód může založit jen ten, kdo ho má odemčený nebo má vstupenku
       if (!canHostMode(mode)) return showPartyPackOffer(mode, create);
       create();
@@ -478,15 +500,26 @@ function showSettingsModal() {
   const modal = openModal(`
     <div class="x-close-row"><button class="x-close" id="modal-settings-close" aria-label="Close">${icon('close')}</button></div>
     <h2>Settings</h2>
+    <div class="setting-block-title">${icon('chat')} Language</div>
+    ${languagePickerHtml()}
     ${volumeSlidersHtml()}
     <button id="modal-camera-test" class="btn btn-primary btn-block" type="button">${icon('camera')} Allow camera access</button>
     <p class="camera-status" id="modal-camera-status"></p>
   `);
   wireVolumeSliders(modal);
+  modal.querySelectorAll('[data-lang]').forEach((b) => {
+    b.onclick = () => {
+      if (b.dataset.lang === getLang()) return;
+      setLang(b.dataset.lang);
+      closeModal();
+      // překreslit aktuální obrazovku v novém jazyce a nastavení nechat otevřené
+      if (lastState) { mountedKey = ''; renderApp(lastState); } else renderStartScreen();
+      showSettingsModal();
+    };
+  });
   // ukázka hudby hraje jen během posouvání — po zavření nastavení ztichne
-  const closeSettings = () => { stopLobbyMusic(); closeModal(); };
+  const closeSettings = closeModal;
   modal.querySelector('#modal-settings-close').onclick = closeSettings;
-  document.getElementById('modal-backdrop').addEventListener('click', (e) => { if (e.target.id === 'modal-backdrop') stopLobbyMusic(); });
 
   modal.querySelector('#modal-camera-test').onclick = async () => {
     const statusEl = modal.querySelector('#modal-camera-status');
@@ -637,8 +670,22 @@ function wireOptionPicker(id, onPick) {
   const wrap = document.getElementById(`picker-${id}`);
   if (!wrap) return;
   wrap.querySelectorAll('.option-chip').forEach((btn) => {
-    btn.onclick = () => onPick(Number(btn.getAttribute('data-value')));
+    btn.onclick = () => {
+      wrap.querySelectorAll('.option-chip').forEach((b) => b.classList.toggle('active', b === btn)); // hned, bez čekání na server
+      onPick(Number(btn.getAttribute('data-value')));
+    };
   });
+}
+
+// Lobby, jak bude vypadat, než odpoví server (výchozí nastavení jako na serveru).
+// Ovládání je do té doby zamčené, kód se objeví, jakmile přijde odpověď.
+function pendingLobbyState(mode, name) {
+  return {
+    pending: true, code: '', mode, phase: 'lobby', isHost: true, joinRequests: [],
+    players: [{ id: 'me', name, looks: myLooks(), isHost: true, isYou: true, connected: true }],
+    totalRounds: 5, drawEnabled: mode === 'draw', drawSeconds: 20, captionSeconds: 40,
+    huntSeconds: 60, huntPack: 'anywhere', promptPack: 'classic',
+  };
 }
 
 function renderLobbyScreen(state) {
@@ -651,11 +698,13 @@ function renderLobbyScreen(state) {
       <button id="back-btn" class="back-btn" title="Back to home">${icon('back')}</button>
       ${brandHtml(state)}
     </div>
-    <div class="screen">
-      <div class="code-display">${escapeHtml(state.code)}</div>
+    <div class="screen ${state.pending ? 'lobby-pending' : ''}">
+      <div class="code-display ${state.pending ? 'is-pending' : ''}">${state.pending ? '<span></span><span></span><span></span><span></span>' : escapeHtml(state.code)}</div>
       ${!state.isHost && promptPackBadge(state) ? `<div style="text-align:center">${promptPackBadge(state)}</div>` : ''}
       <button class="btn btn-ghost btn-block invite-btn" id="invite-btn">${icon('users')} Invite friends</button>
 
+
+      ${joinRequestsHtml(state)}
 
       <div class="card">
         <h3 style="margin-bottom:12px;">Players (${players.length})</h3>
@@ -667,6 +716,9 @@ function renderLobbyScreen(state) {
                 ${p.isHost ? '<span class="badge">Host</span>' : ''}
                 ${!p.isYou && p.friendCode && !isFriend(p.friendCode) && !getSentRequests().some((r) => r.code === p.friendCode)
                   ? `<button class="add-friend-mini" data-add-friend="${p.friendCode}" data-name="${escapeHtml(p.name)}" aria-label="Add friend">${icon('plus')}</button>`
+                  : ''}
+                ${state.isHost && !p.isYou
+                  ? `<button class="kick-btn" data-kick="${p.id}" data-name="${escapeHtml(p.name)}" aria-label="Remove from lobby">${icon('close')}</button>`
                   : ''}
               </span>
             </div>
@@ -731,7 +783,10 @@ function renderLobbyScreen(state) {
     wireOptionPicker('hunt-seconds', (v) => send({ type: 'set_hunt_settings', seconds: v }));
     wireAddBot();
     document.querySelectorAll('#picker-hunt-pack .pack-chip').forEach((b) => {
-      b.onclick = () => send({ type: 'set_hunt_settings', pack: b.dataset.huntPack });
+      b.onclick = () => {
+        document.querySelectorAll('#picker-hunt-pack .pack-chip').forEach((c) => c.classList.toggle('active', c === b));
+        send({ type: 'set_hunt_settings', pack: b.dataset.huntPack });
+      };
     });
     document.querySelectorAll('#picker-pack .pack-chip').forEach((b) => {
       b.onclick = () => {
@@ -740,6 +795,7 @@ function renderLobbyScreen(state) {
           // po koupi rovnou vybrat sadu, na kterou hostitel ťukl
           return showQuestionPacksOffer(pack, () => send({ type: 'set_prompt_pack', pack }));
         }
+        document.querySelectorAll('#picker-pack .pack-chip').forEach((c) => c.classList.toggle('active', c === b));
         send({ type: 'set_prompt_pack', pack });
       };
     });
@@ -751,6 +807,7 @@ function renderLobbyScreen(state) {
   }
   document.getElementById('back-btn').onclick = leaveLobby;
   document.getElementById('invite-btn').onclick = showInviteFriendsModal;
+  wireLobbyHostControls();
   document.querySelectorAll('[data-add-friend]').forEach((b) => {
     b.onclick = () => {
       sendFriendRequest(b.dataset.addFriend, b.dataset.name);
@@ -759,7 +816,11 @@ function renderLobbyScreen(state) {
   });
 }
 
+// Hráč odešel z lobby dřív, než ji server stihl založit → až přijde, hned ji opustit.
+let cancelPendingCreate = false;
+
 function leaveLobby() {
+  if (!lastState && mountedKey === 'lobby') cancelPendingCreate = true;
   leftLobbyCode = lastState?.code || null;
   closeModal();
   clearSession();
@@ -770,6 +831,64 @@ function leaveLobby() {
   votedLocallyFor = null;
   drawDoneLocally = false;
   renderStartScreen();
+}
+
+// ------------------------------------------------ SCHVALOVÁNÍ A VYHAZOVÁNÍ ---
+// Kdo se připojuje kódem nebo přes přítele, čeká, až ho hostitel pustí.
+// Pozvaní přátelé a boti jdou rovnou dovnitř (hlídá server).
+
+function renderJoinPendingScreen(msg) {
+  mountedKey = 'join-pending';
+  stopCamera();
+  document.body.classList.remove('home-bg', 'has-bottom-nav');
+  app.innerHTML = `
+    <div class="screen center join-pending">
+      <div class="x-close-row"><button class="x-close" id="cancel-join" aria-label="Cancel">${icon('close')}</button></div>
+      <div class="code-display">${escapeHtml(msg.code)}</div>
+      <div class="join-pending-spinner"></div>
+      <h2>Waiting for the host</h2>
+      <p class="join-pending-host">${msg.hostName ? `${escapeHtml(msg.hostName)} has to let you in` : 'The host has to let you in'}</p>
+    </div>`;
+  document.getElementById('cancel-join').onclick = () => {
+    send({ type: 'cancel_join' });
+    renderStartScreen();
+  };
+}
+
+function joinRequestsHtml(state) {
+  const reqs = state.joinRequests || [];
+  if (!state.isHost || !reqs.length) return '';
+  return `
+    <div class="card join-requests">
+      <h3>Wants to join (${reqs.length})</h3>
+      ${reqs.map((r) => `
+        <div class="player-row">
+          <span class="name">${avatarHtml(r.name, r.looks, 34)}${playerNameHtml(r.name, r.looks)}</span>
+          <span class="player-row-actions">
+            <button class="req-btn req-yes" data-approve="${r.id}" aria-label="Let in">${icon('check')}</button>
+            <button class="req-btn req-no" data-deny="${r.id}" aria-label="Decline">${icon('close')}</button>
+          </span>
+        </div>`).join('')}
+    </div>`;
+}
+
+function wireLobbyHostControls() {
+  document.querySelectorAll('[data-approve]').forEach((b) => { b.onclick = () => send({ type: 'approve_join', id: b.dataset.approve }); });
+  document.querySelectorAll('[data-deny]').forEach((b) => { b.onclick = () => send({ type: 'deny_join', id: b.dataset.deny }); });
+  document.querySelectorAll('[data-kick]').forEach((b) => {
+    b.onclick = () => {
+      const modal = openModal(`
+        <div class="x-close-row"><button class="x-close" id="kick-cancel" aria-label="Close">${icon('close')}</button></div>
+        <h2>Remove ${b.dataset.name}?</h2>
+        <button class="btn btn-danger btn-block" id="kick-yes">Remove from lobby</button>
+      `);
+      modal.querySelector('#kick-cancel').onclick = closeModal;
+      modal.querySelector('#kick-yes').onclick = () => {
+        send({ type: 'kick_player', playerId: b.dataset.kick });
+        closeModal();
+      };
+    };
+  });
 }
 
 // ----------------------------------------------------------- SUBMITTING ---
@@ -1470,8 +1589,7 @@ function renderApp(state) {
   playPhaseSounds(lastState, state);
   lastState = state;
 
-  if (state.phase === 'lobby') playLobbyMusic();
-  else stopLobbyMusic();
+  playMusic(state.phase === 'lobby' ? 'lobby' : 'main');
 
   if (state.phase === 'lobby') return renderLobbyScreen(state);
 
@@ -1584,6 +1702,7 @@ function playPhaseSounds(prev, state) {
     playTimeUp(prev.deadlineAt);
   }
   if (prev.phase === 'lobby' && state.phase === 'lobby' && state.players.length > prev.players.length) playSfx('player-join');
+  if ((state.joinRequests || []).length > (prev.joinRequests || []).length) playSfx('player-join');
   if (prev.phase === 'lobby' && state.phase !== 'lobby') playSfx('game-start');
   if (state.phase === 'results' && prev.phase !== 'results') playSfx('round-results');
   if (state.phase === 'gameover' && prev.phase !== 'gameover') playSfx('win');

@@ -164,7 +164,7 @@ function renderProfileScreen() {
         ${framedAvatarHtml(128)}
         <div class="profile-hero-name">
           ${styledNameHtml('No name')}
-          <button id="profile-rename" class="chip-btn chip-icon" title="Upravit profil" aria-label="Upravit profil">${icon('pencil')}</button>
+          <button id="profile-rename" class="chip-btn chip-icon" title="Edit profile" aria-label="Edit profile">${icon('pencil')}</button>
         </div>
       </div>
 

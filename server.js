@@ -8,6 +8,8 @@ const http = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 const crypto = require('crypto');
+const PROMPTS_I18N = require('./prompts-i18n'); // otázky v češtině a španělštině
+const LANGS = ['en', 'cs', 'es'];
 
 const PORT = process.env.PORT || 3000;
 
@@ -477,6 +479,15 @@ const HUNT_FOOD_PROMPTS = [
   'Your dream meal (or a picture of it)',
 ];
 
+const PROMPT_ARRAY_NAMES = new Map([
+  [NAME_PROMPTS, 'NAME_PROMPTS'], [IMPOSTOR_PAIRS, 'IMPOSTOR_PAIRS'],
+  [SPICY_NAME_PROMPTS, 'SPICY_NAME_PROMPTS'], [SPICY_IMPOSTOR_PAIRS, 'SPICY_IMPOSTOR_PAIRS'],
+  [FAMILY_NAME_PROMPTS, 'FAMILY_NAME_PROMPTS'], [FAMILY_IMPOSTOR_PAIRS, 'FAMILY_IMPOSTOR_PAIRS'],
+  [SCHOOL_NAME_PROMPTS, 'SCHOOL_NAME_PROMPTS'], [SCHOOL_IMPOSTOR_PAIRS, 'SCHOOL_IMPOSTOR_PAIRS'],
+  [HUNT_PROMPTS, 'HUNT_PROMPTS'], [HUNT_HOME_PROMPTS, 'HUNT_HOME_PROMPTS'], [HUNT_SCHOOL_PROMPTS, 'HUNT_SCHOOL_PROMPTS'],
+  [HUNT_OUTDOORS_PROMPTS, 'HUNT_OUTDOORS_PROMPTS'], [HUNT_PARTY_PROMPTS, 'HUNT_PARTY_PROMPTS'], [HUNT_FOOD_PROMPTS, 'HUNT_FOOD_PROMPTS'],
+]);
+
 const HUNT_PACKS = {
   anywhere: HUNT_PROMPTS,
   home: HUNT_HOME_PROMPTS,
@@ -485,6 +496,15 @@ const HUNT_PACKS = {
   party: HUNT_PARTY_PROMPTS,
   food: HUNT_FOOD_PROMPTS,
 };
+
+// Přeložená verze pole otázek podle jazyka lobby (jazyk hostitele).
+// Když překlad chybí nebo nesedí počet vět, zůstane angličtina.
+function localize(arr, lang) {
+  if (lang === 'en') return arr;
+  const name = PROMPT_ARRAY_NAMES.get(arr);
+  const t = name && PROMPTS_I18N[lang] && PROMPTS_I18N[lang][name];
+  return t && t.length === arr.length ? t : arr;
+}
 
 // Sady otázek, ze kterých hostitel vybírá v lobby (Main Character žádné nemá).
 // Spicy, Family a School jsou placené (Question Packs) — hlídá to zatím jen klient.
@@ -581,6 +601,9 @@ function newLobby(hostId) {
     drawDone: new Set(), // hráči, kteří dokreslili (nebo neměli co)
     cardOrder: [], // shuffled player ids for this round's reveal
     huntSeconds: HUNT_SECONDS_DEFAULT, // Snap Hunt — čas na hledání a vyfocení
+    joinRequests: new Map(), // id žádosti -> { id, name, looks, avatar, accept(), reject(msg) } — čekají na schválení hostitelem
+    invited: new Set(), // kódy přátel, které hostitel pozval — ti se připojí bez schvalování
+    lang: 'en', // jazyk otázek = jazyk hostitele (en | cs | es)
     huntPack: 'anywhere', // Snap Hunt — žánr (anywhere | home | school | outdoors | party | food)
     // --- Main character (mode: 'caption') ---
     captionSeconds: CAPTION_SECONDS_DEFAULT, // jediná fáze s časovým limitem — psaní popisků
@@ -604,7 +627,7 @@ function newLobby(hostId) {
 }
 
 function pickPrompt(lobby) {
-  const prompts = lobby.mode === 'hunt' ? HUNT_PACKS[lobby.huntPack] : PROMPT_PACKS[lobby.promptPack].prompts;
+  const prompts = localize(lobby.mode === 'hunt' ? HUNT_PACKS[lobby.huntPack] : PROMPT_PACKS[lobby.promptPack].prompts, lobby.lang);
   const remaining = prompts.filter((t) => !lobby.usedPrompts.has(t));
   const pool = remaining.length ? remaining : prompts;
   const chosen = pool[crypto.randomInt(pool.length)];
@@ -662,7 +685,7 @@ function startImpostorRound(lobby) {
   clearTimer(lobby);
   lobby.round += 1;
 
-  const pairs = PROMPT_PACKS[lobby.promptPack].pairs;
+  const pairs = localize(PROMPT_PACKS[lobby.promptPack].pairs, lobby.lang);
   const key = (i) => `${lobby.promptPack}:${i}`;
   const remaining = pairs.map((_, i) => i).filter((i) => !lobby.usedPairs.has(key(i)));
   const pool = remaining.length ? remaining : pairs.map((_, i) => i);
@@ -1138,6 +1161,13 @@ function publicState(lobby, viewerId) {
     deadlineAt: lobby.deadlineAt,
   };
 
+  // žádosti o připojení vidí jen hostitel
+  if (viewerId === lobby.hostId && lobby.phase === 'lobby') {
+    base.joinRequests = [...lobby.joinRequests.values()].map((r) => ({
+      id: r.id, name: r.name, looks: { ...r.looks, avatar: r.avatar },
+    }));
+  }
+
   if (lobby.phase === 'submitting') {
     base.submittedCount = lobby.submissions.size;
     base.activeCount = connectedPlayers(lobby).length;
@@ -1252,6 +1282,7 @@ const HEARTBEAT_MS = 25_000;
 
 wss.on('connection', (ws) => {
   let isDev = false; // vývojářský režim (ověřený tajný klíč)
+  let pendingJoin = null; // { lobby, id } — čekám, až mě hostitel pustí dovnitř
   let lobby = null;
   let playerId = null;
   let me = null; // kód přítele tohohle zařízení (po zprávě "hello")
@@ -1283,6 +1314,46 @@ wss.on('connection', (ws) => {
     setPresenceLobby(lobby.code);
     broadcast(lobby);
     return null;
+  }
+
+  // Žádost o připojení: hostitel ji musí schválit. Bez schvalování se
+  // připojí jen boti a přátelé, které hostitel sám pozval.
+  function requestJoin(target, msg) {
+    if (!target) return 'No lobby with that code.';
+    if (target === lobby && playerId) return null;
+    if (target.phase !== 'lobby') return 'The game has already started.';
+    if (target.players.size >= 10) return 'The lobby is full (max 10 players).';
+    if (msg.botKey === BOT_JOIN_KEY || (me && target.invited.has(me))) return joinLobby(target, msg);
+    cancelPendingJoin();
+    const reqId = id();
+    const name = (msg.name || 'Player').slice(0, 20);
+    target.joinRequests.set(reqId, {
+      id: reqId,
+      name,
+      looks: sanitizeLooks(msg.looks),
+      avatar: sanitizeAvatar(msg.looks),
+      accept: () => {
+        pendingJoin = null;
+        const err = joinLobby(target, msg);
+        if (err) ws.send(JSON.stringify({ type: 'join_denied', message: err }));
+      },
+      reject: (message) => {
+        pendingJoin = null;
+        ws.send(JSON.stringify({ type: 'join_denied', message }));
+      },
+    });
+    pendingJoin = { lobby: target, id: reqId };
+    const host = target.players.get(target.hostId);
+    ws.send(JSON.stringify({ type: 'join_pending', code: target.code, hostName: host ? host.name : '' }));
+    broadcast(target);
+    return null;
+  }
+
+  function cancelPendingJoin() {
+    if (!pendingJoin) return;
+    const { lobby: target, id: reqId } = pendingJoin;
+    pendingJoin = null;
+    if (target.joinRequests.delete(reqId)) broadcast(target);
   }
 
   // Odchod z lobby — buď úmyslný (tlačítko zpět), nebo výpadek spojení.
@@ -1345,6 +1416,9 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    // hráč, kterého hostitel vyhodil, už v lobby není — zapomenout ji (ať se může znovu přihlásit)
+    if (lobby && playerId && !lobby.players.has(playerId)) { lobby = null; playerId = null; }
+
     if (msg.type === 'dev_login') {
       isDev = isDevKey(msg.key);
       ws.send(JSON.stringify({ type: isDev ? 'dev_ok' : 'dev_denied' }));
@@ -1406,7 +1480,7 @@ wss.on('connection', (ws) => {
       const target = users.get(String(msg.code || '').toUpperCase());
       if (!target || target.sockets.size === 0) return sendError(ws, 'Your friend isn\'t online right now.');
       if (!target.lobbyCode) return sendError(ws, 'Your friend isn\'t in a lobby right now.');
-      const err = joinLobby(lobbies.get(target.lobbyCode), msg);
+      const err = requestJoin(lobbies.get(target.lobbyCode), msg);
       if (err) sendError(ws, err);
       return;
     }
@@ -1422,6 +1496,7 @@ wss.on('connection', (ws) => {
       lobby = newLobby(null);
       lobby.code = newCode;
       lobby.mode = ['draw', 'caption', 'impostor', 'hunt'].includes(msg.mode) ? msg.mode : 'classic';
+      lobby.lang = LANGS.includes(msg.lang) ? msg.lang : 'en';
       lobby.drawEnabled = lobby.mode === 'draw';
       playerId = id();
       lobby.hostId = playerId;
@@ -1441,8 +1516,13 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (msg.type === 'cancel_join') {
+      cancelPendingJoin();
+      return;
+    }
+
     if (msg.type === 'join_lobby') {
-      const err = joinLobby(lobbies.get((msg.code || '').toUpperCase()), msg);
+      const err = requestJoin(lobbies.get((msg.code || '').toUpperCase()), msg);
       if (err) sendError(ws, err);
       return;
     }
@@ -1474,9 +1554,38 @@ wss.on('connection', (ws) => {
 
     if (!lobby || !playerId) return;
 
+    // hostitel pustí / nepustí čekajícího hráče dovnitř
+    if ((msg.type === 'approve_join' || msg.type === 'deny_join') && playerId === lobby.hostId) {
+      const req = lobby.joinRequests.get(msg.id);
+      if (!req) return;
+      lobby.joinRequests.delete(msg.id);
+      if (msg.type === 'deny_join') req.reject('The host didn\'t let you in.');
+      else if (lobby.phase !== 'lobby') req.reject('The game has already started.');
+      else if (lobby.players.size >= 10) req.reject('The lobby is full (max 10 players).');
+      else req.accept();
+      broadcast(lobby);
+      return;
+    }
+
+    // hostitel vyhodí hráče z lobby (jen před začátkem hry)
+    if (msg.type === 'kick_player' && playerId === lobby.hostId && lobby.phase === 'lobby' && msg.playerId !== playerId) {
+      const p = lobby.players.get(msg.playerId);
+      if (!p) return;
+      lobby.players.delete(msg.playerId);
+      if (p.ws && p.ws.readyState === WebSocket.OPEN) p.ws.send(JSON.stringify({ type: 'kicked', code: lobby.code }));
+      if (p.friendCode) {
+        lobby.invited.delete(p.friendCode);
+        const u = users.get(p.friendCode);
+        if (u && u.lobbyCode === lobby.code) u.lobbyCode = null;
+      }
+      broadcast(lobby);
+      return;
+    }
+
     if (msg.type === 'invite_friend' && me) {
       const to = String(msg.code || '').toUpperCase();
       const u = users.get(me);
+      if (FRIEND_CODE_RE.test(to)) lobby.invited.add(to);
       const ok = sendToUser(to, {
         type: 'invite',
         from: { code: me, name: u.name, looks: publicLooks(u) },
@@ -1484,6 +1593,12 @@ wss.on('connection', (ws) => {
         mode: lobby.mode,
       });
       if (!ok) sendError(ws, 'Your friend isn\'t online right now.');
+      return;
+    }
+
+    // hostitel přepnul jazyk → další otázky v novém jazyce
+    if (msg.type === 'set_lang' && playerId === lobby.hostId && LANGS.includes(msg.lang)) {
+      lobby.lang = msg.lang;
       return;
     }
 
@@ -1529,6 +1644,9 @@ wss.on('connection', (ws) => {
       if (connectedPlayers(lobby).length < MIN_PLAYERS) {
         return sendError(ws, `You need at least ${MIN_PLAYERS} players.`);
       }
+      // kdo ještě čekal na schválení, už se nepřipojí
+      for (const req of lobby.joinRequests.values()) req.reject('The game has already started.');
+      lobby.joinRequests.clear();
       lobby.gameId = id();
       for (const p of lobby.players.values()) {
         p.coinsEarned = 0;
@@ -1632,6 +1750,7 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
+    cancelPendingJoin(); // zavřené spojení = zrušená žádost o připojení
     if (me) users.get(me)?.sockets.delete(ws);
     detachFromLobby({ leaving: false });
   });
@@ -1648,6 +1767,9 @@ const heartbeatTimer = setInterval(() => {
 wss.on('close', () => clearInterval(heartbeatTimer));
 
 // ------------------------------------------------------ Boti (dev) ---
+// Boti se připojují bez schválení hostitelem — prokážou se tímhle klíčem,
+// který existuje jen v paměti serveru (při každém startu jiný).
+const BOT_JOIN_KEY = crypto.randomBytes(16).toString('hex');
 // Bot je obyčejný hráč připojený přes WebSocket k tomuhle serveru — hraje
 // podle stejných pravidel jako lidi. Fotí jen smajlíka, hlasuje náhodně.
 
@@ -1677,11 +1799,11 @@ function spawnBot(code, takenNames) {
   const out = (obj) => bws.send(JSON.stringify(obj));
   let hostGoneSince = null;
 
-  bws.on('open', () => out({ type: 'join_lobby', code, name, looks: {} }));
+  bws.on('open', () => out({ type: 'join_lobby', code, name, looks: {}, botKey: BOT_JOIN_KEY }));
   bws.on('message', (raw) => {
     let m;
     try { m = JSON.parse(raw.toString()); } catch { return; }
-    if (m.type === 'error') return bws.close();
+    if (m.type === 'error' || m.type === 'kicked') return bws.close();
     if (m.type !== 'state') return;
     const r = `${m.round}`;
 

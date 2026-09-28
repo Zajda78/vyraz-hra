@@ -23,6 +23,9 @@ const RARITIES = {
   rare: { label: 'Rare', color: '#A855F7', refund: 35 },
   epic: { label: 'Epic', color: '#EC4899', refund: 75 },
   legendary: { label: 'Legendary', color: '#F0B429', refund: 200 },
+  // Mythic — nejvzácnější, zatím jen rámeček Fortune z kola štěstí (v truhlách není,
+  // proto není v RARITY_ORDER, podle kterého se počítají šance truhel)
+  mythic: { label: 'Mythic', color: '#FF3D7F', refund: 500 },
 };
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'];
 
@@ -44,7 +47,7 @@ const SHOP_SECTIONS = [
       { id: 'frame-ocean', name: 'Ocean', rarity: 'rare', style: 'linear-gradient(135deg,#22D3EE,#2563EB,#1E3A8A)' },
       { id: 'frame-candy', name: 'Cotton Candy', rarity: 'rare', style: 'linear-gradient(135deg,#F9A8D4,#C4B5FD,#93C5FD)' },
       { id: 'frame-toxic', name: 'Toxic', rarity: 'rare', style: 'linear-gradient(135deg,#BEF264,#22C55E,#14532D)' },
-      { id: 'frame-lava', name: 'Lava', rarity: 'epic', style: 'linear-gradient(160deg,#FACC15,#EF4444 45%,#7F1D1D)' },
+      { id: 'frame-lava', name: 'Lava', rarity: 'epic', style: 'linear-gradient(160deg,#FDE047,#F97316 30%,#DC2626 60%,#450A0A)' },
       { id: 'frame-aurora', name: 'Aurora', rarity: 'epic', style: 'linear-gradient(135deg,#34D399,#22D3EE,#A78BFA,#F472B6)' },
       { id: 'frame-chrome', name: 'Chrome', rarity: 'epic', style: 'linear-gradient(135deg,#F8FAFC,#94A3B8 30%,#F1F5F9 55%,#64748B 80%,#E2E8F0)' },
       { id: 'frame-galaxy', name: 'Galaxy', rarity: 'legendary', style: 'conic-gradient(from 200deg,#1E1B4B,#7C3AED,#EC4899,#22D3EE,#1E1B4B)' },
@@ -61,7 +64,7 @@ const SHOP_SECTIONS = [
       { id: 'frame-music', name: 'Music', rarity: 'epic', style: 'linear-gradient(135deg,#A78BFA,#EC4899,#F59E0B)' },
       { id: 'frame-king', name: 'King', rarity: 'legendary', style: 'linear-gradient(135deg,#7C3AED,#FDE68A 45%,#F59E0B 55%,#7C3AED)' },
       { id: 'frame-phoenix', name: 'Phoenix', rarity: 'legendary', style: 'linear-gradient(0deg,#7F1D1D,#F97316 40%,#FDE047 75%,#FFF7ED)' },
-      { id: 'frame-sweets', name: 'Sweets', rarity: 'legendary', style: 'conic-gradient(#F9A8D4,#FDE68A,#A7F3D0,#BFDBFE,#F9A8D4)' },
+      { id: 'frame-sweets', name: 'Sweets', rarity: 'legendary', style: 'repeating-linear-gradient(135deg,#FF5FA2 0 7%,#FFF0F6 7% 12%,#7DD3FC 12% 19%,#FFF0F6 19% 24%)' },
       // Spooky (halloweenská sada — Spooky Chest)
       { id: 'frame-pumpkin', name: 'Pumpkin', rarity: 'common', style: 'linear-gradient(135deg,#FDBA74,#F97316,#C2410C)' },
       { id: 'frame-moss', name: 'Moss', rarity: 'common', style: 'linear-gradient(135deg,#A3E635,#4D7C0F)' },
@@ -74,6 +77,8 @@ const SHOP_SECTIONS = [
       { id: 'frame-spider', name: 'Spider', rarity: 'epic', style: 'linear-gradient(135deg,#6B7280,#1F2937 50%,#9CA3AF)' },
       { id: 'frame-haunted', name: 'Haunted', rarity: 'legendary', style: 'conic-gradient(from 45deg,#F97316,#7C3AED,#1E1B4B,#7C3AED,#F97316)' },
       { id: 'frame-vampire', name: 'Vampire', rarity: 'legendary', style: 'linear-gradient(160deg,#FECACA,#DC2626 35%,#7F1D1D 65%,#18181B)' },
+      // jen z kola štěstí (wheel.js)
+      { id: 'frame-fortune', name: 'Fortune', rarity: 'mythic', wheelOnly: true, style: 'conic-gradient(from 20deg,#FDE047,#22C55E,#FDE047,#A855F7,#FDE047)' },
     ],
   },
   {
@@ -116,6 +121,8 @@ const SHOP_SECTIONS = [
       { id: 'name-witch', name: 'Witchy', rarity: 'epic', gradient: 'linear-gradient(90deg,#86EFAC,#A855F7,#86EFAC)' },
       { id: 'name-haunted', name: 'Haunted', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FDBA74,#F97316,#A855F7,#F97316)' },
       { id: 'name-vampire', name: 'Vampire', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FECACA,#EF4444,#B91C1C,#EF4444)' },
+      // jen z kola štěstí (wheel.js)
+      { id: 'name-jackpot', name: 'Jackpot', rarity: 'epic', wheelOnly: true, gradient: 'linear-gradient(90deg,#FDE047,#4ADE80,#FDE047,#4ADE80)' },
     ],
   },
 ];
@@ -123,16 +130,16 @@ const SHOP_SECTIONS = [
 // Všechny věci v jednom seznamu, každá ví, do jaké sekce patří.
 const ALL_ITEMS = SHOP_SECTIONS.flatMap((s) => s.items.map((i) => ({ ...i, section: s.id })));
 
-// Ceník — jeden kurz pro všechno: zhruba 100 mincí = 1 €.
-// Větší balíčky mincí mají bonus navíc, ať se vyplatí.
-// Truhly stojí 50–250 mincí (≈ €0.50–2.50), dohraná hra dá 3–13 mincí, denně +30 zdarma.
-const COIN_RATE_EUR = 0.01; // cena 1 mince v eurech (podle nejmenšího balíčku)
+// Ceník — jeden kurz pro všechno: 120 mincí za €0.99 (≈ 121 mincí = 1 €).
+// Větší balíčky mincí mají bonus navíc (+10/20/30 %), ať se vyplatí.
+// Truhly stojí 50–250 mincí (≈ €0.40–2.10), dohraná hra dá 3–13 mincí, denně +30 zdarma.
+const COIN_RATE_EUR = 0.99 / 120; // cena 1 mince v eurech (podle nejmenšího balíčku)
 
 const COIN_PACKS = [
-  { coins: 100, price: '€0.99' },
-  { coins: 550, price: '€4.99', bonus: 10, tag: 'Popular' },
-  { coins: 1200, price: '€9.99', bonus: 20 },
-  { coins: 2600, price: '€19.99', bonus: 30, tag: 'Best value' },
+  { coins: 120, price: '€0.99', art: 'coin' },
+  { coins: 670, price: '€4.99', bonus: 10, tag: 'Popular', art: 'pile' },
+  { coins: 1450, price: '€9.99', bonus: 20, art: 'box' },
+  { coins: 3150, price: '€19.99', bonus: 30, tag: 'Best value', art: 'safe' },
 ];
 
 const NO_ADS_PRICE = '€2.99';
@@ -177,6 +184,24 @@ function sectionOf(item) {
 // Shop záložka má dvě pod-obrazovky: samotný obchod a inventář.
 let shopView = 'shop';
 
+// Obchod je rozdělený do záložek, ať není jeden dlouhý seznam.
+// Otevře se na „Free", když je co vyzvednout, jinak na truhlách.
+const SHOP_TABS = [
+  { id: 'free', label: 'Free', icon: 'gift' },
+  { id: 'chests', label: 'Chests', icon: 'chest' },
+  { id: 'packs', label: 'Packs', icon: 'star' }, // nabídky + mince + No ads
+];
+let shopTab = null;
+
+function shopTabsHtml() {
+  return `<div class="shop-tabs">${SHOP_TABS.map((t) => `
+    <button class="shop-tab ${t.id === shopTab ? 'active' : ''}" data-shop-tab="${t.id}">
+      <span class="shop-tab-icon">${icon(t.icon)}</span>
+      <span>${t.label}</span>
+      ${t.id === 'free' && anyDailyAvailable() ? '<i class="shop-tab-dot"></i>' : ''}
+    </button>`).join('')}</div>`;
+}
+
 function openInventory() {
   shopView = 'inventory';
   renderShopScreen();
@@ -199,8 +224,9 @@ function renderShopScreen() {
   stopCamera();
   document.body.classList.add('home-bg', 'has-bottom-nav');
   const data = shopLoad();
+  if (!shopTab) shopTab = anyDailyAvailable() ? 'free' : 'chests';
 
-  const casesHtml = CASES.filter((c) => !c.adChest && isCaseAvailable(c)).map((c) => `
+  const casesHtml = CASES.filter((c) => isCaseAvailable(c)).map((c) => `
     <div class="case-card ${c.isNew ? 'is-new' : ''}" style="--case-glow:${c.glow}">
       ${c.isNew ? '<span class="case-new-tag">NEW</span>' : ''}
       <button class="case-info-btn" data-case="${c.id}" title="What's inside" aria-label="What's inside">?</button>
@@ -214,7 +240,7 @@ function renderShopScreen() {
   const packsHtml = COIN_PACKS.map((p) => `
     <button class="coin-pack" data-pack="${p.coins}">
       ${p.tag ? `<span class="coin-pack-tag">${p.tag}</span>` : ''}
-      <div class="coin-pack-icon">${COIN_SVG}</div>
+      <div class="coin-pack-icon">${COIN_PACK_ART[p.art]}</div>
       <div class="coin-pack-amount num">${p.coins}</div>
       ${p.bonus ? `<div class="coin-pack-bonus">+${p.bonus}% extra</div>` : ''}
       <div class="coin-pack-price">${p.price}</div>
@@ -234,32 +260,39 @@ function renderShopScreen() {
         <div class="inventory-btn-arrow">${icon('chevron')}</div>
       </button>
 
-      ${dailyRewardsHtml()}
+      ${shopTabsHtml()}
 
-      <div class="section-eyebrow">OFFERS</div>
-      <div id="shop-pack">${partyPackCardHtml({ compact: true })}</div>
-      <div id="shop-qpacks">${questionPacksCardHtml({ compact: true })}</div>
+      <div class="shop-tab-body">
+        ${shopTab === 'free' ? dailyRewardsHtml() : ''}
 
-      <div class="section-eyebrow">CHESTS</div>
-      <div class="case-grid">${casesHtml}</div>
+        ${shopTab === 'chests' ? `<div class="case-grid">${casesHtml}</div>` : ''}
 
-      <div class="section-eyebrow">COINS</div>
-      <div class="coin-packs">${packsHtml}</div>
+        ${shopTab === 'packs' ? `
+          <div id="shop-pack">${partyPackCardHtml({ compact: true })}</div>
+          <div id="shop-qpacks">${questionPacksCardHtml({ compact: true })}</div>
 
-      <button class="no-ads-card" id="no-ads-btn">
-        <div class="no-ads-icon">${icon('noAds')}</div>
-        <div class="no-ads-text"><strong>No ads</strong><span>Forever</span></div>
-        <div class="no-ads-price">${NO_ADS_PRICE}</div>
-      </button>
+          <div class="section-eyebrow">COINS</div>
+          <div class="coin-packs">${packsHtml}</div>
+          <button class="no-ads-card" id="no-ads-btn">
+            <div class="no-ads-icon">${NO_ADS_SVG}</div>
+            <div class="no-ads-text"><strong>No ads</strong><span>Forever</span></div>
+            <div class="no-ads-price">${NO_ADS_PRICE}</div>
+          </button>` : ''}
+      </div>
     </div>
     ${bottomNavHtml('shop')}
   `;
 
   wireBottomNav();
   document.getElementById('inventory-btn').onclick = openInventory;
-  wireDailyRewards();
-  wirePackBuy(document.getElementById('shop-pack'), renderShopScreen);
-  wireQuestionPacksBuy(document.getElementById('shop-qpacks'), renderShopScreen);
+  document.querySelectorAll('[data-shop-tab]').forEach((b) => {
+    b.onclick = () => { shopTab = b.dataset.shopTab; renderShopScreen(); };
+  });
+  if (shopTab === 'free') wireDailyRewards();
+  if (shopTab === 'packs') {
+    wirePackBuy(document.getElementById('shop-pack'), renderShopScreen);
+    wireQuestionPacksBuy(document.getElementById('shop-qpacks'), renderShopScreen);
+  }
   // truhla se po ťuknutí zatřese; "Otevřít" ji nejdřív zatřese a pak otevře
   const shake = (card) => {
     card.classList.remove('shake');
@@ -286,7 +319,8 @@ function renderShopScreen() {
 
   const notYet = () => showToast('Payments aren\'t live yet — this is a prototype.');
   document.querySelectorAll('.coin-pack').forEach((b) => { b.onclick = notYet; });
-  document.getElementById('no-ads-btn').onclick = notYet;
+  const noAds = document.getElementById('no-ads-btn');
+  if (noAds) noAds.onclick = notYet;
 }
 
 let toastTimer = null;
@@ -315,11 +349,14 @@ function nameStyleFor(item) {
   if (!item) return 'color:#fff;';
   if (item.gradient) {
     const base = `background:${item.gradient}; -webkit-background-clip:text; background-clip:text; color:transparent;`;
-    // epické a legendární barvy jména se pomalu přelévají
-    const animated = item.rarity === 'epic' || item.rarity === 'legendary';
-    return animated ? `${base} background-size:220% 100%; animation:name-shimmer 3.5s ease-in-out infinite alternate;` : base;
+    // vzácné barvy jména se pomalu přelévají, epické a legendární rychleji a víc září
+    if (item.rarity === 'epic' || item.rarity === 'legendary') {
+      return `${base} background-size:220% 100%; animation:name-shimmer 3.5s ease-in-out infinite alternate; filter:drop-shadow(0 0 6px rgba(255,255,255,0.25));`;
+    }
+    return `${base} background-size:180% 100%; animation:name-shimmer 6s ease-in-out infinite alternate;`;
   }
-  return `color:${item.color};`;
+  // obyčejné barvy jména jemně svítí svou barvou
+  return `color:${item.color}; text-shadow:0 0 10px ${item.color}55;`;
 }
 
 // Náhled toho, jak tě uvidí ostatní — nasazený rámeček + barva jména.
@@ -390,7 +427,7 @@ function renderInventoryScreen() {
   document.querySelector('.bottom-nav-btn[data-tab="shop"]').onclick = backToShop;
   document.getElementById('inv-back').onclick = backToShop;
   const toShop = document.getElementById('inv-to-shop');
-  if (toShop) toShop.onclick = backToShop;
+  if (toShop) toShop.onclick = () => { shopTab = 'chests'; backToShop(); };
 
   document.querySelectorAll('.inv-item').forEach((btn) => {
     btn.onclick = () => {

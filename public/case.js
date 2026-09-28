@@ -79,19 +79,8 @@ const CASES = [
     colors: { body: ['#1F1235', '#0B0616'], lid: ['#3B2463', '#1F1235'], trim: ['#FDE68A', '#F59E0B'] },
     glow: 'rgba(245,158,11,0.55)',
   },
-  {
-    // Daily Chest — zdarma jednou denně za reklamu (daily.js). Padá z něj
-    // cokoli ze všech truhel, ale s nízkou šancí na lepší věci.
-    id: 'daily',
-    name: 'Daily Chest',
-    price: 0,
-    adChest: true,
-    items: null, // null = všechny skiny
-    odds: { common: 70, rare: 24, epic: 5, legendary: 1 },
-    colors: { body: ['#14B8A6', '#0F766E'], lid: ['#5EEAD4', '#0D9488'], trim: ['#FFFFFF', '#CCFBF1'] },
-    glow: 'rgba(45,212,191,0.4)',
-  },
 ];
+// (Daily Chest nahradilo kolo štěstí — wheel.js)
 
 function caseById(id) {
   return CASES.find((c) => c.id === id) || CASES[0];
@@ -124,7 +113,7 @@ function casePool(caseDef) {
 (() => {
   const counts = {};
   for (const c of CASES) for (const id of c.items || []) counts[id] = (counts[id] || 0) + 1;
-  const missing = ALL_ITEMS.filter((i) => !counts[i.id]).map((i) => i.id);
+  const missing = ALL_ITEMS.filter((i) => !counts[i.id] && !i.wheelOnly).map((i) => i.id);
   const unknown = Object.keys(counts).filter((id) => !ALL_ITEMS.some((i) => i.id === id));
   const noRarity = CASES.filter((c) => c.items).flatMap((c) => RARITY_ORDER
     .filter((r) => !casePool(c).some((i) => i.rarity === r)).map((r) => `${c.id}:${r}`));
@@ -317,18 +306,13 @@ function showCaseContents(caseId) {
     </div>
     <div class="odds-row">${oddsHtml}</div>
     <div class="drop-grid">${dropsHtml}</div>
-    ${caseDef.adChest
-      ? (canOpenDailyChest()
-        ? `<button class="case-open-btn wide" id="contents-open">${icon('play')} Watch ad to open</button>`
-        : `<div class="daily-wait wide">${icon('timer')} Next chest in ${timeUntilReset()}</div>`)
-      : `<button class="case-open-btn wide" id="contents-open">Open ${COIN_SVG}<span class="num">${caseDef.price}</span></button>`}
+    <button class="case-open-btn wide" id="contents-open">Open ${COIN_SVG}<span class="num">${caseDef.price}</span></button>
   `);
   const openBtn = modal.querySelector('#contents-open');
   if (openBtn) {
     openBtn.onclick = () => {
       closeModal();
-      if (caseDef.adChest) startDailyChest();
-      else openCase(caseId);
+      openCase(caseId);
     };
   }
   modal.querySelector('#contents-close').onclick = closeModal;
@@ -447,11 +431,9 @@ function showReveal(caseDef, won, duplicate, refund) {
     </div>
     <div class="reveal-actions">
       ${duplicate ? '' : `<button class="btn btn-primary btn-block" id="reveal-equip">Equip</button>`}
-      ${caseDef.adChest
-        ? `<div class="daily-wait wide">${icon('timer')} Next Daily Chest in ${timeUntilReset()}</div>`
-        : `<button class="btn ${duplicate ? 'btn-primary' : 'btn-ghost'} btn-block" id="reveal-again" ${coins < caseDef.price ? 'disabled' : ''}>
+      <button class="btn ${duplicate ? 'btn-primary' : 'btn-ghost'} btn-block" id="reveal-again" ${coins < caseDef.price ? 'disabled' : ''}>
         Open another ${COIN_SVG}<span class="num">${caseDef.price}</span>
-      </button>`}
+      </button>
     </div>`;
   reveal.classList.add('show');
   document.getElementById('reveal-close').hidden = false;
