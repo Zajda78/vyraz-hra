@@ -234,6 +234,9 @@ function lavaDrip(x, delay, s, side = false) {
 }
 
 // Rámečky s animovaným okrajem (vrstva přes okraj rámečku, uvnitř fotka zůstane)
+// rámečky s vlastní barevnou září za sebou (CSS .halo-<id>)
+const FRAME_HALO_IDS = new Set(['frame-sweets']);
+
 const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava' };
 
 function frameDecorHtml(frame) {
@@ -245,7 +248,9 @@ function frameDecorHtml(frame) {
   const auraKind = FRAME_AURA[id] || (item && item.rarity);
   const aura = auraKind ? `<div class="frame-aura aura-${auraKind}" aria-hidden="true"></div>` : '';
   const rarity = item && item.rarity;
-  const halo = rarity === 'legendary' || rarity === 'mythic' ? `<div class="frame-halo halo-${rarity} halo-${id}" aria-hidden="true"></div>` : '';
+  // záře za rámečkem: mythic vždy, jinak jen rámečky s vlastní září (legendary zlatá záře zrušena)
+  const hasHalo = rarity === 'mythic' || FRAME_HALO_IDS.has(id);
+  const halo = hasHalo ? `<div class="frame-halo halo-${rarity} halo-${id}" aria-hidden="true"></div>` : '';
   if (!make) return halo + aura;
   return `${halo}${aura}<div class="frame-decor" aria-hidden="true"><svg viewBox="-12 -12 124 124">${make()}</svg></div>`;
 }
