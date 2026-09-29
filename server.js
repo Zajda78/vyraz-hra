@@ -809,6 +809,78 @@ const HUNT_FOOD_PROMPTS = [
   'Something you had as a kid',
 ];
 
+// Mód Filter Frenzy — v každém kole se všem vnutí jeden obličejový filtr (kolo si
+// vylosuje filtr, {name} = náhodný spoluhráč). Bez sad otázek.
+const FILTER_DOG_PROMPTS = [
+  'Your best puppy eyes',
+  'Your face when someone says "walkies!"',
+  'Your face when you hear the treat bag',
+  'Pose like a dog who just got caught on the sofa',
+  'Your face when you\'re a very good boy or girl',
+  'Your best "who, me?" innocent look',
+  '{name} just took your bone — your reaction',
+  'Your face when you spot the mailman',
+  'Howl at the moon — show us the pose',
+  'Your sleepy face after a long walk',
+];
+const FILTER_GLASSES_PROMPTS = [
+  'Your coolest "I don\'t care" look',
+  'Pose like a secret agent',
+  'Your face when you walk in slow motion',
+  'Your best movie-star pose',
+  'Your face when you see something shocking behind the shades',
+  'Look like a boss who just closed a huge deal',
+  '{name} just said something silly — your unimpressed look',
+  'Your face when you are the coolest person on the beach',
+  'Pose like a rock star before the big concert',
+  'Your best "I saw that" stare',
+];
+const FILTER_CROWN_PROMPTS = [
+  'Your royal "peasants, bow" face',
+  'Your face when you are crowned ruler of the world',
+  'Pose like a king or queen on a throne',
+  'Your face when someone forgets to bow',
+  'Your most dramatic royal wave',
+  '{name} is your royal jester — your amused look',
+  'Your face when the royal dinner is served',
+  'Look like you just lost the crown jewels',
+  'Your proud face when you win the whole kingdom',
+  'Your best fancy posh look',
+];
+const FILTER_CLOWN_PROMPTS = [
+  'Your saddest clown face',
+  'Your best circus laugh',
+  'Your face when the balloon pops',
+  'Pose like a clown who just slipped on a banana peel',
+  'Your face when you squeeze out of a tiny car',
+  'Your best silly, goofy grin',
+  '{name} just told the funniest joke ever — your reaction',
+  'Your face when the audience stops laughing',
+  'Pose like the star of the circus',
+  'Your most dramatic "tragic clown" look',
+];
+const FILTER_DEVIL_PROMPTS = [
+  'Your most evil laugh',
+  'Your sneaky "I have a plan" face',
+  'Pose like the boss of the underworld',
+  'Your face when you get away with something naughty',
+  'Your most menacing stare',
+  '{name} is your next victim — your devilish look',
+  'Your face when you stole the last cookie',
+  'Your best villain monologue face',
+  'Your innocent angel face (with horns)',
+  'Pose like a devil who just got grounded',
+];
+
+const FILTER_PROMPTS = {
+  dog: FILTER_DOG_PROMPTS,
+  glasses: FILTER_GLASSES_PROMPTS,
+  crown: FILTER_CROWN_PROMPTS,
+  clown: FILTER_CLOWN_PROMPTS,
+  devil: FILTER_DEVIL_PROMPTS,
+};
+const FILTER_IDS = Object.keys(FILTER_PROMPTS);
+
 const PROMPT_ARRAY_NAMES = new Map([
   [NAME_PROMPTS, 'NAME_PROMPTS'], [IMPOSTOR_PAIRS, 'IMPOSTOR_PAIRS'],
   [SPICY_NAME_PROMPTS, 'SPICY_NAME_PROMPTS'], [SPICY_IMPOSTOR_PAIRS, 'SPICY_IMPOSTOR_PAIRS'],
@@ -816,6 +888,7 @@ const PROMPT_ARRAY_NAMES = new Map([
   [SCHOOL_NAME_PROMPTS, 'SCHOOL_NAME_PROMPTS'], [SCHOOL_IMPOSTOR_PAIRS, 'SCHOOL_IMPOSTOR_PAIRS'],
   [HUNT_PROMPTS, 'HUNT_PROMPTS'], [HUNT_HOME_PROMPTS, 'HUNT_HOME_PROMPTS'], [HUNT_SCHOOL_PROMPTS, 'HUNT_SCHOOL_PROMPTS'],
   [HUNT_OUTDOORS_PROMPTS, 'HUNT_OUTDOORS_PROMPTS'], [HUNT_PARTY_PROMPTS, 'HUNT_PARTY_PROMPTS'], [HUNT_FOOD_PROMPTS, 'HUNT_FOOD_PROMPTS'],
+  [FILTER_DOG_PROMPTS, 'FILTER_DOG_PROMPTS'], [FILTER_GLASSES_PROMPTS, 'FILTER_GLASSES_PROMPTS'], [FILTER_CROWN_PROMPTS, 'FILTER_CROWN_PROMPTS'], [FILTER_CLOWN_PROMPTS, 'FILTER_CLOWN_PROMPTS'], [FILTER_DEVIL_PROMPTS, 'FILTER_DEVIL_PROMPTS'],
 ]);
 
 const HUNT_PACKS = {
@@ -911,7 +984,7 @@ function friendStatus(code) {
 function newLobby(hostId) {
   return {
     hostId,
-    mode: 'classic', // classic | draw | caption | impostor | hunt — nastaví se při create_lobby, dál se nemění
+    mode: 'classic', // classic | draw | caption | impostor | hunt | filter — nastaví se při create_lobby, dál se nemění
     phase: 'lobby', // lobby | submitting | drawing | voting | impostor_voting | subject_photo | captioning | judging | results | gameover
     totalRounds: 5,
     drawEnabled: false,
@@ -929,6 +1002,8 @@ function newLobby(hostId) {
     joinRequests: new Map(), // id žádosti -> { id, name, looks, avatar, accept(), reject(msg) } — čekají na schválení hostitelem
     invited: new Set(), // kódy přátel, které hostitel pozval — ti se připojí bez schvalování
     lang: 'en', // jazyk otázek = jazyk hostitele (en | cs | es)
+    filter: null, // Filter Frenzy — id filtru aktuálního kola
+    lastFilter: null, // filtr minulého kola (bez okamžitého opakování)
     huntPack: 'anywhere', // Snap Hunt — žánr (anywhere | home | school | outdoors | party | food)
     // --- Main character (mode: 'caption') ---
     captionSeconds: CAPTION_SECONDS_DEFAULT, // jediná fáze s časovým limitem — psaní popisků
@@ -952,7 +1027,13 @@ function newLobby(hostId) {
 }
 
 function pickPrompt(lobby) {
-  const prompts = localize(lobby.mode === 'hunt' ? HUNT_PACKS[lobby.huntPack] : PROMPT_PACKS[lobby.promptPack].prompts, lobby.lang);
+  if (lobby.mode === 'filter') {
+    // Filter Frenzy: nejdřív filtr (ne stejný jako minule), pak zadání k němu
+    const choices = FILTER_IDS.filter((f) => f !== lobby.lastFilter);
+    lobby.filter = choices[crypto.randomInt(choices.length)];
+    lobby.lastFilter = lobby.filter;
+  }
+  const prompts = localize(lobby.mode === 'filter' ? FILTER_PROMPTS[lobby.filter] : lobby.mode === 'hunt' ? HUNT_PACKS[lobby.huntPack] : PROMPT_PACKS[lobby.promptPack].prompts, lobby.lang);
   const remaining = prompts.filter((t) => !lobby.usedPrompts.has(t));
   const pool = remaining.length ? remaining : prompts;
   const chosen = pool[crypto.randomInt(pool.length)];
@@ -1477,6 +1558,7 @@ function publicState(lobby, viewerId) {
     captionSeconds: lobby.captionSeconds,
     huntSeconds: lobby.huntSeconds,
     huntPack: lobby.huntPack,
+    filter: lobby.mode === 'filter' ? lobby.filter : null, // filtr kola (Filter Frenzy)
     promptPack: lobby.promptPack,
     prompt: promptFor(lobby, viewerId),
     // impostor o své roli neví — dozví se ji až ve výsledcích kola
@@ -1832,7 +1914,7 @@ wss.on('connection', (ws) => {
       const newCode = code();
       lobby = newLobby(null);
       lobby.code = newCode;
-      lobby.mode = ['draw', 'caption', 'impostor', 'hunt'].includes(msg.mode) ? msg.mode : 'classic';
+      lobby.mode = ['draw', 'caption', 'impostor', 'hunt', 'filter'].includes(msg.mode) ? msg.mode : 'classic';
       lobby.lang = LANGS.includes(msg.lang) ? msg.lang : 'en';
       lobby.drawEnabled = lobby.mode === 'draw';
       playerId = id();
@@ -1954,7 +2036,7 @@ wss.on('connection', (ws) => {
       return;
     }
 
-    if (msg.type === 'set_prompt_pack' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode !== 'caption' && lobby.mode !== 'hunt') {
+    if (msg.type === 'set_prompt_pack' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode !== 'caption' && lobby.mode !== 'hunt' && lobby.mode !== 'filter') {
       if (PROMPT_PACKS[msg.pack]) lobby.promptPack = msg.pack;
       broadcast(lobby);
       return;

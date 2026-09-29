@@ -157,6 +157,19 @@ function shopLoad() {
   let data = null;
   try { data = JSON.parse(localStorage.getItem(shopKey()) || 'null'); } catch { /* ignore */ }
   data = data || { coins: SHOP_START_COINS, owned: [], equipped: {} };
+  // nabídky byly zdarma omylem v prototypu, tak se odstraní od běžných hráčů (dev storage se nemění)
+  if (!isDevMode() && data.unlocks) {
+    const partyPackCoins = 200; // PARTY_PACK.coins z offers.js
+    const questionPacksCoins = 100; // QUESTION_PACKS.coins z offers.js
+    let coinsToRemove = 0;
+    if (data.unlocks.includes('party-pack')) coinsToRemove += partyPackCoins;
+    if (data.unlocks.includes('question-packs')) coinsToRemove += questionPacksCoins;
+    data.unlocks = data.unlocks.filter(id => id !== 'party-pack' && id !== 'question-packs');
+    if (coinsToRemove > 0) {
+      data.coins = Math.max(0, data.coins - coinsToRemove);
+      shopSave(data);
+    }
+  }
   if (isDevMode() && data.coins < DEV_COINS / 2) data.coins = DEV_COINS;
   return data;
 }
