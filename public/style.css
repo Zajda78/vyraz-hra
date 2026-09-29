@@ -25,7 +25,7 @@ body{
   transition:background .3s ease;
   touch-action:pan-y;
 }
-button, .code-box, .vote-card, .mode-card, .toggle-switch, .swatch, .result-card{
+button, .code-box, .vote-card, .mode-card, .swatch, .result-card{
   touch-action:manipulation;
   user-select:none;
   -webkit-user-select:none;
@@ -109,7 +109,6 @@ button{font:inherit;}
 }
 .reconnect-box p{ margin:0; }
 .reconnect-box p:first-of-type{ font-weight:700; margin-top:16px; }
-.reconnect-sub{ color:var(--ink-dim); font-size:0.85rem; margin-top:8px !important; }
 .spinner{
   width:34px; height:34px; margin:0 auto; border-radius:50%;
   border:3px solid var(--line); border-top-color:var(--accent);
@@ -141,19 +140,6 @@ button{font:inherit;}
 .dot{ width:8px; height:8px; border-radius:50%; background:var(--good); flex:none; }
 .dot.off{ background:#5a564f; }
 
-.toggle-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; }
-.toggle-row h3{ font-size:1rem; }
-.toggle-switch{
-  flex:none; width:50px; height:30px; border-radius:999px; border:1px solid var(--line);
-  background:var(--surface-2); position:relative; cursor:pointer; padding:0;
-  transition:background .15s ease;
-}
-.toggle-switch::after{
-  content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
-  background:var(--ink-dim); transition:transform .15s ease, background .15s ease;
-}
-.toggle-switch.on{ background:var(--accent); border-color:var(--accent); }
-.toggle-switch.on::after{ transform:translateX(20px); background:#fff; }
 
 .draw-stage{ background:#000; }
 .draw-stage img{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
@@ -165,12 +151,6 @@ button{font:inherit;}
 }
 .swatch.active{ border-color:#fff; box-shadow:0 0 0 2px var(--accent); }
 
-.stepper{ display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:16px; }
-.stepper button{
-  width:44px; height:44px; border-radius:50%; border:1px solid var(--line);
-  background:var(--surface-2); color:var(--ink); font-size:1.3rem; cursor:pointer;
-}
-.stepper .val{ font-size:1.6rem; font-weight:800; min-width:2.5ch; text-align:center; }
 
 .timer{
   font-family:'Unbounded',sans-serif; font-size:1.1rem; font-weight:800; color:var(--gold);
@@ -192,6 +172,8 @@ button{font:inherit;}
 .camera-wrap video, .camera-wrap canvas, .camera-wrap img{
   width:100%; height:100%; object-fit:cover; position:absolute; inset:0;
 }
+/* selfie náhled jako zrcadlo (stejně jako výsledná fotka), zadní foťák ne */
+.camera-wrap video:not(.rear){ transform:scaleX(-1); }
 .camera-wrap .flash{
   position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none;
 }
@@ -295,7 +277,6 @@ button{font:inherit;}
 .place-3 .podium-bar{ height:62px; background:linear-gradient(180deg, #3d2a1a, var(--surface-2)); border-color:#a5673a; }
 .place-1 .podium-medal{ font-size:2.4rem; }
 
-.footer-note{ margin-top:auto; text-align:center; color:#5c584f; font-size:0.72rem; padding-top:20px; }
 
 /* ------------------------------------------------------------ HOME ---- */
 
@@ -314,19 +295,6 @@ button{font:inherit;}
 }
 .home-actions{ display:flex; gap:10px; }
 
-.player-name-row{
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
-  margin-bottom:18px;
-  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-  color:rgba(255,255,255,0.85); border-radius:14px; padding:10px 10px 10px 12px; font-size:0.85rem;
-}
-.player-name-row strong{ color:#fff; }
-.player-name-info{ display:flex; align-items:center; gap:10px; min-width:0; }
-.player-avatar{
-  flex:none; width:30px; height:30px; border-radius:50%; background:var(--accent);
-  color:#fff; font-family:'Unbounded',sans-serif; font-weight:800; font-size:0.85rem;
-  display:flex; align-items:center; justify-content:center;
-}
 .chip-btn{
   flex:none; background:var(--surface-2); color:#fff; border:1px solid var(--line); border-radius:999px;
   padding:11px 16px; font-size:0.78rem; font-weight:700; cursor:pointer; min-height:44px;
@@ -337,7 +305,6 @@ button{font:inherit;}
   border-radius:22px; padding:20px;
 }
 .join-card h2{ font-size:1.15rem; margin-bottom:16px; }
-.join-card .join-sub{ color:#726d7a; font-size:0.85rem; margin-bottom:16px; }
 
 .code-boxes{ display:flex; gap:10px; justify-content:center; margin-bottom:14px; position:relative; }
 .code-box{
@@ -391,13 +358,7 @@ button{font:inherit;}
 .mode-card-draw{ --c1:#22D3EE; --c2:#3FAE6B; --base:#0f2436; }
 .mode-card-caption{ --c1:#F59E0B; --c2:#EC4899; --base:#3a1750; }
 
-.mode-badge{
-  display:inline-flex; align-items:center; gap:6px; background:var(--surface-2);
-  border:1px solid var(--line); color:var(--ink-dim); font-size:0.78rem; font-weight:600;
-  padding:6px 12px; border-radius:999px; margin:0 auto 4px;
-}
 
-.home-error{ color:#ffd7d2; font-size:0.82rem; text-align:center; min-height:1.2em; }
 
 /* ------------------------------------------------------------ MODAL --- */
 
@@ -436,13 +397,9 @@ button{font:inherit;}
 .ico{ width:1em; height:1em; display:inline-block; vertical-align:-0.14em; flex:none; }
 .icon-btn .ico{ width:22px; height:22px; }
 .back-btn .ico{ width:20px; height:20px; }
-.stepper button{ display:flex; align-items:center; justify-content:center; }
-.stepper button .ico{ width:20px; height:20px; }
 .chip-btn{ display:inline-flex; align-items:center; gap:6px; }
 .chip-btn .ico{ width:15px; height:15px; color:var(--accent); }
 .btn .ico{ width:18px; height:18px; margin-right:6px; vertical-align:-0.22em; }
-.icon-heading{ display:flex; align-items:center; gap:8px; }
-.icon-heading .ico{ width:20px; height:20px; color:var(--accent); }
 .subtitle > .ico{ color:var(--accent); margin-right:4px; }
 .camera-status .ico{ width:16px; height:16px; vertical-align:-0.25em; margin-right:4px; }
 .camera-status.ok .ico{ color:var(--good); }
@@ -495,7 +452,6 @@ button{font:inherit;}
   background:#C13CF5;
   box-shadow:0 0 0 2px rgba(255,255,255,0.18), 0 6px 18px -4px rgba(193,60,245,0.7), inset 0 -3px 0 rgba(0,0,0,0.18);
 }
-.setting-note{ margin-top:12px; font-size:0.82rem; }
 
 /* ------------------------------------------------------- PRAVIDLA ------ */
 
@@ -519,7 +475,6 @@ button{font:inherit;}
 .rules-tab.active .mode-tile{ opacity:1; }
 .rules-tab-draw{ --c1:#22D3EE; --c2:#3FAE6B; }
 .rules-tab-caption{ --c1:#F59E0B; --c2:#EC4899; }
-.player-greeting{ font-size:1rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* ------------------------------------------------------ SPODNÍ LIŠTA --- */
 
@@ -563,11 +518,6 @@ body.has-bottom-nav #app{ padding-bottom:calc(110px + env(safe-area-inset-bottom
 .shop-item:active{ transform:scale(0.96); }
 .shop-item.is-equipped{ border-color:var(--good); box-shadow:0 0 0 3px rgba(63,174,107,0.2); }
 .shop-item-name{ font-family:'Unbounded',sans-serif; font-weight:700; font-size:0.85rem; }
-.shop-price{
-  display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:999px;
-  background:rgba(251,191,36,0.14); color:#FDE68A; font-weight:800; font-size:0.85rem;
-}
-.shop-price .coin{ width:16px; height:16px; }
 .shop-state{ display:inline-flex; align-items:center; gap:5px; padding:6px 12px; border-radius:999px; font-weight:700; font-size:0.8rem; }
 .shop-state.owned{ background:var(--surface-2); color:#fff; }
 .shop-state.equipped{ background:rgba(63,174,107,0.18); color:#86EFAC; }
@@ -1411,7 +1361,6 @@ body.no-scroll{ overflow:hidden; }
 .daily-coins-art .coin:nth-child(2){ left:32px; top:12px; width:52px; height:52px; }
 .daily-coins-art .coin:nth-child(3){ left:58px; top:34px; animation-delay:-1.2s; }
 @keyframes coin-bob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-5px); } }
-.daily-chest-art{ width:104px; height:88px; }
 .daily-btn{
   display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border:none; border-radius:999px; cursor:pointer;
   background:linear-gradient(135deg,#5EEAD4,#14B8A6); color:#042F2E;

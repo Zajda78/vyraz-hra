@@ -95,6 +95,41 @@ const NAME_PROMPTS = [
   'Your face when {name} brings up your New Year\'s Eve fail you\'d forgotten',
   'Your face when {name} says their dog likes you more than them',
   'Your face when {name} admits your jokes were never funny',
+  'Your face when {name} replies "ok." to your long message',
+  'Your face when {name} spoils the ending of your favourite series',
+  'Your face when {name} leaves you on read for 3 days',
+  'Your face when {name} posts the ugly photo of you instead of the good one',
+  'Your face when {name} laughs at your joke 10 minutes later',
+  'Your face when {name} says "I\'m 5 minutes away" and hasn\'t left home yet',
+  'Your face when {name} changes your phone language to Chinese',
+  'Your face when {name} explains a meme you already understood',
+  'Your face when {name} sends you a 7-minute voice message',
+  'Your face when {name} borrows your charger and "forgets" to return it',
+  'Your face when {name} starts the video call with the camera pointing up their nose',
+  'Your face when {name} orders pineapple pizza for everyone',
+  'Your face when {name} reveals your childhood nickname',
+  'Your face when {name} beats your high score on your own phone',
+  'Your face when {name} says "trust me, I know a shortcut"',
+  'Your face when {name} sits on your freshly made sandwich',
+  'Your face when {name} calls instead of texting',
+  'Your face when {name} dances at a wedding like nobody is watching — but everyone is',
+  'Your face when {name} uses your toothbrush "just once"',
+  'Your face when {name} tells you the milk you just drank expired last month',
+  'Your face when {name} puts you on speaker without telling you',
+  'Your face when {name} brings their new partner to game night',
+  'Your face when {name} wins rock-paper-scissors 10 times in a row',
+  'Your face when {name} gives you a haircut "like a pro"',
+  'Your face when {name} reads your horoscope out loud and it\'s scarily accurate',
+  'Your face when {name} says they\'ve never seen your favourite film',
+  'Your face when {name} replies to the group chat with just "?"',
+  'Your face when {name} challenges you to eat a spoon of mustard',
+  'Your face when {name} starts singing and everyone joins in except you',
+  'Your face when {name} tells you your fly has been open all day',
+  'Your face when {name} says "we should do this every week"',
+  'Your face when {name} gets lost in a shopping centre',
+  'Your face when {name} puts salt in your coffee instead of sugar',
+  'Your face when {name} shows up to the party in the exact same outfit as you',
+  'Your face when {name} tells everyone you cried at a cartoon',
 ];
 
 // Kosmetika ze shopu (nasazený rámeček / barva jména). Server jen přeposílá
@@ -143,6 +178,46 @@ const IMPOSTOR_PAIRS = [
   ['Your face when you realise it\'s Monday', 'Your face when you realise you\'re out of food'],
   ['Your face when you\'re keeping a secret', 'Your face when you\'re planning a surprise'],
   ['Your face when you\'re trying to fall asleep', 'Your face when you\'re bored in a lecture'],
+  ['Your face when the Wi-Fi goes down', 'Your face when your phone dies at 1%'],
+  ['Pose like a rock star', 'Pose like an opera singer'],
+  ['Your face when you step in something wet with socks on', 'Your face when you step on a Lego brick'],
+  ['Your face when you smell fresh bread', 'Your face when you smell fresh coffee'],
+  ['Pose like a secret agent', 'Pose like a detective'],
+  ['Your face when you open a surprise bill', 'Your face when you check your bank account'],
+  ['Your face on a plane during turbulence', 'Your face on a boat in big waves'],
+  ['Your face when you hear your favourite song', 'Your face when you hear your ringtone in public'],
+  ['Pose like a zombie', 'Pose like a vampire'],
+  ['Your face when you jump into cold water', 'Your face when you walk out into freezing wind'],
+  ['Your face when you pretend to understand', 'Your face when you pretend to listen'],
+  ['Your face when the waiter brings the wrong food', 'Your face when your food takes an hour'],
+  ['Pose like a yoga teacher', 'Pose like a karate master'],
+  ['Your face when you see your old school photo', 'Your face when you hear your own voice recording'],
+  ['Your face when you win an argument', 'Your face when you win a race'],
+  ['Your face when you taste something delicious', 'Your face when you taste something expensive'],
+  ['Pose like a pop star on stage', 'Pose like a DJ at a festival'],
+  ['Your face when you get a surprise party', 'Your face when you get a surprise visit'],
+  ['Your face when you hear a mosquito at night', 'Your face when you hear an alarm at night'],
+  ['Pose like a fashion influencer', 'Pose like a fitness influencer'],
+  ['Your face when you find money in your jeans', 'Your face when you find chocolate in your bag'],
+  ['Your face when your food is too hot', 'Your face when your drink is too cold'],
+  ['Your face when you forget someone\'s name', 'Your face when you forget why you walked into a room'],
+  ['Pose like a cowboy', 'Pose like a pirate'],
+  ['Your face when you see the price of a concert ticket', 'Your face when you see the price of a coffee at the airport'],
+  ['Your face when you hear good news', 'Your face when you hear gossip'],
+  ['Your face when you are stuck in traffic', 'Your face when you are stuck in a lift'],
+  ['Pose like a news reporter', 'Pose like a weather presenter'],
+  ['Your face when you smell smoke', 'Your face when you smell gas'],
+  ['Your face when you win at cards', 'Your face when you win at chess'],
+  ['Your face when your ice cream falls on the ground', 'Your face when your pizza falls face down'],
+  ['Pose like a tired parent', 'Pose like a tired teacher'],
+  ['Your face when you see a snake', 'Your face when you see a rat'],
+  ['Your face when you get a massage', 'Your face when you get into a hot bath'],
+  ['Your face when you hear a baby crying on a plane', 'Your face when someone kicks your seat on a plane'],
+  ['Pose like a movie villain', 'Pose like an evil scientist'],
+  ['Your face when your phone autocorrects something rude', 'Your face when you send a message to the wrong group'],
+  ['Your face when you finally sit down after a long day', 'Your face when you finally take your shoes off'],
+  ['Your face when you are about to sneeze', 'Your face when you are about to yawn'],
+  ['Pose like a tourist taking a selfie', 'Pose like a paparazzi photographer'],
 ];
 
 // Sada „Spicy“ — pikantnější, trapnější otázky o randění a vztazích.
@@ -178,6 +253,31 @@ const SPICY_NAME_PROMPTS = [
   'Your face when {name} likes a 3-year-old photo of your crush from your phone',
   'Your face when {name} says your ex is now dating their cousin',
   'Your face when {name} tells your crush you practised asking them out',
+  'Your face when {name} reads your "about me" from your dating app out loud',
+  'Your face when {name} asks your crush if they\'re single — for you',
+  'Your face when {name} finds your old love poems',
+  'Your face when {name} says your ex looked happier with you',
+  'Your face when {name} spots you on a date from across the restaurant',
+  'Your face when {name} replies to your ex\'s story with fire emojis',
+  'Your face when {name} shows everyone your most-used emoji',
+  'Your face when {name} says you blush every time a certain someone walks in',
+  'Your face when {name} plays your breakup song at the party',
+  'Your face when {name} sets you up on a blind date with their cousin',
+  'Your face when {name} asks "so what are you two?"',
+  'Your face when {name} does an impression of your flirting',
+  'Your face when {name} finds out who your phone wallpaper is',
+  'Your face when {name} says your last relationship was "a phase"',
+  'Your face when {name} starts a rumour that you have a secret admirer',
+  'Your face when {name} shows the group your "typing…" that lasted 20 minutes',
+  'Your face when {name} asks your date how much they earn',
+  'Your face when {name} catches you rehearsing a breakup speech',
+  'Your face when {name} leaves a kiss mark on your cheek in front of everyone',
+  'Your face when {name} says your crush asked about you',
+  'Your face when {name} rates everyone\'s exes out loud',
+  'Your face when {name} dares you to call your ex on speaker',
+  'Your face when {name} finds a hickey joke in your notes app',
+  'Your face when {name} tells your date your real age',
+  'Your face when {name} says you\'d be a cute couple — with them',
 ];
 
 const SPICY_IMPOSTOR_PAIRS = [
@@ -201,6 +301,46 @@ const SPICY_IMPOSTOR_PAIRS = [
   ['Your most attractive face', 'Your sleepiest face'],
   ['Your face when your crush says "you\'re like a sibling to me"', 'Your face when your crush says "let\'s just be friends"'],
   ['Your face when you text "I love you" by accident', 'Your face when you reply "k" by accident'],
+  ['Your face when your date shows up late', 'Your face when your date shows up with their mum'],
+  ['Your "I saw that message" face', 'Your "I\'m ignoring you" face'],
+  ['Pose like a romantic movie poster', 'Pose like a perfume advert'],
+  ['Your face when someone flirts with your partner', 'Your face when someone flirts with you in front of your partner'],
+  ['Your face when you get a "u up?" text', 'Your face when you get a "who is this?" text'],
+  ['Your face when your crush compliments your outfit', 'Your face when your crush compliments your friend'],
+  ['Your face at your ex\'s wedding', 'Your face at your best friend\'s wedding'],
+  ['Your face when you\'re about to kiss', 'Your face when you\'re about to sneeze'],
+  ['Pose like you\'re proposing', 'Pose like you just got proposed to'],
+  ['Your face when your crush says "haha"', 'Your face when your crush says "lol"'],
+  ['Your face when you get ghosted', 'Your face when you get friend-zoned'],
+  ['Your face when someone steals your seat next to your crush', 'Your face when someone steals your dance partner'],
+  ['Your seductive face', 'Your "I just smelled something" face'],
+  ['Your face when your parents walk in on your date', 'Your face when your siblings walk in on your date'],
+  ['Your face when you realise your date is your friend\'s ex', 'Your face when you realise your date is your teacher\'s kid'],
+  ['Your face when your crush sits next to you', 'Your face when your crush touches your hand'],
+  ['Your face when you see your ex with someone new', 'Your face when your ex likes your photo'],
+  ['Your "I\'m single" face', 'Your "it\'s complicated" face'],
+  ['Pose like a romance novel cover', 'Pose like a soap opera star'],
+  ['Your face when someone asks for your number', 'Your face when someone asks for your Instagram'],
+  ['Your face when your date is really good-looking', 'Your face when your date looks nothing like their photos'],
+  ['Your face when you hear your crush is single', 'Your face when you hear your crush is taken'],
+  ['Your face during a slow dance', 'Your face during an awkward hug'],
+  ['Pose like you\'re on a honeymoon', 'Pose like you\'re on a first date'],
+  ['Your face when someone says you\'re their type', 'Your face when someone says you remind them of their mum'],
+  ['Your face when you read a flirty text', 'Your face when you write a flirty text'],
+  ['Your face when you get caught sending a heart emoji', 'Your face when you get caught deleting a message'],
+  ['Your "you look good tonight" face', 'Your "I have a boyfriend/girlfriend" face'],
+  ['Your face when your partner forgets your anniversary', 'Your face when your partner forgets your birthday'],
+  ['Pose like a bride', 'Pose like a groom'],
+  ['Your face when your ex asks to get back together', 'Your face when your ex asks for their stuff back'],
+  ['Your face when you meet your partner\'s parents', 'Your face when you meet your partner\'s ex'],
+  ['Your face when someone flirts with you at work', 'Your face when someone flirts with you at the gym'],
+  ['Your face when you swipe right', 'Your face when you swipe left'],
+  ['Pose like a lovesick teenager', 'Pose like a heartbroken poet'],
+  ['Your face when you get a rose', 'Your face when you get chocolates'],
+  ['Your face when your crush laughs at your joke', 'Your face when your crush ignores your joke'],
+  ['Your face at 3am texting your crush', 'Your face at 3am eating in the kitchen'],
+  ['Your face when your friends leave you alone with your crush', 'Your face when your friends embarrass you in front of your crush'],
+  ['Your face when someone says "you\'re cute"', 'Your face when someone says "you\'re funny"'],
 ];
 
 // Sada „Family“ — otázky vhodné pro celou rodinu i děti.
@@ -235,6 +375,31 @@ const FAMILY_NAME_PROMPTS = [
   'Your face when {name} brings home a new puppy',
   'Your face when {name} says you have to clean your room',
   'Your face when {name} pulls a funny face at dinner',
+  'Your face when {name} says we\'re having pancakes for breakfast',
+  'Your face when {name} does a magic trick that goes wrong',
+  'Your face when {name} says the cat is sitting on your homework',
+  'Your face when {name} builds the tallest block tower ever',
+  'Your face when {name} says we\'re going to the beach',
+  'Your face when {name} puts ketchup on everything',
+  'Your face when {name} wakes you up with a trumpet',
+  'Your face when {name} wins hide and seek again',
+  'Your face when {name} says the goldfish can talk',
+  'Your face when {name} makes the funniest noise ever',
+  'Your face when {name} gives you a big bear hug',
+  'Your face when {name} says there\'s a monster under the bed',
+  'Your face when {name} eats a whole lemon',
+  'Your face when {name} brings home a huge watermelon',
+  'Your face when {name} dresses up as a dinosaur',
+  'Your face when {name} says you can stay up late tonight',
+  'Your face when {name} tries to whistle and can\'t',
+  'Your face when {name} finds a treasure map',
+  'Your face when {name} says the car is out of petrol',
+  'Your face when {name} makes a snowman that looks like you',
+  'Your face when {name} says it\'s pizza night',
+  'Your face when {name} falls asleep during the film',
+  'Your face when {name} jumps in a muddy puddle',
+  'Your face when {name} says there\'s a surprise in the garden',
+  'Your face when {name} shows you a baby photo of themselves',
 ];
 
 const FAMILY_IMPOSTOR_PAIRS = [
@@ -258,6 +423,46 @@ const FAMILY_IMPOSTOR_PAIRS = [
   ['Your face on your birthday', 'Your face on the first day of holidays'],
   ['Pose like a chicken', 'Pose like a penguin'],
   ['Your face when you\'re really hungry', 'Your face when you\'re really full'],
+  ['Pose like a lion', 'Pose like a tiger'],
+  ['Your face when you blow up a balloon', 'Your face when a balloon pops'],
+  ['Pose like an astronaut', 'Pose like an alien'],
+  ['Your face when you smell a stinky fart', 'Your face when you smell rotten eggs'],
+  ['Pose like a frog', 'Pose like a bunny'],
+  ['Your face when you win a medal', 'Your face when you win a trophy'],
+  ['Your face when you see a shark', 'Your face when you see a crocodile'],
+  ['Pose like a princess', 'Pose like a queen'],
+  ['Your face when you eat a marshmallow', 'Your face when you eat candy floss'],
+  ['Your face when you go down a big slide', 'Your face when you go on a swing really high'],
+  ['Pose like a snowman', 'Pose like a scarecrow'],
+  ['Your face when a bee flies near you', 'Your face when a fly lands on your nose'],
+  ['Pose like a firefighter', 'Pose like a police officer'],
+  ['Your face when you get a hug from grandma', 'Your face when grandma pinches your cheek'],
+  ['Your face when you lose a tooth', 'Your face when you find a coin under your pillow'],
+  ['Pose like an elephant', 'Pose like a giraffe'],
+  ['Your face when you eat a lollipop', 'Your face when you eat popcorn'],
+  ['Pose like a mermaid', 'Pose like a fairy'],
+  ['Your face when you see a clown', 'Your face when you see a magician'],
+  ['Your face when you open a present', 'Your face when you blow out birthday candles'],
+  ['Pose like a knight', 'Pose like a ninja'],
+  ['Your face when you smell flowers', 'Your face when you smell a cake in the oven'],
+  ['Your face when you are scared of the dark', 'Your face when you hear a creaky door'],
+  ['Pose like a teddy bear', 'Pose like a panda'],
+  ['Your face when you see a butterfly', 'Your face when you see a ladybird'],
+  ['Your face when you drink lemonade', 'Your face when you drink hot chocolate'],
+  ['Pose like a race car driver', 'Pose like a pilot'],
+  ['Your face when you jump on a trampoline', 'Your face when you ride a bike downhill'],
+  ['Your face when someone says "boo!"', 'Your face when a jack-in-the-box pops out'],
+  ['Pose like a sleepy owl', 'Pose like a busy bee'],
+  ['Your face when you eat spaghetti', 'Your face when you eat soup'],
+  ['Your face when you build a sandcastle', 'Your face when a wave knocks down your sandcastle'],
+  ['Pose like a scary witch', 'Pose like a friendly ghost'],
+  ['Your face when you find a puppy', 'Your face when you find a kitten'],
+  ['Your face when you have to wait in a long line', 'Your face when you have to sit still'],
+  ['Pose like a mummy', 'Pose like a skeleton'],
+  ['Your face when you taste medicine', 'Your face when you taste toothpaste'],
+  ['Your face when you catch a fish', 'Your face when you catch a ball'],
+  ['Pose like a kangaroo', 'Pose like a flamingo'],
+  ['Your face when you see Santa', 'Your face when you see the Easter bunny'],
 ];
 
 // Sada „School“ — škola, učitelé, testy, spolužáci.
@@ -292,6 +497,31 @@ const SCHOOL_NAME_PROMPTS = [
   'Your face when {name} does a speech with zero preparation',
   'Your face when {name} says the fire alarm is a real one',
   'Your face when {name} wins the school talent show',
+  'Your face when {name} says the teacher is collecting homework today',
+  'Your face when {name} gets the answer right by pure luck',
+  'Your face when {name} spills paint on your art project',
+  'Your face when {name} sneezes in the middle of the exam',
+  'Your face when {name} asks the teacher for more homework',
+  'Your face when {name} says there\'s a new student and it\'s your cousin',
+  'Your face when {name} gets caught passing a note',
+  'Your face when {name} starts laughing at the class photo',
+  'Your face when {name} says the holiday starts tomorrow',
+  'Your face when {name} eats your snack while you\'re at the board',
+  'Your face when {name} breaks the classroom chair',
+  'Your face when {name} gets 100% and brags about it',
+  'Your face when {name} says the teacher saw you copying',
+  'Your face when {name} brings a frog to biology class',
+  'Your face when {name} is the teacher\'s favourite again',
+  'Your face when {name} forgets the words in the school play',
+  'Your face when {name} says the exam has 40 questions',
+  'Your face when {name} wins at dodgeball by themselves',
+  'Your face when {name} writes on the board with a squeaky marker',
+  'Your face when {name} says you\'re in the same group for the project',
+  'Your face when {name} gets their name called on the loudspeaker',
+  'Your face when {name} says the teacher is coming back early',
+  'Your face when {name} asks what the homework was — for the 5th time',
+  'Your face when {name} brings cake for their birthday',
+  'Your face when {name} explains maths better than the teacher',
 ];
 
 const SCHOOL_IMPOSTOR_PAIRS = [
@@ -315,6 +545,46 @@ const SCHOOL_IMPOSTOR_PAIRS = [
   ['Pose like a student on a school trip', 'Pose like a tourist'],
   ['Your face at a parent-teacher meeting', 'Your face at the dentist'],
   ['Your face when you fall asleep in class', 'Your face when you wake up late for school'],
+  ['Your face when you solve a hard maths problem', 'Your face when you finish a long essay'],
+  ['Pose like a scientist', 'Pose like an inventor'],
+  ['Your face when the teacher is late', 'Your face when the teacher is absent'],
+  ['Your face during a spelling test', 'Your face during a vocabulary test'],
+  ['Pose like a school mascot', 'Pose like a cheerleader'],
+  ['Your face when you get picked last in PE', 'Your face when you miss the ball in PE'],
+  ['Your face when you open your school locker', 'Your face when you open your lunchbox'],
+  ['Pose like a librarian', 'Pose like a school cook'],
+  ['Your face when you raise your hand and forget the answer', 'Your face when you answer and everyone laughs'],
+  ['Your face during a fire drill', 'Your face during a school assembly'],
+  ['Your face when you see a pop quiz', 'Your face when you see a group project'],
+  ['Pose like a sleepy student on Monday', 'Pose like a happy student on Friday'],
+  ['Your face when the bus leaves without you', 'Your face when you miss the school trip'],
+  ['Your face when you get a gold star', 'Your face when you get a sticker'],
+  ['Pose like you\'re giving a speech', 'Pose like you\'re accepting an award'],
+  ['Your face when you get your test back', 'Your face when you get your homework back'],
+  ['Pose like a football coach', 'Pose like a referee'],
+  ['Your face in a music lesson', 'Your face in an art lesson'],
+  ['Your face when the teacher says "open your books"', 'Your face when the teacher says "take out a piece of paper"'],
+  ['Pose like a student who didn\'t study', 'Pose like a student who studied all night'],
+  ['Your face when the canteen serves fish', 'Your face when the canteen serves soup'],
+  ['Your face when you hear the school bell on Friday', 'Your face when you hear the school bell on Monday'],
+  ['Pose like a robot in a science fair', 'Pose like a volcano in a science fair'],
+  ['Your face when your pen runs out in the exam', 'Your face when your calculator dies in the exam'],
+  ['Your face when you have to read out loud', 'Your face when you have to sing in front of the class'],
+  ['Pose like a head teacher giving a speech', 'Pose like a coach giving a pep talk'],
+  ['Your face when you see your crush in the corridor', 'Your face when you see your teacher in the supermarket'],
+  ['Your face in a chemistry lesson', 'Your face in a physics lesson'],
+  ['Your face when the whole class gets detention', 'Your face when the whole class gets extra homework'],
+  ['Pose like the fastest runner at sports day', 'Pose like the slowest runner at sports day'],
+  ['Your face when you forget your PE kit', 'Your face when you forget your pencil case'],
+  ['Your face when the teacher reads your essay out loud', 'Your face when the teacher shows your drawing to everyone'],
+  ['Pose like a student taking a class photo', 'Pose like a student hiding a phone'],
+  ['Your face when the test is easy', 'Your face when the test is impossible'],
+  ['Your face when you see snow on a school day', 'Your face when you see sun on a school day'],
+  ['Pose like a teacher catching someone cheating', 'Pose like a teacher who lost their glasses'],
+  ['Your face at the school disco', 'Your face at the school concert'],
+  ['Your face when your friend is absent', 'Your face when your desk partner changes'],
+  ['Your face when you get the answer after the bell', 'Your face when you remember the answer after the test'],
+  ['Pose like a famous author', 'Pose like a famous painter'],
 ];
 
 // Mód Snap Hunt — zadání, co mají všichni najít a vyfotit (bez jména hráče,
@@ -360,6 +630,16 @@ const HUNT_PROMPTS = [
   'A light source',
   'Something that\'s a pair',
   'The strangest texture near you',
+  'Something yellow',
+  'Something smaller than your thumb',
+  'Something that opens and closes',
+  'Something with a logo on it',
+  'Something fluffy',
+  'Something that has wheels',
+  'Something see-through',
+  'Something with polka dots or a pattern',
+  'Something that looks like a letter of the alphabet',
+  'The tallest thing you can reach',
 ];
 
 // Žánry Snap Huntu — hostitel vybírá v lobby, co se bude hledat.
@@ -385,6 +665,16 @@ const HUNT_HOME_PROMPTS = [
   'The biggest spoon you can find',
   'Something you forgot you had',
   'A key',
+  'A spice or herb',
+  'The oldest thing in the bathroom',
+  'A shoe that isn\'t yours',
+  'Something with a battery',
+  'A towel',
+  'The weirdest ornament or decoration',
+  'Something in a jar',
+  'A board game or puzzle',
+  'A hairbrush or comb',
+  'Something that ticks or beeps',
 ];
 
 const HUNT_SCHOOL_PROMPTS = [
@@ -408,6 +698,16 @@ const HUNT_SCHOOL_PROMPTS = [
   'Your timetable',
   'Something that starts with the first letter of your name',
   'The window view from your classroom',
+  'A calculator',
+  'A sticky note',
+  'The longest pencil you can find',
+  'A paper clip or staple',
+  'A poster on the wall',
+  'Something with the school logo',
+  'A highlighter',
+  'The messiest desk',
+  'A pair of scissors',
+  'A word in another language',
 ];
 
 const HUNT_OUTDOORS_PROMPTS = [
@@ -431,6 +731,16 @@ const HUNT_OUTDOORS_PROMPTS = [
   'Something that moves in the wind',
   'A cloud that looks like something',
   'Your shoes on the ground',
+  'A pine cone or a seed',
+  'A street lamp',
+  'A bike',
+  'Something red outside',
+  'A stick that looks like a wand',
+  'A door with a cool colour',
+  'An insect (don\'t touch it!)',
+  'Graffiti or street art',
+  'Something made of wood',
+  'The biggest stone you can see',
 ];
 
 const HUNT_PARTY_PROMPTS = [
@@ -454,6 +764,16 @@ const HUNT_PARTY_PROMPTS = [
   'The best hair in the room',
   'A selfie with 3 people',
   'Something that\'s pink',
+  'Someone doing a thumbs up',
+  'The funniest face in the room',
+  'An empty plate',
+  'Someone wearing glasses',
+  'A human pyramid (safely!)',
+  'Something glowing',
+  'The best dressed person',
+  'Someone pretending to be asleep',
+  'A hat (or something used as a hat)',
+  'A group hug',
 ];
 
 const HUNT_FOOD_PROMPTS = [
@@ -477,6 +797,16 @@ const HUNT_FOOD_PROMPTS = [
   'Something round and edible',
   'A snack with a funny name',
   'Your dream meal (or a picture of it)',
+  'Something sour',
+  'A nut or seed',
+  'Something from another country',
+  'Something frozen',
+  'A food that\'s green',
+  'Something in a can',
+  'The biggest piece of food you can find',
+  'Something salty',
+  'A food that starts with P',
+  'Something you had as a kid',
 ];
 
 const PROMPT_ARRAY_NAMES = new Map([
@@ -540,11 +870,6 @@ const FRIEND_CODE_RE = /^[A-Z2-9]{6}$/;
 const users = new Map();
 /** @type {Map<string, object[]>} kód → zprávy, které čekají, až se hráč připojí */
 const pendingForUser = new Map();
-
-function isOnline(code) {
-  const u = users.get(code);
-  return !!u && u.sockets.size > 0;
-}
 
 // Pošle zprávu na všechna zařízení hráče; když není online, uloží ji na později.
 function sendToUser(code, msg, { queue = false } = {}) {
@@ -1793,6 +2118,25 @@ const BOT_CAPTIONS = [
 ];
 const BOT_COLORS = ['#8B5CF6', '#22D3EE', '#F472B6', '#34D399', '#FB923C', '#60A5FA'];
 
+// Skiny pro boty: id rámečků a barev jmen se vytáhnou přímo z public/shop.js
+// (ať se nové skiny přidají samy) — server ten skript nespouští, jen čte text.
+function loadBotSkins() {
+  const skins = { frame: [], name: [] };
+  try {
+    const src = require('fs').readFileSync(path.join(__dirname, 'public', 'shop.js'), 'utf8');
+    for (const m of src.matchAll(/id:\s*'((frame|name)-[a-z0-9-]{1,26})'/g)) {
+      if (!skins[m[2]].includes(m[1])) skins[m[2]].push(m[1]);
+    }
+  } catch { /* bez shop.js boti prostě nemají skiny */ }
+  return skins;
+}
+const BOT_SKINS = loadBotSkins();
+// ~15 % botů nemá rámeček / barvu jména, ať to působí přirozeně
+function botLooks() {
+  const pick = (list) => (list.length && crypto.randomInt(100) >= 15 ? list[crypto.randomInt(list.length)] : null);
+  return sanitizeLooks({ frame: pick(BOT_SKINS.frame), name: pick(BOT_SKINS.name) });
+}
+
 function botPhoto() {
   const bg = BOT_COLORS[crypto.randomInt(BOT_COLORS.length)];
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="${bg}"/><circle cx="120" cy="120" r="70" fill="#FDE047"/><circle cx="96" cy="104" r="9" fill="#1F1235"/><circle cx="144" cy="104" r="9" fill="#1F1235"/><path d="M88 138 Q120 168 152 138" stroke="#1F1235" stroke-width="9" fill="none" stroke-linecap="round"/></svg>`;
@@ -1811,7 +2155,7 @@ function spawnBot(code, takenNames) {
   const out = (obj) => bws.send(JSON.stringify(obj));
   let hostGoneSince = null;
 
-  bws.on('open', () => out({ type: 'join_lobby', code, name, looks: {}, botKey: BOT_JOIN_KEY }));
+  bws.on('open', () => out({ type: 'join_lobby', code, name, looks: botLooks(), botKey: BOT_JOIN_KEY }));
   bws.on('message', (raw) => {
     let m;
     try { m = JSON.parse(raw.toString()); } catch { return; }
