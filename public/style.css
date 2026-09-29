@@ -184,6 +184,14 @@ button{font:inherit;}
   background:linear-gradient(135deg,var(--c1,#F472B6),var(--c2,#7C3AED));
   box-shadow:0 4px 14px -4px rgba(124,58,237,0.8);
 }
+.ff-badge .ff-spin{
+  display:none; width:12px; height:12px; border-radius:50%;
+  border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; animation:ffspin .8s linear infinite;
+}
+.ff-badge.loading .ff-spin{ display:inline-block; }
+.ff-badge .ff-load,.ff-badge .ff-dev{ font-weight:600; font-size:0.75rem; opacity:0.9; }
+.ff-badge:not(.loading) .ff-load{ display:none; }
+@keyframes ffspin{ to{ transform:rotate(360deg); } }
 .camera-wrap .flash{
   position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none;
 }

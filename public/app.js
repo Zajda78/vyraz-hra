@@ -712,6 +712,7 @@ function pendingLobbyState(mode, name) {
 
 function renderLobbyScreen(state) {
   mountedKey = 'lobby';
+  if (state.mode === 'filter' && typeof faceFiltersPreload === 'function') faceFiltersPreload(); // stažení modelu už v lobby
   stopCamera();
   document.body.classList.remove('home-bg', 'has-bottom-nav');
   const players = state.players;

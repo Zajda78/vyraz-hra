@@ -28,8 +28,24 @@ let faceFilterId = 'none'; // aktivní filtr (jen ve Filter Frenzy, jinak 'none'
 let faceLandmarker = null;
 let faceLandmarkerPromise = null;
 let faceRaf = 0;
-let faceLastVideoTime = -1;
+let faceLastDetectAt = 0;   // čas poslední detekce (throttle)
 let faceTimestamp = 0;
+let faceDelegate = '';      // 'GPU' | 'CPU' — právě použitý delegát
+let faceMp = null;          // načtený modul MediaPipe + fileset (pro runtime fallback)
+let faceErrStreak = 0;      // počet chyb detectForVideo v řadě
+let faceFellBack = false;   // runtime fallback GPU→CPU už proběhl
+let faceFps = 0, faceFpsCount = 0, faceFpsSince = 0, faceLastFaces = 0, faceLastErr = '';
+const FACE_MIN_INTERVAL = 50; // max ~20 detekcí/s
+
+// Mobilní zařízení: GPU delegát je na Androidu nespolehlivý, jdeme rovnou na CPU.
+function faceIsMobile() {
+  try {
+    if (navigator.userAgentData && navigator.userAgentData.mobile) return true;
+  } catch (e) { /* ignoruj */ }
+  return /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || '');
+}
+
+function faceDev() { return typeof isDevMode === 'function' && isDevMode(); }
 
 // ---------------------------------------------------------------- načítání ---
 
@@ -39,13 +55,17 @@ function loadFaceLandmarker() {
   faceLandmarkerPromise = (async () => {
     const mod = await import(`${MP_BASE}/vision_bundle.mjs`);
     const fileset = await mod.FilesetResolver.forVisionTasks(`${MP_BASE}/wasm`);
+    faceMp = { mod, fileset };
     const make = (delegate) => mod.FaceLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: MP_MODEL, delegate },
       runningMode: 'VIDEO',
-      numFaces: 4,
+      numFaces: 2,
     });
-    try { faceLandmarker = await make('GPU'); }
-    catch (e) { faceLandmarker = await make('CPU'); }
+    if (faceIsMobile()) { faceLandmarker = await make('CPU'); faceDelegate = 'CPU'; }
+    else {
+      try { faceLandmarker = await make('GPU'); faceDelegate = 'GPU'; }
+      catch (e) { faceLandmarker = await make('CPU'); faceDelegate = 'CPU'; }
+    }
     return faceLandmarker;
   })().catch((err) => {
     faceLandmarkerPromise = null; // příště zkusit znovu
@@ -54,13 +74,53 @@ function loadFaceLandmarker() {
   return faceLandmarkerPromise;
 }
 
+// Předběžné stažení modelu (např. už v lobby); chyby se ignorují.
+function faceFiltersPreload() {
+  try { loadFaceLandmarker().catch(() => {}); } catch (e) { /* ignoruj */ }
+}
+
+// Runtime fallback: GPU delegát opakovaně padá → přepnout na CPU (jen jednou).
+async function faceFallbackToCpu() {
+  faceFellBack = true;
+  const old = faceLandmarker;
+  faceLandmarker = null; // smyčka mezitím nedetekuje
+  try { old && old.close(); } catch (e) { /* ignoruj */ }
+  try {
+    faceLandmarker = await faceMp.mod.FaceLandmarker.createFromOptions(faceMp.fileset, {
+      baseOptions: { modelAssetPath: MP_MODEL, delegate: 'CPU' },
+      runningMode: 'VIDEO',
+      numFaces: 2,
+    });
+    faceDelegate = 'CPU';
+    faceErrStreak = 0;
+    faceTimestamp = Math.max(faceTimestamp + 1, performance.now());
+    faceFiltersRefresh();
+  } catch (e) {
+    faceLastErr = e && e.message ? e.message : String(e);
+    faceFilterBadgeUpdate();
+  }
+}
+
+// Stav odznaku: načítání + (jen dev) diagnostika.
+function faceFilterBadgeUpdate(loading) {
+  const b = document.querySelector('.ff-badge');
+  if (!b) return;
+  if (loading !== undefined) b.classList.toggle('loading', !!loading);
+  const dev = b.querySelector('.ff-dev');
+  if (!dev) return;
+  if (!faceDev()) { dev.textContent = ''; return; }
+  dev.textContent = faceLastErr
+    ? ` · ${faceLastErr}`
+    : (faceDelegate ? ` · ${faceDelegate} · ${faceFps} fps · faces: ${faceLastFaces}` : '');
+}
+
 // ------------------------------------------------------------------- UI ---
 
 // Odznak s názvem filtru nad kamerou.
 function faceFilterBadgeHtml(id) {
   const f = FACE_FILTERS.find((x) => x.id === id);
   if (!f) return '';
-  return `<span class="ff-badge"><svg viewBox="0 0 40 40" width="20" height="20" aria-hidden="true">${FILTER_ICONS[id]}</svg>${f.label}</span>`;
+  return `<span class="ff-badge"><svg viewBox="0 0 40 40" width="20" height="20" aria-hidden="true">${FILTER_ICONS[id]}</svg>${f.label}<i class="ff-spin"></i><span class="ff-load">Loading filter…</span><span class="ff-dev"></span></span>`;
 }
 
 // Přidá overlay canvas a odznak do kamerové obrazovky a zapne vnucený filtr
@@ -77,14 +137,18 @@ async function faceFiltersMount(forcedId) {
     video.insertAdjacentElement('afterend', cv);
   }
   if (!wrap.querySelector('.ff-badge')) wrap.insertAdjacentHTML('beforeend', faceFilterBadgeHtml(forcedId));
-  if (faceLandmarker) { faceFiltersRefresh(); return; }
+  if (faceLandmarker) { faceFilterBadgeUpdate(false); faceFiltersRefresh(); return; }
+  faceFilterBadgeUpdate(true);
   try {
     await loadFaceLandmarker();
   } catch (err) {
     faceFilterId = 'none';
+    faceLastErr = err && err.message ? err.message : String(err);
+    faceFilterBadgeUpdate(false);
     if (typeof showToast === 'function') showToast("Filters aren't available on this device.");
     return;
   }
+  faceFilterBadgeUpdate(false);
   if (!video.isConnected) return; // mezitím se obrazovka změnila
   faceFiltersRefresh();
 }
@@ -107,7 +171,7 @@ function faceFiltersRefresh() {
 function faceFiltersStop() {
   if (faceRaf) cancelAnimationFrame(faceRaf);
   faceRaf = 0;
-  faceLastVideoTime = -1;
+  faceLastDetectAt = 0;
 }
 
 // ----------------------------------------------------------------- smyčka ---
@@ -122,16 +186,34 @@ function faceFilterTick() {
   const W = video.videoWidth, H = video.videoHeight;
   if (!W || !H || video.readyState < 2) return;
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
-  if (video.currentTime === faceLastVideoTime) return; // nový snímek nepřišel
-  faceLastVideoTime = video.currentTime;
-  faceTimestamp = Math.max(faceTimestamp + 1, performance.now());
+  // časový throttle místo video.currentTime (na některých Androidech se nemění)
+  const now = performance.now();
+  if (now - faceLastDetectAt < FACE_MIN_INTERVAL) return;
+  faceLastDetectAt = now;
+  faceTimestamp = Math.max(faceTimestamp + 1, now); // striktně rostoucí
   let res;
-  try { res = faceLandmarker.detectForVideo(video, faceTimestamp); }
-  catch (e) { return; }
+  try {
+    res = faceLandmarker.detectForVideo(video, faceTimestamp);
+    faceErrStreak = 0;
+  } catch (e) {
+    faceLastErr = e && e.message ? e.message : String(e);
+    faceErrStreak++;
+    if (faceErrStreak >= 5 && faceDelegate === 'GPU' && !faceFellBack && faceMp) faceFallbackToCpu();
+    faceFilterBadgeUpdate();
+    return;
+  }
+  faceLastErr = '';
   const ctx = cv.getContext('2d');
   ctx.clearRect(0, 0, W, H);
-  if (res && res.faceLandmarks) {
-    for (const lm of res.faceLandmarks) drawFaceFilter(ctx, lm, W, H, faceFilterId);
+  const faces = (res && res.faceLandmarks) || [];
+  for (const lm of faces) drawFaceFilter(ctx, lm, W, H, faceFilterId);
+  // diagnostika (fps + počet tváří), v dev režimu se zobrazí v odznaku
+  faceLastFaces = faces.length;
+  faceFpsCount++;
+  if (now - faceFpsSince >= 1000) {
+    faceFps = Math.round(faceFpsCount * 1000 / (now - faceFpsSince));
+    faceFpsCount = 0; faceFpsSince = now;
+    if (faceDev()) faceFilterBadgeUpdate();
   }
 }
 

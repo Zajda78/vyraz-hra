@@ -43,6 +43,7 @@ const DICT_ROWS = [
   ['Crown', 'Koruna', 'Corona'],
   ['Clown', 'Klaun', 'Payaso'],
   ['Devil', 'Ďábel', 'Diablo'],
+  ['Loading filter…', 'Načítání filtru…', 'Cargando filtro…'],
   ["Filters aren't available on this device.", 'Filtry na tomto zařízení nejsou dostupné.', 'Los filtros no están disponibles en este dispositivo.'],
   ['Shop', 'Obchod', 'Tienda'],
   ['Friends', 'Přátelé', 'Amigos'],
