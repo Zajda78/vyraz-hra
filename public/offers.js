@@ -3,7 +3,7 @@
 // v jeho lobby ho hrají zdarma. Nákup se zatím jen nasimuluje (žádná
 // skutečná platba), odemčení se drží v localStorage jako mince.
 
-const PAID_MODES = ['draw', 'impostor', 'hunt', 'filter'];
+const PAID_MODES = ['draw', 'impostor', 'hunt'];
 
 // Hodnota balíčku = módy zvlášť + mince podle kurzu. Sleva se z toho
 // dopočítá sama, ať cena, přeškrtnutá hodnota a procenta vždycky sedí.
@@ -14,22 +14,10 @@ const PARTY_PACK = {
   name: 'Party Pack',
   priceEur: 3.99,
   coins: 200,
-  modes: ['draw', 'impostor', 'hunt', 'filter'],
+  modes: ['draw', 'impostor', 'hunt'],
 };
 PARTY_PACK.worthEur = PARTY_PACK.modes.length * MODE_PRICE_EUR + PARTY_PACK.coins * COIN_RATE_EUR;
 PARTY_PACK.discount = Math.round((1 - PARTY_PACK.priceEur / PARTY_PACK.worthEur) * 100);
-
-// Vrací viditelné módy Party Pack (bez 'filter' mimo dev režim)
-function partyPackModes() {
-  return PARTY_PACK.modes.filter((m) => m !== 'filter' || isDevMode());
-}
-
-// Vrací slevu na viditelné módy Party Pack
-function partyPackDiscount() {
-  const visibleCount = partyPackModes().length;
-  const worth = visibleCount * MODE_PRICE_EUR + PARTY_PACK.coins * COIN_RATE_EUR;
-  return Math.round((1 - PARTY_PACK.priceEur / worth) * 100);
-}
 
 // Vstupenka na jednu hru zamčeného módu za mince. Koupí se dopředu,
 // spotřebuje se až ve chvíli, kdy hostitel hru opravdu spustí.
@@ -95,16 +83,13 @@ function buyPartyPack() {
 // Velká karta balíčku (v okně s ofertou i v shopu).
 function partyPackCardHtml({ compact = false } = {}) {
   const owned = ownsPartyPack();
-  const visibleModes = partyPackModes();
-  const modesHtml = visibleModes.map((m) => `
+  const modesHtml = PARTY_PACK.modes.map((m) => `
     <div class="pack-mode">${modeTile(m)}<span>${modeDisplayName(m)}</span></div>
   `).join('');
-  const discount = partyPackDiscount();
-  const worth = visibleModes.length * MODE_PRICE_EUR + PARTY_PACK.coins * COIN_RATE_EUR;
   return `
     <div class="pack-card ${compact ? 'compact' : ''}">
       <div class="pack-shine"></div>
-      ${owned ? '' : `<div class="pack-discount">−${discount} %</div>`}
+      ${owned ? '' : `<div class="pack-discount">−${PARTY_PACK.discount} %</div>`}
       <div class="pack-title">${PARTY_PACK.name}</div>
       <div class="pack-modes">
         ${modesHtml}
@@ -119,7 +104,7 @@ function partyPackCardHtml({ compact = false } = {}) {
         ? `<div class="pack-owned">${icon('checkCircle')} Owned</div>`
         : `<button class="pack-buy" data-buy-pack>
              <span class="pack-price">Buy for ${formatEur(PARTY_PACK.priceEur)}</span>
-             <span class="pack-worth">${formatEur(worth)}</span>
+             <span class="pack-worth">${formatEur(PARTY_PACK.worthEur)}</span>
            </button>`}
     </div>`;
 }

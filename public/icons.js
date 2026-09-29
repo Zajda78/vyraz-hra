@@ -73,11 +73,6 @@ const MODE_GLYPHS = {
     <path d="M2.8 10.2 Q12 13.8 21.2 10.2 L21.2 11.6 Q12 15.6 2.8 11.6 Z" fill="#fff" fill-opacity="0.85"/>
     <path d="M5.5 15.8 Q12 12.8 18.5 15.8 Q17.6 20.2 14.2 19 L12 17.9 L9.8 19 Q6.4 20.2 5.5 15.8 Z" fill="#fff"/>
     <circle cx="9.2" cy="16.4" r="1.05" fill="#4c1030"/><circle cx="14.8" cy="16.4" r="1.05" fill="#4c1030"/>`,
-  filter: `
-    <path d="M6.5 9.2 L5.6 3.6 L9.3 6.4 L12 2.8 L14.7 6.4 L18.4 3.6 L17.5 9.2 Z" fill="#fff"/>
-    <circle cx="12" cy="14.6" r="7" fill="#fff" fill-opacity="0.92"/>
-    <circle cx="9.3" cy="13.6" r="1.1" fill="#3a1060"/><circle cx="14.7" cy="13.6" r="1.1" fill="#3a1060"/>
-    <path d="M9 17c1.7 1.6 4.3 1.6 6 0" stroke="#3a1060" stroke-width="1.4" stroke-linecap="round" fill="none"/>`,
   hunt: `
     <circle cx="10.5" cy="10" r="6.8" fill="#fff"/>
     <circle cx="10.5" cy="10" r="4.4" fill="#1e2a6b" fill-opacity="0.55"/>

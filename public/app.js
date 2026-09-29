@@ -216,15 +216,6 @@ const MODE_ICON_LOUPE = `
     <path d="M76 68 L104 94" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
   </svg>`;
 
-const MODE_ICON_FILTER = `
-  <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M34 40 L28 12 L47 27 L60 8 L73 27 L92 12 L86 40 Z" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
-    <circle cx="60" cy="66" r="30" stroke="currentColor" stroke-width="6"/>
-    <circle cx="48" cy="62" r="4.5" fill="currentColor"/>
-    <circle cx="72" cy="62" r="4.5" fill="currentColor"/>
-    <path d="M47 76 C55 85 65 85 73 76" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
-  </svg>`;
-
 // Menu módů na úvodní obrazovce — rozdělené na hry zdarma a Party Pack.
 // Uvnitř skupiny jsou nejdřív hry s obličejem (kompaktní dlaždice po dvou),
 // módy „fotíš cokoli“ (wide) jdou přes celou šířku.
@@ -242,8 +233,7 @@ const MODE_MENU = [
     modes: [
       { id: 'draw', name: 'Doodle', tagline: 'Snap a selfie, doodle on it, vote', players: 3, bg: () => MODE_ICON_PALETTE },
       { id: 'impostor', name: 'Impostor', tagline: 'One player got a different prompt', players: 3, bg: () => MODE_ICON_SPY },
-      { id: 'hunt', name: 'Snap Hunt', tagline: 'Find the thing, snap it, vote', players: 3, bg: () => MODE_ICON_LOUPE },
-      { id: 'filter', name: 'Filter Frenzy', tagline: 'Same face filter for all, vote', players: 3, bg: () => MODE_ICON_FILTER },
+      { id: 'hunt', name: 'Snap Hunt', wide: true, tagline: 'A task drops — like "something blue". Hunt it down, snap it and vote for the best shot.', players: 3, bg: () => MODE_ICON_LOUPE },
     ],
   },
 ];
@@ -254,9 +244,7 @@ function modeMenuHtml() {
       <div class="section-eyebrow">${group.title}</div>
     </div>
     <div class="mode-grid">
-      ${group.modes.filter((m) => m.id !== 'filter' || isDevMode())
-        // bez Filter Frenzy (mimo dev) zůstane Snap Hunt sám v řadě — přes celou šířku
-        .map((m) => (m.id === 'hunt' && !isDevMode() ? { ...m, wide: true } : m)).map((m) => `
+      ${group.modes.map((m) => `
         <div class="mode-card mode-card-${m.id} ${m.wide ? 'wide' : 'compact'} ${isModeUnlocked(m.id) ? '' : 'is-locked'}" data-mode="${m.id}">
           <div class="mode-icon-bg">${m.bg()}</div>
           ${group.partyPack && !isModeUnlocked(m.id) ? modeRibbonHtml(m.id, { compact: !m.wide }) : ''}
@@ -283,7 +271,6 @@ function modeDisplayName(mode) {
   if (mode === 'caption') return 'Main Character';
   if (mode === 'impostor') return 'Impostor';
   if (mode === 'hunt') return 'Snap Hunt';
-  if (mode === 'filter') return 'Filter Frenzy';
   return 'Reaction';
 }
 
@@ -587,15 +574,6 @@ const RULES_BY_MODE = {
     'If the impostor gets the most votes, everyone else wins: +100 pts and +3 coins each.',
     'If they escape (a tie counts too), the impostor wins: +250 pts and +10 coins.',
   ],
-  filter: [
-    'The host creates a lobby and shares the code with friends — you need at least 3 players.',
-    'Each round a random face filter is picked — Dog, Glasses, Crown, Clown or Devil — plus a prompt that fits it.',
-    'Everyone gets the same filter on their selfie camera and snaps a photo within 30 seconds.',
-    "If the filter can't load on your device, you can still take a normal photo.",
-    'All photos are revealed at once and you vote for the best one — no voting for yourself.',
-    'Points by ranking — 1st place gets 100 pts, the rest a little less. Same votes = same points.',
-    'After the last round, whoever has the most points wins.',
-  ],
   hunt: [
     'The host creates a lobby and shares the code with friends — you need at least 3 players.',
     'Each round a task drops — like "something blue" or "the weirdest thing in your bag". The host picks what to hunt: Anywhere, Home, School, Outdoors, Party or Food.',
@@ -608,7 +586,7 @@ const RULES_BY_MODE = {
 };
 
 function showRulesModal(initialMode = 'classic') {
-  const modes = ['classic', 'draw', 'caption', 'impostor', 'hunt', 'filter'].filter((m) => m !== 'filter' || isDevMode());
+  const modes = ['classic', 'draw', 'caption', 'impostor', 'hunt'];
   openModal(`
     <h2>How to play</h2>
     <div class="rules-tabs">
@@ -712,7 +690,6 @@ function pendingLobbyState(mode, name) {
 
 function renderLobbyScreen(state) {
   mountedKey = 'lobby';
-  if (state.mode === 'filter' && typeof faceFiltersPreload === 'function') faceFiltersPreload(); // stažení modelu už v lobby
   stopCamera();
   document.body.classList.remove('home-bg', 'has-bottom-nav');
   const players = state.players;
@@ -751,7 +728,7 @@ function renderLobbyScreen(state) {
       </div>
 
       ${state.isHost ? `
-        ${state.mode !== 'caption' && state.mode !== 'hunt' && state.mode !== 'filter' ? `
+        ${state.mode !== 'caption' && state.mode !== 'hunt' ? `
           <div class="card setting-card">
             <h3 class="setting-title">${icon('chat')} Question pack</h3>
             ${packPickerHtml(state.promptPack)}
@@ -941,7 +918,6 @@ async function buildCameraView(state) {
 
   cameraFacing = state.mode === 'hunt' ? 'environment' : 'user';
   await startCameraStream();
-  if (state.mode === 'filter') faceFiltersMount(state.filter); // vnucený filtr kola (líně načtený MediaPipe)
 
   document.getElementById('shutter-btn').onclick = () => capturePhoto();
   const flip = document.getElementById('flip-btn');
@@ -950,7 +926,6 @@ async function buildCameraView(state) {
       cameraFacing = cameraFacing === 'user' ? 'environment' : 'user';
       stopCamera();
       await startCameraStream();
-      faceFiltersRefresh(); // zadní foťák = bez filtrů (jen Snap Hunt, tam filtr není)
     };
   }
 }
@@ -992,7 +967,6 @@ function capturePhoto() {
     ctx.scale(-1, 1);
   }
   ctx.drawImage(video, sx, sy, side, side, 0, 0, size, size);
-  faceFiltersDrawInto(ctx, sx, sy, side, size); // overlay se stejným výřezem i zrcadlením
   const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
 
   const flash = document.getElementById('flash-el');
@@ -1683,7 +1657,6 @@ function renderApp(state) {
 }
 
 function stopCamera() {
-  faceFiltersStop(); // zastaví detekční smyčku
   if (cameraStream) {
     cameraStream.getTracks().forEach((t) => t.stop());
     cameraStream = null;

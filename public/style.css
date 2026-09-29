@@ -174,24 +174,6 @@ button{font:inherit;}
 }
 /* selfie náhled jako zrcadlo (stejně jako výsledná fotka), zadní foťák ne */
 .camera-wrap video:not(.rear){ transform:scaleX(-1); }
-/* overlay s filtry: stejný výřez i zrcadlení jako video */
-.camera-wrap canvas.filter-canvas{ pointer-events:none; }
-.camera-wrap canvas.filter-canvas:not(.rear){ transform:scaleX(-1); }
-/* odznak s názvem vnuceného filtru nad kamerou (Filter Frenzy) */
-.ff-badge{
-  position:absolute; top:10px; left:10px; z-index:2; display:inline-flex; align-items:center; gap:6px;
-  padding:5px 12px 5px 8px; border-radius:999px; font-weight:800; font-size:0.85rem; color:#fff;
-  background:linear-gradient(135deg,var(--c1,#F472B6),var(--c2,#7C3AED));
-  box-shadow:0 4px 14px -4px rgba(124,58,237,0.8);
-}
-.ff-badge .ff-spin{
-  display:none; width:12px; height:12px; border-radius:50%;
-  border:2px solid rgba(255,255,255,0.4); border-top-color:#fff; animation:ffspin .8s linear infinite;
-}
-.ff-badge.loading .ff-spin{ display:inline-block; }
-.ff-badge .ff-load,.ff-badge .ff-dev{ font-weight:600; font-size:0.75rem; opacity:0.9; }
-.ff-badge:not(.loading) .ff-load{ display:none; }
-@keyframes ffspin{ to{ transform:rotate(360deg); } }
 .camera-wrap .flash{
   position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none;
 }
@@ -1396,7 +1378,7 @@ body.no-scroll{ overflow:hidden; }
 .daily-wait.wide{ width:100%; }
 
 .nav-dot{
-  position:absolute; top:10px; right:22%; width:9px; height:9px; border-radius:50%;
+  position:absolute; top:4px; right:-3px; width:9px; height:9px; border-radius:50%;
   background:#2DD4BF; box-shadow:0 0 0 2px var(--bg), 0 0 8px #2DD4BF;
 }
 
@@ -1456,9 +1438,9 @@ body.no-scroll{ overflow:hidden; }
 .rules-tab-hunt{ --c1:#38BDF8; --c2:#6366F1; }
 .mode-color-hunt{ --c1:#38BDF8; --c2:#6366F1; }
 .pack-mode:nth-child(3) .mode-tile{ --c1:#38BDF8; --c2:#6366F1; }
-/* Party Pack má teď 4 módy + „More new modes" — dlaždice o kousek užší, ať se vejdou */
+/* Party Pack má teď 3 módy + „More new modes" — dlaždice o kousek užší, ať se vejdou */
 .pack-card:not(.qp-card) .pack-modes{ gap:8px; }
-.pack-card:not(.qp-card) .pack-mode{ width:62px; font-size:0.72rem; }
+.pack-card:not(.qp-card) .pack-mode{ width:72px; }
 
 /* tlačítko pro přepnutí foťáku vedle spouště */
 .shutter-row{ position:relative; }
@@ -1484,12 +1466,6 @@ body.no-scroll{ overflow:hidden; }
 /* dlaždice se nesmí roztáhnout přes mřížku; trojmístné časy (120s) menším písmem */
 .option-chip{ min-width:0; padding:0; }
 #picker-hunt-seconds .option-chip{ font-size:0.88rem; }
-
-/* ---------------------------------------------------------- FILTER FRENZY --- */
-.mode-card-filter{ --c1:#F472B6; --c2:#8B5CF6; --base:#2a1140; }
-.rules-tab-filter{ --c1:#F472B6; --c2:#8B5CF6; }
-.mode-color-filter{ --c1:#F472B6; --c2:#8B5CF6; }
-.pack-mode:nth-child(4) .mode-tile{ --c1:#F472B6; --c2:#8B5CF6; }
 
 /* ------------------------------------------------------ MENU MÓDŮ --- */
 /* módy ve skupinách: face games jako mřížka 2×2, snap anything přes celou šířku */
