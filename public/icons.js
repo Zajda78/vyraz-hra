@@ -78,6 +78,11 @@ const MODE_GLYPHS = {
     <circle cx="10.5" cy="10" r="4.4" fill="#1e2a6b" fill-opacity="0.55"/>
     <path d="M7.9 8.4a3 3 0 0 1 2.4-1.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
     <path d="M15.4 15l5.2 5.2" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>`,
+  copycat: `
+    <circle cx="14.6" cy="9.4" r="6.6" fill="#fff" fill-opacity="0.55"/>
+    <circle cx="9.4" cy="14.6" r="6.6" fill="#fff"/>
+    <path d="M7.3 12.6h.01M11.5 12.6h.01" stroke="#0d3b3b" stroke-width="2" stroke-linecap="round"/>
+    <path d="M6.8 16.2c1.4 1.6 3.8 1.6 5.2 0" stroke="#0d3b3b" stroke-width="1.5" stroke-linecap="round" fill="none"/>`,
   caption: `
     <path d="M12 3.5c5 0 9 3.2 9 7.2S17 18 12 18c-1 0-2-.1-3-.4L4 20l1.3-3.9C3.8 14.8 3 12.9 3 10.7 3 6.7 7 3.5 12 3.5z" fill="#fff"/>
     <circle cx="8.3" cy="10.8" r="1.3" fill="#7a2a3a"/><circle cx="12" cy="10.8" r="1.3" fill="#7a2a3a"/><circle cx="15.7" cy="10.8" r="1.3" fill="#7a2a3a"/>`,

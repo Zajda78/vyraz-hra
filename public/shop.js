@@ -34,16 +34,16 @@ const SHOP_SECTIONS = [
     id: 'frame',
     title: 'Photo frames',
     items: [
-      { id: 'frame-ice', name: 'Ice', rarity: 'common', style: 'linear-gradient(135deg,#E0F2FE,#7DD3FC,#38BDF8)' },
-      { id: 'frame-forest', name: 'Forest', rarity: 'common', style: 'linear-gradient(135deg,#86EFAC,#22C55E,#15803D)' },
+      { id: 'frame-ice', name: 'Ice', rarity: 'common', style: '#7DD3FC' },
+      { id: 'frame-forest', name: 'Forest', rarity: 'common', style: '#22C55E' },
       { id: 'frame-neon', name: 'Neon', rarity: 'rare', style: 'linear-gradient(135deg,#F472B6,#C084FC,#22D3EE)' },
       { id: 'frame-night', name: 'Midnight', rarity: 'rare', style: 'linear-gradient(135deg,#1E3A8A,#6366F1,#A5B4FC)' },
       { id: 'frame-gold', name: 'Gold', rarity: 'epic', style: 'linear-gradient(135deg,#FDE68A,#F0B429,#B45309)' },
       { id: 'frame-fire', name: 'Flames', rarity: 'epic', style: 'linear-gradient(0deg,#DC2626,#F97316,#FDE047)' },
       { id: 'frame-rainbow', name: 'Rainbow', rarity: 'legendary', style: 'conic-gradient(#F87171,#FBBF24,#34D399,#60A5FA,#A78BFA,#F87171)' },
-      { id: 'frame-sunset', name: 'Sunset', rarity: 'common', style: 'linear-gradient(135deg,#FDBA74,#F472B6)' },
-      { id: 'frame-mint', name: 'Mint', rarity: 'common', style: 'linear-gradient(135deg,#A7F3D0,#34D399)' },
-      { id: 'frame-grape', name: 'Grape', rarity: 'common', style: 'linear-gradient(135deg,#C4B5FD,#8B5CF6)' },
+      { id: 'frame-sunset', name: 'Sunset', rarity: 'common', style: '#FDBA74' },
+      { id: 'frame-mint', name: 'Mint', rarity: 'common', style: '#34D399' },
+      { id: 'frame-grape', name: 'Grape', rarity: 'common', style: '#8B5CF6' },
       { id: 'frame-ocean', name: 'Ocean', rarity: 'rare', style: 'linear-gradient(135deg,#22D3EE,#2563EB,#1E3A8A)' },
       { id: 'frame-candy', name: 'Cotton Candy', rarity: 'rare', style: 'linear-gradient(135deg,#F9A8D4,#C4B5FD,#93C5FD)' },
       { id: 'frame-toxic', name: 'Toxic', rarity: 'rare', style: 'linear-gradient(135deg,#BEF264,#22C55E,#14532D)' },
@@ -52,9 +52,9 @@ const SHOP_SECTIONS = [
       { id: 'frame-chrome', name: 'Chrome', rarity: 'epic', style: 'linear-gradient(135deg,#F8FAFC,#94A3B8 30%,#F1F5F9 55%,#64748B 80%,#E2E8F0)' },
       { id: 'frame-galaxy', name: 'Galaxy', rarity: 'legendary', style: 'conic-gradient(from 200deg,#1E1B4B,#7C3AED,#EC4899,#22D3EE,#1E1B4B)' },
       { id: 'frame-diamond', name: 'Diamond', rarity: 'legendary', style: 'conic-gradient(#E0F2FE,#A5F3FC,#F5D0FE,#FFFFFF,#BAE6FD,#E9D5FF,#E0F2FE)' },
-      { id: 'frame-sand', name: 'Sand', rarity: 'common', style: 'linear-gradient(135deg,#FDE68A,#D6B370)' },
-      { id: 'frame-rose', name: 'Rose', rarity: 'common', style: 'linear-gradient(135deg,#FECDD3,#FB7185)' },
-      { id: 'frame-slate', name: 'Slate', rarity: 'common', style: 'linear-gradient(135deg,#CBD5E1,#64748B)' },
+      { id: 'frame-sand', name: 'Sand', rarity: 'common', style: '#D6B370' },
+      { id: 'frame-rose', name: 'Rose', rarity: 'common', style: '#FB7185' },
+      { id: 'frame-slate', name: 'Slate', rarity: 'common', style: '#94A3B8' },
       { id: 'frame-sakura', name: 'Sakura', rarity: 'rare', style: 'linear-gradient(135deg,#FFF1F2,#F9A8D4,#EC4899)' },
       { id: 'frame-mango', name: 'Mango', rarity: 'rare', style: 'linear-gradient(135deg,#FDE047,#FB923C)' },
       { id: 'frame-deepsea', name: 'Deep Sea', rarity: 'rare', style: 'linear-gradient(135deg,#22D3EE,#1E3A8A,#0F172A)' },
@@ -66,9 +66,9 @@ const SHOP_SECTIONS = [
       { id: 'frame-phoenix', name: 'Phoenix', rarity: 'legendary', style: 'linear-gradient(0deg,#7F1D1D,#F97316 40%,#FDE047 75%,#FFF7ED)' },
       { id: 'frame-sweets', name: 'Sweets', rarity: 'legendary', style: 'repeating-linear-gradient(135deg,#FF5FA2 0 7%,#FFF0F6 7% 12%,#7DD3FC 12% 19%,#FFF0F6 19% 24%)' },
       // Spooky (halloweenská sada — Spooky Chest)
-      { id: 'frame-pumpkin', name: 'Pumpkin', rarity: 'common', style: 'linear-gradient(135deg,#FDBA74,#F97316,#C2410C)' },
-      { id: 'frame-moss', name: 'Moss', rarity: 'common', style: 'linear-gradient(135deg,#A3E635,#4D7C0F)' },
-      { id: 'frame-bone', name: 'Bone', rarity: 'common', style: 'linear-gradient(135deg,#FAFAF9,#D6D3D1,#A8A29E)' },
+      { id: 'frame-pumpkin', name: 'Pumpkin', rarity: 'common', style: '#F97316' },
+      { id: 'frame-moss', name: 'Moss', rarity: 'common', style: '#65A30D' },
+      { id: 'frame-bone', name: 'Bone', rarity: 'common', style: '#D6D3D1' },
       { id: 'frame-bat', name: 'Bat Wing', rarity: 'rare', style: 'linear-gradient(135deg,#8B5CF6,#4C1D95,#1E1B4B)' },
       { id: 'frame-slime', name: 'Slime', rarity: 'rare', style: 'linear-gradient(160deg,#ECFCCB,#A3E635 40%,#65A30D 75%,#365314)' },
       { id: 'frame-blood', name: 'Blood Moon', rarity: 'rare', style: 'linear-gradient(135deg,#FCA5A5,#DC2626,#450A0A)' },
@@ -215,15 +215,27 @@ function shopTabsHtml() {
     </button>`).join('')}</div>`;
 }
 
-function openInventory() {
+// fromProfile = otevřeno z profilu (Edit look) — šipka zpět pak vede do menu, ne do obchodu
+let inventoryFromProfile = false;
+function openInventory(fromProfile = false) {
+  inventoryFromProfile = fromProfile === true;
   shopView = 'inventory';
   renderShopScreen();
   window.scrollTo(0, 0);
 }
 
 function backToShop() {
+  inventoryFromProfile = false;
   shopView = 'shop';
   renderShopScreen();
+  window.scrollTo(0, 0);
+}
+
+function backToMenu() {
+  inventoryFromProfile = false;
+  shopView = 'shop';
+  homeTab = 'games';
+  renderStartScreen();
   window.scrollTo(0, 0);
 }
 
@@ -297,7 +309,7 @@ function renderShopScreen() {
   `;
 
   wireBottomNav();
-  document.getElementById('inventory-btn').onclick = openInventory;
+  document.getElementById('inventory-btn').onclick = () => openInventory();
   document.querySelectorAll('[data-shop-tab]').forEach((b) => {
     b.onclick = () => { shopTab = b.dataset.shopTab; renderShopScreen(); };
   });
@@ -368,8 +380,8 @@ function nameStyleFor(item) {
     }
     return `${base} background-size:180% 100%; animation:name-shimmer 6s ease-in-out infinite alternate;`;
   }
-  // obyčejné barvy jména jemně svítí svou barvou
-  return `color:${item.color}; text-shadow:0 0 10px ${item.color}55;`;
+  // obyčejné barvy jména: jedna plná barva, bez záře a animace
+  return `color:${item.color};`;
 }
 
 // Náhled toho, jak tě uvidí ostatní — nasazený rámeček + barva jména.
@@ -409,7 +421,9 @@ function renderInventoryScreen() {
   const data = shopLoad();
 
   const sectionsHtml = SHOP_SECTIONS.map((section) => {
-    const ownedItems = section.items.filter((i) => data.owned.includes(i.id));
+    // od nejvzácnější po nejběžnější (mythic → legendary → epic → rare → common)
+    const rank = (i) => (i.rarity === 'mythic' ? RARITY_ORDER.length : RARITY_ORDER.indexOf(i.rarity));
+    const ownedItems = section.items.filter((i) => data.owned.includes(i.id)).sort((a, b) => rank(b) - rank(a));
     const tiles = [inventoryTileHtml(section, null, !data.equipped[section.id])]
       .concat(ownedItems.map((item) => inventoryTileHtml(section, item, data.equipped[section.id] === item.id)))
       .join('');
@@ -438,7 +452,7 @@ function renderInventoryScreen() {
   wireBottomNav();
   // ťuknutí na "Shop" v liště z inventáře vrátí zpátky do obchodu
   document.querySelector('.bottom-nav-btn[data-tab="shop"]').onclick = backToShop;
-  document.getElementById('inv-back').onclick = backToShop;
+  document.getElementById('inv-back').onclick = inventoryFromProfile ? backToMenu : backToShop;
   const toShop = document.getElementById('inv-to-shop');
   if (toShop) toShop.onclick = () => { shopTab = 'chests'; backToShop(); };
 

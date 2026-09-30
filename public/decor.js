@@ -239,6 +239,18 @@ const FRAME_HALO_IDS = new Set(['frame-sweets']);
 
 const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava' };
 
+// Fortune — vrstvy navíc (vše barevné, bez bílé): paprsky, oběžná dráha mincí a čtyřlístků, plocha pro výbuchy
+const CLOVER_SVG = '<svg viewBox="0 0 24 24"><g fill="#22C55E" stroke="#14532D" stroke-width="1">'
+  + [0, 90, 180, 270].map((r) => `<ellipse cx="12" cy="6.5" rx="4.6" ry="5.6" transform="rotate(${r} 12 12)"/>`).join('')
+  + '</g><circle cx="12" cy="12" r="2.2" fill="#86EFAC"/></svg>';
+const FORTUNE_EXTRA = '<div class="fortune-rays" aria-hidden="true"></div>'
+  + '<div class="fortune-orbit" aria-hidden="true">'
+  + '<i class="fo-item fo-coin" style="animation-delay:0s"></i>'
+  + `<i class="fo-item fo-clover" style="animation-delay:-2.25s">${CLOVER_SVG}</i>`
+  + '<i class="fo-item fo-coin" style="animation-delay:-4.5s"></i>'
+  + `<i class="fo-item fo-clover" style="animation-delay:-6.75s">${CLOVER_SVG}</i>`
+  + '</div><div class="fortune-burst" aria-hidden="true"></div>';
+
 function frameDecorHtml(frame) {
   if (!frame) return '';
   const id = typeof frame === 'string' ? frame : frame.id;
@@ -246,13 +258,23 @@ function frameDecorHtml(frame) {
   // lesk / efekt okraje podle vzácnosti (Fortune má vlastní duhovou animaci)
   const item = typeof frame === 'string' ? ALL_ITEMS.find((i) => i.id === frame) : frame;
   const auraKind = FRAME_AURA[id] || (item && item.rarity);
-  const aura = auraKind ? `<div class="frame-aura aura-${auraKind}" aria-hidden="true"></div>` : '';
+  // common rámeček = jedna plná barva, bez odlesku
+  // legendary: každý rámeček má vlastní animovaný okraj (třída aura-<id>, CSS na konci style.css)
+  const auraId = auraKind === 'legendary' ? ` aura-${id}` : '';
+  const aura = auraKind && auraKind !== 'common' ? `<div class="frame-aura aura-${auraKind}${auraId}" aria-hidden="true"></div>` : '';
+  // Upír: kapky krve, které se tvoří na spodním okraji a padají (v % rozměrech rámečku)
+  const drips = id === 'frame-vampire'
+    ? '<div class="vamp-drips" aria-hidden="true"><i style="left:22%"></i><i style="left:52%;animation-delay:-1.9s"></i><i style="left:78%;animation-delay:-3.6s"></i></div>' : '';
   const rarity = item && item.rarity;
   // záře za rámečkem: mythic vždy, jinak jen rámečky s vlastní září (legendary zlatá záře zrušena)
   const hasHalo = rarity === 'mythic' || FRAME_HALO_IDS.has(id);
   const halo = hasHalo ? `<div class="frame-halo halo-${rarity} halo-${id}" aria-hidden="true"></div>` : '';
-  if (!make) return halo + aura;
-  return `${halo}${aura}<div class="frame-decor" aria-hidden="true"><svg viewBox="-12 -12 124 124">${make()}</svg></div>`;
+  // legendary: občasný průlet tématického předmětu (řídí ho scheduler níže)
+  const fly = (rarity === 'legendary' || rarity === 'mythic') && FLYBY_ART[id] ? `<div class="frame-flyby" data-flyby="${id}" aria-hidden="true"></div>` : '';
+  // Fortune: sluneční paprsky za rámečkem, oběžné mince/čtyřlístky a plocha pro jackpot výbuchy
+  const fortune = id === 'frame-fortune' ? FORTUNE_EXTRA : '';
+  if (!make) return halo + fortune + aura + drips + fly;
+  return `${halo}${fortune}${aura}${drips}<div class="frame-decor" aria-hidden="true"><svg viewBox="-12 -12 124 124">${make()}</svg></div>${fly}`;
 }
 
 // ------------------------------------------------ Spooky (Spooky Chest) ---
@@ -391,16 +413,141 @@ function clover(cx, cy, s, delay = 0) {
 Object.assign(FRAME_DECOR, {
   'frame-fortune': () => `
     <g class="fd-orbit">
-      ${sparkle(50, -8, 6, '#FFFFFF', 0)}
+      ${sparkle(50, -8, 6, '#FF3D7F', 0)}
       ${sparkle(108, 50, 5, '#FDE047', -0.6)}
       ${sparkle(50, 108, 6, '#F9A8D4', -1.2)}
       ${sparkle(-8, 50, 5, '#86EFAC', -1.8)}
     </g>
     <g class="fd-orbit rev">
-      <circle cx="94" cy="8" r="1.8" fill="#FFFFFF"/><circle cx="6" cy="92" r="1.8" fill="#FDE047"/>
+      <circle cx="94" cy="8" r="1.8" fill="#22D3EE"/><circle cx="6" cy="92" r="1.8" fill="#FDE047"/>
       <circle cx="96" cy="94" r="1.4" fill="#C4B5FD"/><circle cx="4" cy="6" r="1.4" fill="#86EFAC"/>
     </g>
-    ${clover(96, 6, 12, 0)}
-    <g class="fd-rise" style="animation-delay:-0.6s">${coinArt(2, 94, 8.5)}</g>
     ${sparkle(-4, 24, 7, '#FDE047', -0.3)}`,
 });
+
+
+// ------------------------------------------ Legendary: průlety předmětů ---
+// Každý předmět je malé barevné SVG (bez bílých záblesků), míří doprava; doleva se jen zrcadlí.
+const FLYBY_ART = {
+  // kometa s fialovo-růžovým ohonem
+  'frame-galaxy': { w: 48, h: 24, dir: true, svg: `<svg viewBox="0 0 48 24"><defs><linearGradient id="fbg1"><stop offset="0" stop-color="#EC4899" stop-opacity="0"/><stop offset="0.6" stop-color="#A78BFA"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs><path d="M0 12 L34 7 L34 17 Z" fill="url(#fbg1)"/><circle cx="37" cy="12" r="6.5" fill="#22D3EE"/><circle cx="35" cy="10" r="2" fill="#A5F3FC"/></svg>` },
+  // zlatá hvězda s duhovou stopou
+  'frame-rainbow': { w: 48, h: 24, dir: true, svg: `<svg viewBox="0 0 48 24"><rect x="0" y="6" width="34" height="2.6" rx="1.3" fill="#F87171"/><rect x="4" y="9" width="30" height="2.6" rx="1.3" fill="#FBBF24"/><rect x="2" y="12" width="32" height="2.6" rx="1.3" fill="#34D399"/><rect x="6" y="15" width="28" height="2.6" rx="1.3" fill="#60A5FA"/><path d="M38 3l2.6 6 6.4.5-4.9 4.2 1.6 6.3L38 16.6 32.3 20l1.6-6.3L29 9.5l6.4-.5z" fill="#FBBF24"/></svg>` },
+  // otáčející se drahokam
+  'frame-diamond': { w: 24, h: 24, spin: true, svg: `<svg viewBox="0 0 24 24"><path d="M12 2 L21 9 L12 22 L3 9 Z" fill="#22D3EE"/><path d="M3 9 H21 L12 22 Z" fill="#A855F7" opacity="0.75"/><path d="M12 2 L8 9 H16 Z" fill="#67E8F9"/></svg>` },
+  // otáčející se zlatá mince
+  'frame-king': { w: 24, h: 24, coin: true, svg: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F59E0B"/><circle cx="12" cy="12" r="7.3" fill="none" stroke="#FDE68A" stroke-width="1.6"/><path d="M7.5 15.5 L8.5 9 L12 12.5 L15.5 9 L16.5 15.5 Z" fill="#B45309"/></svg>` },
+  // ohnivý pták fénix — mávající plamenná křídla a dlouhý ohnivý ocas
+  'frame-phoenix': { w: 56, h: 32, dir: true, flap: true, svg: `<svg viewBox="0 0 56 32"><defs><linearGradient id="fbp1" x1="0" x2="1"><stop offset="0" stop-color="#DC2626" stop-opacity="0"/><stop offset="0.5" stop-color="#EF4444"/><stop offset="1" stop-color="#F97316"/></linearGradient><linearGradient id="fbp2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE047"/><stop offset="0.6" stop-color="#F97316"/><stop offset="1" stop-color="#DC2626"/></linearGradient></defs><path d="M0 14 Q10 8 18 13 Q10 12 4 18 Q12 14 20 17 Q12 18 6 24 Q16 17 26 18 L30 15 Z" fill="url(#fbp1)"/><path class="fb-wing" d="M31 15 Q24 4 16 1 Q25 3 29 7 Q27 1 22 -2 Q32 2 36 12 Z" fill="url(#fbp2)"/><ellipse cx="35" cy="17" rx="8" ry="4.5" fill="#F97316"/><path class="fb-wing fb-wing2" d="M33 18 Q26 26 20 30 Q28 28 33 24 Q31 29 28 33 Q37 27 38 19 Z" fill="url(#fbp2)" opacity="0.9"/><circle cx="43" cy="14" r="4" fill="#FB923C"/><path d="M46.5 13.2 L51 14.4 L46.5 15.6 Z" fill="#FDE047"/><circle cx="44.2" cy="13.2" r="1" fill="#7F1D1D"/><path d="M41 10.5 Q42 6 45 5 Q43 8 43.6 10.2 Z" fill="#FDE047"/></svg>` },
+  // Fortune: zlatá mince se šťastnou sedmičkou a duhovým ohonem
+  'frame-fortune': { w: 52, h: 24, dir: true, svg: `<svg viewBox="0 0 52 24"><rect x="0" y="6" width="34" height="2.6" rx="1.3" fill="#FF3D7F"/><rect x="4" y="9" width="30" height="2.6" rx="1.3" fill="#FDE047"/><rect x="2" y="12" width="32" height="2.6" rx="1.3" fill="#22C55E"/><rect x="6" y="15" width="28" height="2.6" rx="1.3" fill="#A855F7"/><circle cx="40" cy="12" r="10.5" fill="#F59E0B"/><circle cx="40" cy="12" r="7.8" fill="#FDE047"/><path d="M36 8 H44.5 L39.5 17" fill="none" stroke="#B45309" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  // lízátko
+  'frame-sweets': { w: 24, h: 24, spin: true, svg: `<svg viewBox="0 0 24 24"><rect x="11" y="13" width="2.4" height="10" rx="1.2" fill="#7DD3FC"/><circle cx="12" cy="9" r="8" fill="#FF5FA2"/><path d="M12 9 m0 0 a2.5 2.5 0 1 1 2.5 2.5 a5 5 0 1 1 -5 -5" fill="none" stroke="#7DD3FC" stroke-width="2" stroke-linecap="round"/></svg>` },
+  // fialový duch
+  'frame-haunted': { w: 24, h: 24, svg: `<svg viewBox="0 0 24 24"><path d="M4 22 V11 a8 8 0 0 1 16 0 V22 l-3-2.5 -2.5 2.5 -2.5-2.5 -2.5 2.5 -2.5-2.5Z" fill="#A78BFA"/><circle cx="9" cy="11" r="1.8" fill="#1E1B4B"/><circle cx="15" cy="11" r="1.8" fill="#1E1B4B"/></svg>` },
+  // netopýr s mávajícími křídly
+  'frame-vampire': { w: 32, h: 20, flap: true, svg: `<svg viewBox="0 0 32 20"><path class="fb-wing" d="M16 6 Q10 0 0 3 Q4 7 3 12 Q8 9 11 14 Q13 10 16 13 Q19 10 21 14 Q24 9 29 12 Q28 7 32 3 Q22 0 16 6Z" fill="#DC2626"/><ellipse cx="16" cy="10" rx="3" ry="4.5" fill="#7F1D1D"/></svg>` },
+};
+
+const FLYBY_MAX = 4;        // nejvýš tolik průletů naráz
+let flybyActive = 0;
+const flybyNext = new WeakMap(); // element -> čas dalšího průletu (WeakMap = žádný únik při překreslení DOM)
+
+function flybyReduced() {
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function flybySpawn(host) {
+  const art = FLYBY_ART[host.dataset.flyby];
+  if (!art) return;
+  const obj = document.createElement('div');
+  obj.className = 'fb-obj' + (art.spin ? ' fb-spin' : '') + (art.coin ? ' fb-coin' : '') + (art.flap ? ' fb-flap' : '');
+  const wPct = art.w > art.h ? 34 : 24; // šířka v % kontejneru (kontejner je ~1.3× rámeček)
+  // náhodný směr pod libovolným úhlem (zleva, shora, šikmo…), dráha nemusí jít přes střed
+  const W = host.clientWidth || 100, H = host.clientHeight || 100;
+  const ow = W * wPct / 100;
+  const a = Math.random() * Math.PI * 2;
+  const dx = Math.cos(a), dy = Math.sin(a);
+  const R = Math.hypot(W, H) / 2 + ow;           // start i cíl kousek za okrajem
+  const off = (Math.random() - 0.5) * 0.5 * Math.min(W, H); // posun dráhy do strany
+  const px = -dy * off, py = dx * off;
+  // směrové předměty (kometa, fénix…) se natočí po dráze, doleva letící se převrátí, ať nejsou vzhůru nohama
+  const rot = art.dir ? `rotate(${a}rad)${dx < 0 ? ' scaleY(-1)' : ''}` : (dx < 0 ? 'scaleX(-1)' : '');
+  obj.style.cssText = `width:${wPct}%; aspect-ratio:${art.w}/${art.h}; animation-duration:${(1 + Math.random() * 0.6).toFixed(2)}s;`
+    + `--x0:${(px - dx * R).toFixed(1)}px; --y0:${(py - dy * R).toFixed(1)}px; --x1:${(px + dx * R).toFixed(1)}px; --y1:${(py + dy * R).toFixed(1)}px; --rot:${rot || 'none'};`;
+  obj.innerHTML = art.svg;
+  flybyActive++;
+  let done = false;
+  const end = () => { if (done) return; done = true; flybyActive--; obj.remove(); };
+  obj.addEventListener('animationend', (e) => { if (e.target === obj) end(); });
+  setTimeout(end, 2200); // pojistka, kdyby animationend nepřišel
+  host.appendChild(obj);
+}
+
+function flybyTick() {
+  if (document.hidden || flybyReduced()) return;
+  const now = Date.now();
+  const vh = window.innerHeight;
+  document.querySelectorAll('.frame-flyby').forEach((host) => {
+    if (flybyActive >= FLYBY_MAX) return;
+    let t = flybyNext.get(host);
+    if (t === undefined) { t = now + 500 + Math.random() * 5000; flybyNext.set(host, t); }
+    if (now < t) return;
+    flybyNext.set(host, now + 3000 + Math.random() * 4000); // další za ~3–7 s
+    const r = host.getBoundingClientRect();
+    if (r.width < 8 || r.bottom < 0 || r.top > vh) return; // neviditelné (skryté / mimo obrazovku)
+    flybySpawn(host);
+  });
+}
+setInterval(flybyTick, 700);
+
+// ---------------------------------------------- Fortune: jackpot výbuchy ---
+// Každých ~4–8 s vystřelí z rámečku fontána mincí, hvězd a konfet (barevné, padají s gravitací).
+const BURST_MAX = 2;        // nejvýš tolik výbuchů naráz (šetří telefon)
+const BURST_PARTS = 12;     // částic na výbuch
+const BURST_COLORS = ['#FF3D7F', '#22D3EE', '#A855F7', '#22C55E', '#FDE047', '#F97316'];
+let burstActive = 0;
+const burstNext = new WeakMap();
+
+function burstSpawn(host) {
+  burstActive++;
+  const frag = document.createDocumentFragment();
+  const parts = [];
+  for (let i = 0; i < BURST_PARTS; i++) {
+    const kind = i % 3 === 0 ? 'coin' : i % 3 === 1 ? 'star' : 'conf';
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.5; // převážně nahoru a do stran
+    const wrap = document.createElement('i');
+    wrap.className = 'fb-p';
+    const up = 90 + Math.random() * 130;                 // výška výstřelu v násobcích velikosti částice (%)
+    const dur = 1.1 + Math.random() * 0.5;
+    wrap.style.cssText = `--ox:${(50 + Math.cos(a) * 30).toFixed(1)}%; --oy:${(50 + Math.sin(a) * 30 + 6).toFixed(1)}%;`
+      + `--dx:${(Math.cos(a) * (140 + Math.random() * 120)).toFixed(0)}%; --up:${up.toFixed(0)}%; --fall:${(up + 150 + Math.random() * 120).toFixed(0)}%;`
+      + `--dur:${dur.toFixed(2)}s; --rot:${((Math.random() - 0.5) * 720).toFixed(0)}deg;`;
+    const c = BURST_COLORS[Math.floor(Math.random() * BURST_COLORS.length)];
+    const inner = document.createElement('b');
+    inner.className = 'fb-' + kind;
+    if (kind !== 'coin') inner.style.background = c;
+    wrap.appendChild(inner);
+    frag.appendChild(wrap);
+    parts.push(wrap);
+  }
+  host.appendChild(frag);
+  setTimeout(() => { parts.forEach((p) => p.remove()); burstActive--; }, 1900);
+}
+
+function burstTick() {
+  if (document.hidden || flybyReduced()) return;
+  const now = Date.now();
+  const vh = window.innerHeight;
+  document.querySelectorAll('.fortune-burst').forEach((host) => {
+    if (burstActive >= BURST_MAX) return;
+    let t = burstNext.get(host);
+    if (t === undefined) { t = now + 800 + Math.random() * 5000; burstNext.set(host, t); }
+    if (now < t) return;
+    burstNext.set(host, now + 4000 + Math.random() * 4000);
+    const r = host.getBoundingClientRect();
+    if (r.width < 24 || r.bottom < 0 || r.top > vh) return; // maličké nebo mimo obrazovku
+    burstSpawn(host);
+  });
+}
+setInterval(burstTick, 900);

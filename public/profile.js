@@ -194,7 +194,7 @@ function renderProfileScreen() {
   document.getElementById('profile-edit-looks').onclick = () => {
     profileOpen = false;
     homeTab = 'shop';
-    openInventory();
+    openInventory(true);
   };
   document.getElementById('profile-shop').onclick = () => {
     profileOpen = false;

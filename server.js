@@ -31,6 +31,10 @@ const CAPTION_SECONDS_DEFAULT = 40;
 const CAPTION_SECONDS_MIN = 10;
 const CAPTION_SECONDS_MAX = 180;
 const CAPTION_WIN_POINTS = 100;
+const COPY_SECONDS_DEFAULT = 20; // Copycat — čas na napodobení obličeje
+const COPY_SECONDS_OPTIONS = [10, 15, 20, 30];
+const COPY_PEEK_SECONDS = 3; // Copycat — tolik vteřin je vidět originál
+const COPY_WIN_POINTS = 100;
 // --- Snap Hunt --- čas na hledání a vyfocení (hostitel vybírá v lobby)
 const HUNT_SECONDS_DEFAULT = 60;
 const HUNT_SECONDS_MIN = 15;
@@ -931,6 +935,7 @@ function newLobby(hostId) {
     lang: 'en', // jazyk otázek = jazyk hostitele (en | cs | es)
     huntPack: 'anywhere', // Snap Hunt — žánr (anywhere | home | school | outdoors | party | food)
     // --- Main character (mode: 'caption') ---
+    copySeconds: COPY_SECONDS_DEFAULT, // Copycat — čas na kopírování obličeje
     captionSeconds: CAPTION_SECONDS_DEFAULT, // jediná fáze s časovým limitem — psaní popisků
     subjectOrder: [], // pořadí hráčů, kdo bude objekt fotky, zamíchané při startu hry
     subjectIndex: -1,
@@ -987,6 +992,7 @@ function clearTimer(lobby) {
 
 function startRound(lobby) {
   if (lobby.mode === 'caption') return startCaptionRound(lobby);
+  if (lobby.mode === 'copycat') return startCopyRound(lobby);
   if (lobby.mode === 'impostor') return startImpostorRound(lobby);
   clearTimer(lobby);
   lobby.round += 1;
@@ -1017,9 +1023,16 @@ function startImpostorRound(lobby) {
   const pairIndex = pool[crypto.randomInt(pool.length)];
   lobby.usedPairs.add(key(pairIndex));
   if (pairs.every((_, i) => lobby.usedPairs.has(key(i)))) lobby.usedPairs.clear();
-  const pair = crypto.randomInt(2) === 0 ? pairs[pairIndex] : [...pairs[pairIndex]].reverse();
-  lobby.civilPrompt = pair[0];
-  lobby.impostorPrompt = pair[1];
+  // Náhodně buď „dvojče“ (skoro stejná otázka), nebo úplně jiná otázka z jiné dvojice —
+  // ať nikdo dopředu neví, jak moc se impostorovo zadání liší (uživatelovo přání).
+  const civilHalf = crypto.randomInt(2);
+  lobby.civilPrompt = pairs[pairIndex][civilHalf];
+  if (pairs.length > 1 && crypto.randomInt(2) === 0) {
+    const otherIndex = (pairIndex + 1 + crypto.randomInt(pairs.length - 1)) % pairs.length;
+    lobby.impostorPrompt = pairs[otherIndex][crypto.randomInt(2)];
+  } else {
+    lobby.impostorPrompt = pairs[pairIndex][1 - civilHalf];
+  }
   lobby.prompt = null;
 
   // impostor = náhodný připojený hráč, pokud to jde, ne stejný jako minule
@@ -1222,6 +1235,107 @@ function finishCaptionRound(lobby, { winnerId = null, skipped = false, noCaption
   broadcast(lobby);
 }
 
+// ---------------------------------------------------------- Copycat ---
+// Originál (subjectId) vyfotí grimasu, ostatní ji 3 s vidí a pak ji zkopírují
+// bez pohledu na originál. Kopie se ukládají do lobby.submissions, zamíchané
+// pořadí do lobby.captionOrder, originál do lobby.subjectPhoto.
+
+function startCopyRound(lobby) {
+  clearTimer(lobby);
+  lobby.round += 1;
+  lobby.prompt = null;
+  lobby.subjectPhoto = null;
+  lobby.submissions.clear();
+  lobby.captionOrder = [];
+  lobby.lastRoundResult = null;
+
+  const subjectId = pickNextSubject(lobby);
+  lobby.subjectId = subjectId;
+  if (!subjectId) return; // nikdo připojený — hra se pozastaví
+
+  // Čas na fotku originálu je neomezený.
+  lobby.phase = 'copy_original';
+  lobby.deadlineAt = null;
+  broadcast(lobby);
+}
+
+function afterCopyOriginal(lobby) {
+  if (lobby.phase !== 'copy_original' || !lobby.subjectPhoto) return;
+  clearTimer(lobby);
+  lobby.phase = 'copy_peek';
+  lobby.deadlineAt = Date.now() + COPY_PEEK_SECONDS * 1000;
+  lobby.timer = setTimeout(() => beginCopying(lobby), COPY_PEEK_SECONDS * 1000);
+  broadcast(lobby);
+}
+
+function beginCopying(lobby) {
+  if (lobby.phase !== 'copy_peek') return;
+  clearTimer(lobby);
+  lobby.phase = 'copy_copying';
+  lobby.deadlineAt = Date.now() + lobby.copySeconds * 1000;
+  lobby.timer = setTimeout(() => afterCopying(lobby), lobby.copySeconds * 1000);
+  broadcast(lobby);
+}
+
+function maybeAdvanceFromCopying(lobby) {
+  if (lobby.phase !== 'copy_copying') return;
+  const eligible = connectedPlayers(lobby).filter((p) => p.id !== lobby.subjectId);
+  if (eligible.length > 0 && eligible.every((p) => lobby.submissions.has(p.id))) afterCopying(lobby);
+}
+
+function afterCopying(lobby) {
+  if (lobby.phase !== 'copy_copying') return;
+  clearTimer(lobby);
+  for (const p of connectedPlayers(lobby)) {
+    if (p.id !== lobby.subjectId && !lobby.submissions.has(p.id)) {
+      lobby.submissions.set(p.id, { photoDataUrl: null, missed: true });
+    }
+  }
+  const real = [...lobby.submissions.entries()].filter(([, sub]) => !sub.missed).map(([pid]) => pid);
+  if (real.length === 0) {
+    finishCopyRound(lobby, {});
+    return;
+  }
+  lobby.captionOrder = shuffle(real);
+  lobby.phase = 'copy_pick';
+  lobby.deadlineAt = null;
+  broadcast(lobby);
+}
+
+function finishCopyRound(lobby, { winnerId = null, skipped = false } = {}) {
+  clearTimer(lobby);
+  if (winnerId) {
+    const winner = lobby.players.get(winnerId);
+    if (winner) winner.score += COPY_WIN_POINTS;
+  }
+  const copies = [...lobby.submissions.entries()].map(([pid, sub]) => {
+    const player = lobby.players.get(pid);
+    return {
+      id: pid,
+      name: player ? player.name : '???',
+      photoDataUrl: sub.missed ? null : sub.photoDataUrl,
+      missed: !!sub.missed,
+      isWinner: pid === winnerId,
+    };
+  });
+  const subjectPlayer = lobby.players.get(lobby.subjectId);
+  lobby.lastRoundResult = {
+    kind: 'copycat',
+    round: lobby.round,
+    subjectId: lobby.subjectId,
+    subjectName: subjectPlayer ? subjectPlayer.name : '???',
+    photoDataUrl: lobby.subjectPhoto ? lobby.subjectPhoto.photoDataUrl : null,
+    copies,
+    winnerId,
+    points: winnerId ? COPY_WIN_POINTS : 0,
+    skipped,
+  };
+  lobby.phase = 'results';
+  lobby.deadlineAt = Date.now() + RESULTS_AUTO_ADVANCE_SECONDS * 1000;
+  lobby.timer = setTimeout(() => advanceAfterResults(lobby), RESULTS_AUTO_ADVANCE_SECONDS * 1000);
+  broadcast(lobby);
+}
+
 function maybeAdvanceFromSubmitting(lobby) {
   const active = connectedPlayers(lobby);
   if (active.length > 0 && active.every((p) => lobby.submissions.has(p.id))) {
@@ -1416,7 +1530,8 @@ function resetLobbyToWaiting(lobby) {
   lobby.phase = 'lobby';
   lobby.round = 0;
   lobby.prompt = null;
-  lobby.usedPrompts.clear();
+  // usedPrompts / usedPairs se schválně NEmažou — v další hře stejné lobby
+  // nepřijdou znovu ty samé otázky (sady se vyprázdní samy, až se vystřídají všechny)
   lobby.submissions.clear();
   lobby.votes.clear();
   lobby.drawDone = new Set();
@@ -1433,7 +1548,6 @@ function resetLobbyToWaiting(lobby) {
   lobby.lastImpostorId = null;
   lobby.civilPrompt = null;
   lobby.impostorPrompt = null;
-  lobby.usedPairs.clear();
   lobby.gameId = null;
   for (const [pid, p] of lobby.players) {
     if (!p.connected) {
@@ -1475,6 +1589,7 @@ function publicState(lobby, viewerId) {
     drawEnabled: lobby.drawEnabled,
     drawSeconds: lobby.drawSeconds,
     captionSeconds: lobby.captionSeconds,
+    copySeconds: lobby.copySeconds,
     huntSeconds: lobby.huntSeconds,
     huntPack: lobby.huntPack,
     promptPack: lobby.promptPack,
@@ -1563,6 +1678,25 @@ function publicState(lobby, viewerId) {
     base.isSubject = viewerId === lobby.subjectId;
     base.subjectPhotoDataUrl = lobby.subjectPhoto ? lobby.subjectPhoto.photoDataUrl : null;
     base.captionCards = lobby.captionOrder.map((pid) => ({ id: pid, text: lobby.captions.get(pid) }));
+  }
+
+  if (lobby.mode === 'copycat' && lobby.phase.startsWith('copy_')) {
+    const isSubject = viewerId === lobby.subjectId;
+    base.subjectId = lobby.subjectId;
+    base.subjectName = lobby.players.get(lobby.subjectId)?.name || '???';
+    base.isSubject = isSubject;
+    // originál se neposílá při kopírování; v peeku jen ostatním, v pick všem
+    if (lobby.phase === 'copy_pick' || (lobby.phase === 'copy_peek' && !isSubject)) {
+      base.subjectPhotoDataUrl = lobby.subjectPhoto ? lobby.subjectPhoto.photoDataUrl : null;
+    }
+    if (lobby.phase === 'copy_copying') {
+      base.submittedCount = lobby.submissions.size;
+      base.activeCount = connectedPlayers(lobby).filter((p) => p.id !== lobby.subjectId).length;
+      base.youSubmitted = lobby.submissions.has(viewerId);
+    }
+    if (lobby.phase === 'copy_pick') {
+      base.copyCards = lobby.captionOrder.map((pid) => ({ id: pid, photoDataUrl: lobby.submissions.get(pid)?.photoDataUrl || null }));
+    }
   }
 
   if (lobby.phase === 'results') {
@@ -1708,6 +1842,10 @@ wss.on('connection', (ws) => {
         && (current.phase === 'subject_photo' || current.phase === 'judging')) {
       finishCaptionRound(current, { skipped: true });
     }
+    if (leaving && current.mode === 'copycat' && current.subjectId === playerId
+        && (current.phase === 'copy_original' || current.phase === 'copy_pick')) {
+      finishCopyRound(current, { skipped: true });
+    }
     if (me && users.get(me)?.lobbyCode === current.code) setPresenceLobby(null);
     lobby = null;
     playerId = null;
@@ -1723,6 +1861,7 @@ wss.on('connection', (ws) => {
       if (current.phase === 'drawing') maybeAdvanceFromDrawing(current);
       if (current.phase === 'voting') maybeAdvanceFromVoting(current);
       if (current.phase === 'captioning') maybeAdvanceFromCaptioning(current);
+      if (current.phase === 'copy_copying') maybeAdvanceFromCopying(current);
       if (current.phase === 'impostor_voting') maybeAdvanceFromImpostorVoting(current);
       broadcast(current);
     }
@@ -1832,7 +1971,7 @@ wss.on('connection', (ws) => {
       const newCode = code();
       lobby = newLobby(null);
       lobby.code = newCode;
-      lobby.mode = ['draw', 'caption', 'impostor', 'hunt'].includes(msg.mode) ? msg.mode : 'classic';
+      lobby.mode = ['draw', 'caption', 'impostor', 'hunt', 'copycat'].includes(msg.mode) ? msg.mode : 'classic';
       lobby.lang = LANGS.includes(msg.lang) ? msg.lang : 'en';
       lobby.drawEnabled = lobby.mode === 'draw';
       playerId = id();
@@ -1885,6 +2024,7 @@ wss.on('connection', (ws) => {
       if (lobby.phase === 'drawing') maybeAdvanceFromDrawing(lobby);
       if (lobby.phase === 'voting') maybeAdvanceFromVoting(lobby);
       if (lobby.phase === 'captioning') maybeAdvanceFromCaptioning(lobby);
+      if (lobby.phase === 'copy_copying') maybeAdvanceFromCopying(lobby);
       if (lobby.phase === 'impostor_voting') maybeAdvanceFromImpostorVoting(lobby);
       return;
     }
@@ -1954,7 +2094,7 @@ wss.on('connection', (ws) => {
       return;
     }
 
-    if (msg.type === 'set_prompt_pack' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode !== 'caption' && lobby.mode !== 'hunt') {
+    if (msg.type === 'set_prompt_pack' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode !== 'caption' && lobby.mode !== 'hunt' && lobby.mode !== 'copycat') {
       if (PROMPT_PACKS[msg.pack]) lobby.promptPack = msg.pack;
       broadcast(lobby);
       return;
@@ -1964,6 +2104,13 @@ wss.on('connection', (ws) => {
       if (msg.seconds != null) {
         lobby.captionSeconds = Math.max(CAPTION_SECONDS_MIN, Math.min(CAPTION_SECONDS_MAX, Number(msg.seconds) || CAPTION_SECONDS_DEFAULT));
       }
+      broadcast(lobby);
+      return;
+    }
+
+    if (msg.type === 'set_copy_settings' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode === 'copycat') {
+      const sec = Number(msg.seconds);
+      if (COPY_SECONDS_OPTIONS.includes(sec)) lobby.copySeconds = sec;
       broadcast(lobby);
       return;
     }
@@ -1989,7 +2136,7 @@ wss.on('connection', (ws) => {
         p.coinsEarned = 0;
         p.reward = null;
       }
-      if (lobby.mode === 'caption') {
+      if (lobby.mode === 'caption' || lobby.mode === 'copycat') {
         lobby.subjectOrder = shuffle([...lobby.players.keys()]);
         lobby.subjectIndex = -1;
       }
@@ -2013,6 +2160,30 @@ wss.on('connection', (ws) => {
         broadcast(lobby);
         afterSubjectPhoto(lobby);
       }
+      return;
+    }
+
+    if (msg.type === 'submit_photo' && lobby.phase === 'copy_original' && playerId === lobby.subjectId) {
+      if (typeof msg.photoDataUrl === 'string' && msg.photoDataUrl.startsWith('data:image/')) {
+        lobby.subjectPhoto = { photoDataUrl: msg.photoDataUrl };
+        afterCopyOriginal(lobby);
+      }
+      return;
+    }
+
+    if (msg.type === 'submit_photo' && lobby.phase === 'copy_copying' && playerId !== lobby.subjectId) {
+      if (typeof msg.photoDataUrl === 'string' && msg.photoDataUrl.startsWith('data:image/')) {
+        if (lobby.submissions.has(playerId)) return;
+        lobby.submissions.set(playerId, { photoDataUrl: msg.photoDataUrl, missed: false });
+        broadcast(lobby);
+        maybeAdvanceFromCopying(lobby);
+      }
+      return;
+    }
+
+    if (msg.type === 'pick_copy' && lobby.phase === 'copy_pick' && playerId === lobby.subjectId) {
+      if (!lobby.captionOrder.includes(msg.authorId)) return;
+      finishCopyRound(lobby, { winnerId: msg.authorId });
       return;
     }
 
@@ -2172,6 +2343,11 @@ function spawnBot(code, takenNames) {
 
     if (m.phase === 'submitting' && !m.youSubmitted) later(`photo-${r}`, () => out({ type: 'submit_photo', photoDataUrl: botPhoto() }));
     if (m.phase === 'subject_photo' && m.isSubject) later(`subject-${r}`, () => out({ type: 'submit_photo', photoDataUrl: botPhoto() }));
+    if (m.phase === 'copy_original' && m.isSubject) later(`corig-${r}`, () => out({ type: 'submit_photo', photoDataUrl: botPhoto() }));
+    if (m.phase === 'copy_copying' && !m.isSubject && !m.youSubmitted) later(`ccopy-${r}`, () => out({ type: 'submit_photo', photoDataUrl: botPhoto() }));
+    if (m.phase === 'copy_pick' && m.isSubject && m.copyCards?.length) {
+      later(`cpick-${r}`, () => out({ type: 'pick_copy', authorId: m.copyCards[crypto.randomInt(m.copyCards.length)].id }));
+    }
     if (m.phase === 'drawing' && !m.youDone) later(`draw-${r}`, () => out({ type: 'finish_drawing' }));
     if ((m.phase === 'voting' || m.phase === 'impostor_voting') && !m.youVoted) {
       const options = (m.cards || []).filter((c) => !c.isOwn && !c.missed);

@@ -6,6 +6,7 @@ let mountedKey = null;
 let cameraStream = null;
 let cameraFacing = 'user'; // 'user' = selfie, 'environment' = zadní foťák
 let submittedLocally = false;
+let lastSentPhoto = null; // { round, url } — vlastní odeslaná fotka, ukáže se při čekání na ostatní
 let votedLocallyFor = null;
 let drawDoneLocally = false;
 let errorTimer = null;
@@ -55,7 +56,7 @@ function wireSocketEvents(socket) {
         return;
       }
       cancelPendingCreate = false;
-      if (msg.phase !== 'submitting') submittedLocally = false;
+      if (msg.phase !== 'submitting' && msg.phase !== 'copy_copying') submittedLocally = false;
       if (msg.phase !== 'drawing') drawDoneLocally = false;
       if (msg.phase !== 'voting') votedLocallyFor = null;
       if (msg.code && msg.youId) saveSession(msg.code, msg.youId);
@@ -209,6 +210,15 @@ const MODE_ICON_PALETTE = `
     <circle cx="43" cy="65" r="8" stroke="currentColor" stroke-width="5"/>
   </svg>`;
 
+const MODE_ICON_COPY = `
+  <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="74" cy="38" r="30" stroke="currentColor" stroke-width="6"/>
+    <circle cx="46" cy="60" r="30" stroke="currentColor" stroke-width="6" fill="#0d1f24"/>
+    <circle cx="36" cy="54" r="4.5" fill="currentColor"/>
+    <circle cx="56" cy="54" r="4.5" fill="currentColor"/>
+    <path d="M34 70 Q46 82 58 70" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+  </svg>`;
+
 const MODE_ICON_LOUPE = `
   <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="52" cy="44" r="32" stroke="currentColor" stroke-width="6"/>
@@ -233,7 +243,8 @@ const MODE_MENU = [
     modes: [
       { id: 'draw', name: 'Doodle', tagline: 'Snap a selfie, doodle on it, vote', players: 3, bg: () => MODE_ICON_PALETTE },
       { id: 'impostor', name: 'Impostor', tagline: 'One player got a different prompt', players: 3, bg: () => MODE_ICON_SPY },
-      { id: 'hunt', name: 'Snap Hunt', wide: true, tagline: 'A task drops — like "something blue". Hunt it down, snap it and vote for the best shot.', players: 3, bg: () => MODE_ICON_LOUPE },
+      { id: 'hunt', name: 'Snap Hunt', tagline: 'Find the thing, snap it, vote', players: 3, bg: () => MODE_ICON_LOUPE },
+      { id: 'copycat', name: 'Copycat', tagline: 'Copy the face, best copy wins', players: 3, bg: () => MODE_ICON_COPY },
     ],
   },
 ];
@@ -271,6 +282,7 @@ function modeDisplayName(mode) {
   if (mode === 'caption') return 'Main Character';
   if (mode === 'impostor') return 'Impostor';
   if (mode === 'hunt') return 'Snap Hunt';
+  if (mode === 'copycat') return 'Copycat';
   return 'Reaction';
 }
 
@@ -574,6 +586,15 @@ const RULES_BY_MODE = {
     'If the impostor gets the most votes, everyone else wins: +100 pts and +3 coins each.',
     'If they escape (a tie counts too), the impostor wins: +250 pts and +10 coins.',
   ],
+  copycat: [
+    'The host creates a lobby and shares the code with friends — you need at least 3 players.',
+    'Each round a different player is the original — everyone gets a turn.',
+    'The original snaps a selfie with a crazy face or pose, with no time limit.',
+    'Everyone else gets 3 seconds to memorise it.',
+    'Then the photo disappears and you copy it from memory with your own selfie (the host sets how long).',
+    'The original picks the best copy anonymously — its author gets 100 pts.',
+    'After the last round, whoever has the most points wins.',
+  ],
   hunt: [
     'The host creates a lobby and shares the code with friends — you need at least 3 players.',
     'Each round a task drops — like "something blue" or "the weirdest thing in your bag". The host picks what to hunt: Anywhere, Home, School, Outdoors, Party or Food.',
@@ -586,7 +607,7 @@ const RULES_BY_MODE = {
 };
 
 function showRulesModal(initialMode = 'classic') {
-  const modes = ['classic', 'draw', 'caption', 'impostor', 'hunt'];
+  const modes = ['classic', 'draw', 'caption', 'impostor', 'hunt', 'copycat'];
   openModal(`
     <h2>How to play</h2>
     <div class="rules-tabs">
@@ -655,7 +676,7 @@ function promptPackBadge(state) {
     const h = HUNT_PACK_INFO[state.huntPack];
     return h && state.huntPack !== 'anywhere' ? `<span class="spicy-badge pack-badge-${state.huntPack}">${packGlyph(state.huntPack)} ${h.label}</span>` : '';
   }
-  if (state.mode === 'caption' || !state.promptPack || state.promptPack === 'classic') return '';
+  if (state.mode === 'caption' || state.mode === 'copycat' || !state.promptPack || state.promptPack === 'classic') return '';
   const p = QUESTION_PACK_INFO[state.promptPack];
   return p ? `<span class="spicy-badge pack-badge-${state.promptPack}">${packGlyph(state.promptPack)} ${p.label}</span>` : '';
 }
@@ -683,7 +704,7 @@ function pendingLobbyState(mode, name) {
   return {
     pending: true, code: '', mode, phase: 'lobby', isHost: true, joinRequests: [],
     players: [{ id: 'me', name, looks: myLooks(), isHost: true, isYou: true, connected: true }],
-    totalRounds: 5, drawEnabled: mode === 'draw', drawSeconds: 20, captionSeconds: 40,
+    totalRounds: 5, drawEnabled: mode === 'draw', drawSeconds: 20, captionSeconds: 40, copySeconds: 20,
     huntSeconds: 60, huntPack: 'anywhere', promptPack: 'classic',
   };
 }
@@ -728,7 +749,7 @@ function renderLobbyScreen(state) {
       </div>
 
       ${state.isHost ? `
-        ${state.mode !== 'caption' && state.mode !== 'hunt' ? `
+        ${state.mode !== 'caption' && state.mode !== 'hunt' && state.mode !== 'copycat' ? `
           <div class="card setting-card">
             <h3 class="setting-title">${icon('chat')} Question pack</h3>
             ${packPickerHtml(state.promptPack)}
@@ -765,6 +786,13 @@ function renderLobbyScreen(state) {
           </div>
         ` : ''}
 
+        ${state.mode === 'copycat' ? `
+          <div class="card setting-card">
+            <h3 class="setting-title">${icon('timer')} Copy time</h3>
+            ${optionPicker('copy-seconds', COPY_SECONDS_OPTIONS, state.copySeconds, 's')}
+          </div>
+        ` : ''}
+
         ${addBotButtonHtml(state)}
         <button id="start-btn" class="btn btn-primary btn-block" ${players.length < minPlayersFor(state.mode) ? 'disabled' : ''}>
           ${players.length < minPlayersFor(state.mode)
@@ -781,6 +809,7 @@ function renderLobbyScreen(state) {
     wireOptionPicker('rounds', (v) => send({ type: 'set_rounds', rounds: v }));
     wireOptionPicker('draw-seconds', (v) => send({ type: 'set_draw_settings', seconds: v }));
     wireOptionPicker('caption-seconds', (v) => send({ type: 'set_caption_settings', seconds: v }));
+    wireOptionPicker('copy-seconds', (v) => send({ type: 'set_copy_settings', seconds: v }));
     wireOptionPicker('hunt-seconds', (v) => send({ type: 'set_hunt_settings', seconds: v }));
     wireAddBot();
     document.querySelectorAll('#picker-hunt-pack .pack-chip').forEach((b) => {
@@ -973,14 +1002,16 @@ function capturePhoto() {
   if (flash) { flash.classList.add('on'); setTimeout(() => flash.classList.remove('on'), 350); }
 
   send({ type: 'submit_photo', photoDataUrl: dataUrl });
+  lastSentPhoto = { round: lastState ? lastState.round : null, url: dataUrl };
   playSfx('shutter');
   stopCamera();
 
-  if (lastState && lastState.phase === 'subject_photo') {
+  if (lastState && (lastState.phase === 'subject_photo' || lastState.phase === 'copy_original')) {
     // fáze se po odeslání změní skoro okamžitě, žádný mezikrok navíc netřeba
     return;
   }
   submittedLocally = true;
+  if (lastState.phase === 'copy_copying') return buildCopyWaitingView(lastState);
   buildWaitingView(lastState);
 }
 
@@ -994,7 +1025,9 @@ function buildWaitingView(state) {
         ${roleBadgeHtml(state)}
         <div class="prompt-text">${escapeHtml(state.prompt)}</div>
       </div>
-      ${bigIcon('checkCircle', 'good')}
+      ${lastSentPhoto && lastSentPhoto.round === state.round
+        ? `<div class="sent-photo"><img src="${lastSentPhoto.url}" alt=""><span class="sent-check">${icon('check')}</span></div>`
+        : bigIcon('checkCircle', 'good')}
       <h3>Photo sent!</h3>
       <p class="subtitle" id="wait-count-text">Waiting for the others…</p>
       <div class="timer" id="timer-el">--</div>
@@ -1371,6 +1404,7 @@ function renderResultsScreen(state) {
   const r = state.result;
 
   if (r.kind === 'caption') return renderCaptionResultsScreen(state, r);
+  if (r.kind === 'copycat') return renderCopyResultsScreen(state, r);
   if (r.kind === 'impostor') return renderImpostorResults(state, r);
 
   const cardsHtml = r.cards.map((c) => `
@@ -1447,7 +1481,7 @@ function renderCaptionResultsScreen(state, r) {
     <div class="screen">
       <div class="prompt-box">
         <div class="eyebrow">Round ${r.round} / ${state.totalRounds} results</div>
-        <div class="prompt-text">${playerNameHtml(r.subjectName, looksOf(state, r.subjectId))}'s photo</div>
+        <div class="prompt-text">${tr('Photo of', getLang())} ${playerNameHtml(r.subjectName, looksOf(state, r.subjectId))}</div>
       </div>
       ${body}
       <div class="card">
@@ -1626,6 +1660,8 @@ function renderApp(state) {
     else patchImpostorVoting(state);
     return;
   }
+
+  if (renderCopycatPhase(state)) return;
 
   if (state.phase === 'subject_photo') {
     if (state.isSubject) {

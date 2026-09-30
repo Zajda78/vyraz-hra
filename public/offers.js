@@ -3,7 +3,7 @@
 // v jeho lobby ho hrají zdarma. Nákup se zatím jen nasimuluje (žádná
 // skutečná platba), odemčení se drží v localStorage jako mince.
 
-const PAID_MODES = ['draw', 'impostor', 'hunt'];
+const PAID_MODES = ['draw', 'impostor', 'hunt', 'copycat'];
 
 // Hodnota balíčku = módy zvlášť + mince podle kurzu. Sleva se z toho
 // dopočítá sama, ať cena, přeškrtnutá hodnota a procenta vždycky sedí.
@@ -14,7 +14,7 @@ const PARTY_PACK = {
   name: 'Party Pack',
   priceEur: 3.99,
   coins: 200,
-  modes: ['draw', 'impostor', 'hunt'],
+  modes: ['draw', 'impostor', 'hunt', 'copycat'],
 };
 PARTY_PACK.worthEur = PARTY_PACK.modes.length * MODE_PRICE_EUR + PARTY_PACK.coins * COIN_RATE_EUR;
 PARTY_PACK.discount = Math.round((1 - PARTY_PACK.priceEur / PARTY_PACK.worthEur) * 100);
