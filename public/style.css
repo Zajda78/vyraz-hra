@@ -2033,16 +2033,6 @@ body.no-scroll{ overflow:hidden; }
 }
 .frame-aura.aura-legendary{ box-shadow:none; }
 
-/* Rainbow — plynulé barevné pásy obíhající okraj dokola */
-.frame-aura.aura-frame-rainbow{
-  background:conic-gradient(from var(--fa), #F87171, #FB923C, #FBBF24, #34D399, #22D3EE, #60A5FA, #A78BFA, #F472B6, #F87171);
-  animation:lg-spin 7s linear infinite;
-}
-.frame-aura.aura-frame-rainbow::before{
-  background:conic-gradient(from var(--ga), rgba(30,27,75,0.35), transparent 25%, rgba(30,27,75,0.25) 50%, transparent 75%, rgba(30,27,75,0.35));
-  animation:lg-spin2 11s linear infinite;
-}
-
 /* Galaxy — hluboký vesmír, pomalu plující mlhovina a barevné hvězdičky přímo v okraji */
 .frame-aura.aura-frame-galaxy{
   background:conic-gradient(from var(--fa), #1E1B4B, #6D28D9 18%, #DB2777 38%, #1E1B4B 52%, #0891B2 70%, #7C3AED 85%, #1E1B4B);
@@ -2077,49 +2067,6 @@ body.no-scroll{ overflow:hidden; }
     rgba(244,114,182,0.7) 0 8%, transparent 8% 17%, rgba(34,211,238,0.7) 17% 25%, transparent 25% 42%,
     rgba(167,139,250,0.75) 42% 50%, transparent 50% 67%, rgba(244,114,182,0.6) 67% 75%, transparent 75% 92%, rgba(34,211,238,0.7) 92% 100%);
   animation:lg-spin2 9s linear infinite, lg-pulse 3.4s ease-in-out infinite;
-}
-
-/* King — zlatý okraj s rytým filigránem, klenoty (rubín / safír / smaragd) jemně pulzují */
-.frame-aura.aura-frame-king{
-  background:
-    repeating-linear-gradient(45deg, rgba(120,53,15,0.4) 0 1px, transparent 1px 5px),
-    repeating-linear-gradient(-45deg, rgba(120,53,15,0.4) 0 1px, transparent 1px 5px),
-    conic-gradient(from var(--fa), #B45309, #FDE68A 15%, #F59E0B 30%, #92400E 45%, #FCD34D 62%, #D97706 78%, #FDE68A 90%, #B45309);
-  animation:lg-spin 12s linear infinite;
-}
-.frame-aura.aura-frame-king::before{
-  background:
-    radial-gradient(ellipse 5% 5% at 50% 2.5%, #EF4444 55%, transparent 100%),
-    radial-gradient(ellipse 5% 5% at 97.5% 50%, #3B82F6 55%, transparent 100%),
-    radial-gradient(ellipse 5% 5% at 50% 97.5%, #10B981 55%, transparent 100%),
-    radial-gradient(ellipse 5% 5% at 2.5% 50%, #A855F7 55%, transparent 100%);
-  animation:lg-pulse 2.8s ease-in-out infinite;
-}
-.frame-aura.aura-frame-king::after{
-  background:
-    radial-gradient(ellipse 4.5% 4.5% at 3% 3%, #3B82F6 55%, transparent 100%),
-    radial-gradient(ellipse 4.5% 4.5% at 97% 3%, #10B981 55%, transparent 100%),
-    radial-gradient(ellipse 4.5% 4.5% at 97% 97%, #EF4444 55%, transparent 100%),
-    radial-gradient(ellipse 4.5% 4.5% at 3% 97%, #10B981 55%, transparent 100%);
-  animation:lg-pulse 2.8s ease-in-out -1.4s infinite;
-}
-
-/* Phoenix — plameny olizují okraj: jazyky plamene stoupají vzhůru a mihotají se */
-.frame-aura.aura-frame-phoenix{
-  background:
-    repeating-linear-gradient(0deg, transparent 0 20%, rgba(249,115,22,0.85) 38%, rgba(251,191,36,0.95) 50%, transparent 68%),
-    conic-gradient(from var(--fa), #7F1D1D, #DC2626 20%, #F97316 40%, #7F1D1D 55%, #EA580C 75%, #DC2626 90%, #7F1D1D);
-  background-size:100% 50%, 100% 100%;
-  animation:lg-spin 9s linear infinite, lg-flame-up 1.6s linear infinite;
-}
-@keyframes lg-flame-up{ to{ background-position:0 -50%, 0 0; } }
-.frame-aura.aura-frame-phoenix::before{
-  background:repeating-conic-gradient(from var(--ga), transparent 0 5deg, rgba(253,224,71,0.85) 8deg, rgba(249,115,22,0.6) 11deg, transparent 15deg 20deg);
-  animation:lg-spin2 6s linear infinite, lg-pulse 0.7s ease-in-out infinite;
-}
-.frame-aura.aura-frame-phoenix::after{
-  background:linear-gradient(0deg, rgba(220,38,38,0.6), transparent 45%);
-  animation:lg-pulse 1.1s ease-in-out infinite;
 }
 
 /* Sweets — cukrátkové pruhy (růžová / mátová / pastelová) se posouvají po okraji jako barber pole */
@@ -2181,4 +2128,118 @@ body.no-scroll{ overflow:hidden; }
 @media (prefers-reduced-motion: reduce){
   .frame-aura.aura-legendary, .frame-aura.aura-legendary::before, .frame-aura.aura-legendary::after, .vamp-drips i{ animation:none !important; }
   .vamp-drips{ display:none; }
+}
+
+/* ======================= LEGENDARY: řemeslné dokončení okrajů a ozdob =======================
+   Hloubka okraje: .frame-bevel (stejná maska jako .frame-aura) kreslí tenkou tmavou vnější linku, světlou
+   vnitřní linku a jemné zkosení (světlejší hrana nahoře vlevo / tmavší dole vpravo) v barvách rámečku.
+   Všechno statické, bez záře a bez bílého lesku; čáry jsou tenké, takže sedí na 40px avatar i velkou fotku. */
+.frame-bevel{
+  position:absolute; inset:0; z-index:2; pointer-events:none; border-radius:inherit; padding:inherit; box-sizing:border-box;
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask:linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.frame-bevel::before{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background:linear-gradient(135deg, var(--bv-hi) 0, transparent 38%, transparent 62%, var(--bv-lo) 100%);
+  box-shadow:inset 0 0 0 1px var(--bv-out);
+}
+/* statický potomek vyplní obsah (= díru okraje) a jeho stín nakreslí vnitřní linku přesně na hranu fotky */
+.frame-bevel::after{
+  content:""; display:block; width:100%; height:100%; box-sizing:border-box; border-radius:inherit;
+  box-shadow:0 0 0 0.8px var(--bv-in);
+}
+.wheel-odds-art .frame-bevel{ display:none; }
+.bv-frame-galaxy{ --bv-hi:rgba(196,181,253,0.34); --bv-lo:rgba(8,6,36,0.5); --bv-out:rgba(8,6,36,0.88); --bv-in:rgba(165,243,252,0.5); }
+.bv-frame-diamond{ --bv-hi:rgba(165,243,252,0.4); --bv-lo:rgba(30,27,100,0.4); --bv-out:rgba(12,74,110,0.8); --bv-in:rgba(224,242,254,0.6); }
+.bv-frame-sweets{ --bv-hi:rgba(255,209,229,0.5); --bv-lo:rgba(157,23,77,0.34); --bv-out:rgba(157,23,77,0.7); --bv-in:rgba(255,240,246,0.62); }
+.bv-frame-haunted{ --bv-hi:rgba(134,239,172,0.3); --bv-lo:rgba(10,5,35,0.5); --bv-out:rgba(10,5,35,0.88); --bv-in:rgba(196,181,253,0.52); }
+.bv-frame-vampire{ --bv-hi:rgba(248,113,113,0.3); --bv-lo:rgba(20,0,0,0.6); --bv-out:rgba(20,0,0,0.9); --bv-in:rgba(252,165,165,0.42); }
+
+/* Plynulejší, bohatší barevné přechody okrajů (víc zarážek; animace zůstávají z pravidel výše) */
+.frame-aura.aura-frame-galaxy{
+  background:conic-gradient(from var(--fa), #1E1B4B, #312E81 8%, #6D28D9 18%, #A21CAF 28%, #DB2777 38%, #581C87 46%, #1E1B4B 54%, #155E75 62%, #0891B2 70%, #4F46E5 78%, #7C3AED 85%, #312E81 93%, #1E1B4B);
+}
+/* Diamond — každý fasetový segment má vlastní přechod tmavá hrana -> světlá plocha (brus krystalu) */
+.frame-aura.aura-frame-diamond{
+  background:conic-gradient(from var(--fa), #0E7490 0%, #67E8F9 8.32%, #4338CA 8.33%, #A5B4FC 16.66%, #0891B2 16.67%, #A5F3FC 24.99%, #7E22CE 25%, #D8B4FE 33.32%, #0E7490 33.33%, #67E8F9 41.66%, #A21CAF 41.67%, #F5D0FE 49.99%, #0891B2 50%, #7DD3FC 58.32%, #5B21B6 58.33%, #C4B5FD 66.66%, #0E7490 66.67%, #A5F3FC 74.99%, #BE185D 75%, #F9A8D4 83.32%, #0369A1 83.33%, #7DD3FC 91.66%, #6D28D9 91.67%, #DDD6FE 99.99%);
+}
+/* Sweets — cukrová tyčka: pruhy mají tmavší okrajovou linku a jemné stíny */
+.frame-aura.aura-frame-sweets{
+  background:repeating-linear-gradient(45deg, #FF5FA2 0 5.4%, #E0337F 5.4% 6.25%, #FFE4F0 6.25% 11.6%, #F9C9DC 11.6% 12.5%, #99F6E4 12.5% 17.9%, #5EEAD4 17.9% 18.75%, #FFE4F0 18.75% 24.2%, #F9C9DC 24.2% 25%);
+  background-size:50% 50%;
+}
+.frame-aura.aura-frame-haunted{
+  background:
+    radial-gradient(ellipse 40% 50% at 30% 40%, rgba(74,222,128,0.55), transparent 70%),
+    radial-gradient(ellipse 45% 40% at 75% 70%, rgba(167,139,250,0.6), transparent 70%),
+    linear-gradient(135deg, #1E1B4B, #3B0764 25%, #5B21B6 50%, #3B0764 75%, #1E1B4B);
+  background-size:160% 160%, 160% 160%, 100% 100%;
+}
+.frame-aura.aura-frame-vampire{
+  background:conic-gradient(from var(--fa), #2A0505, #5F0F0F 10%, #991B1B 25%, #6B1111 38%, #2A0505 50%, #5F0F0F 62%, #7F1D1D 75%, #450A0A 88%, #2A0505);
+}
+
+/* Ozdoby: pomalé, měkké pohyby (jen transform / opacity) a jemné částice */
+.frame-decor .fd-bob, .frame-decor .fd-gem, .frame-decor .fd-lick, .frame-decor .fd-ember, .frame-decor .fd-fog,
+.frame-decor .fd-sprinkle, .frame-decor .fd-glow, .frame-decor .fd-flap2{ transform-box:fill-box; transform-origin:50% 50%; }
+.frame-decor .fd-revolve, .frame-decor .fd-dust{ transform-box:view-box; transform-origin:50px 50px; }
+@keyframes fd-bob{ 0%,100%{ transform:translateY(0) rotate(-1.5deg); } 50%{ transform:translateY(-2.5px) rotate(1.5deg); } }
+@keyframes fd-gem{ 0%,100%{ transform:rotate(-4deg) scale(1); } 50%{ transform:rotate(4deg) scale(1.05); } }
+@keyframes fd-lick{ 0%,100%{ transform:scaleY(1) skewX(-2deg); } 50%{ transform:scaleY(1.08) skewX(2.5deg); } }
+@keyframes fd-ember{ 0%{ transform:translate(0,0) scale(1); opacity:0; } 15%{ opacity:0.9; } 100%{ transform:translate(3px,-22px) scale(0.35); opacity:0; } }
+@keyframes fd-fog{ 0%,100%{ transform:translateX(-3px); opacity:0.2; } 50%{ transform:translateX(4px); opacity:0.42; } }
+@keyframes fd-sprinkle{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(3px) rotate(28deg); } }
+@keyframes fd-glow{ 0%,100%{ opacity:0.78; } 50%{ opacity:1; } }
+@keyframes fd-flap2{ 0%,100%{ transform:scaleY(1); } 50%{ transform:scaleY(0.6) translateY(-1px); } }
+.frame-decor .fd-bob{ animation:fd-bob 5s ease-in-out infinite; }
+.frame-decor .fd-gem{ animation:fd-gem 5s ease-in-out infinite; }
+.frame-decor .fd-lick{ transform-origin:50% 100%; animation:fd-lick 2.2s ease-in-out infinite; }
+.frame-decor .fd-ember{ opacity:0.85; animation:fd-ember 3.6s ease-out infinite; }
+.frame-decor .fd-fog{ opacity:0.3; animation:fd-fog 9s ease-in-out infinite; }
+.frame-decor .fd-sprinkle{ animation:fd-sprinkle 4.5s ease-in-out infinite; }
+.frame-decor .fd-glow{ animation:fd-glow 3.2s ease-in-out infinite; }
+.frame-decor .fd-flap2{ animation:fd-flap2 0.9s ease-in-out infinite; }
+.frame-decor .fd-revolve{ animation:fd-orbit 14s linear infinite; }
+.frame-decor .fd-dust{ animation:fd-orbit 46s linear infinite; }
+.frame-decor .fd-dust.rev{ animation-direction:reverse; }
+@media (prefers-reduced-motion: reduce){
+  .frame-decor .fd-bob, .frame-decor .fd-gem, .frame-decor .fd-lick, .frame-decor .fd-ember, .frame-decor .fd-fog,
+  .frame-decor .fd-sprinkle, .frame-decor .fd-glow, .frame-decor .fd-flap2, .frame-decor .fd-revolve, .frame-decor .fd-dust{ animation:none !important; }
+}
+
+/* ======================= Fénix / Král / Duha — kreslený styl hry =======================
+   Okraj = jedna plná barva se stínem ve spodní části (ostrý přechod) a tmavým obrysem stejného odstínu (.bv-<id>).
+   Bez záře a bez bílých záblesků; ozdoby poskakují (transform), odlesky jsou statické tónované skvrny. */
+
+/* Phoenix — tlustý kruh oranžová -> červená */
+.frame-aura.aura-frame-phoenix{ background:linear-gradient(160deg, #FB923C 0, #F97316 50%, #DC2626 50%, #B91C1C 100%); }
+.bv-frame-phoenix{ --bv-hi:transparent; --bv-lo:transparent; --bv-out:rgba(127,29,29,0.95); --bv-in:rgba(127,29,29,0.85); }
+/* křídla poskakují kolem kořene (přestřelení = gumový pohyb), ocasní pírka se houpají */
+.frame-decor .ph-wing, .frame-decor .ph-sway, .frame-decor .rb-squash, .frame-decor .rb-pop{ transform-box:fill-box; }
+.frame-decor .ph-wl{ transform-origin:100% 50%; animation:ph-flapl 2.6s cubic-bezier(.34,1.56,.64,1) infinite; }
+.frame-decor .ph-wr{ transform-origin:0 50%; animation:ph-flapr 2.6s cubic-bezier(.34,1.56,.64,1) infinite; }
+.frame-decor .ph-sway{ transform-origin:50% 0; animation:ph-sway 3s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes ph-flapl{ 0%,100%{ transform:rotate(8deg); } 50%{ transform:rotate(-16deg); } }
+@keyframes ph-flapr{ 0%,100%{ transform:rotate(-8deg); } 50%{ transform:rotate(16deg); } }
+@keyframes ph-sway{ 0%,100%{ transform:rotate(-5deg); } 50%{ transform:rotate(5deg); } }
+
+/* King — zlatý kruh, tmavě zlatý obrys */
+.frame-aura.aura-frame-king{ background:linear-gradient(160deg, #FDE047 0, #FBBF24 50%, #F59E0B 50%, #D97706 100%); }
+.bv-frame-king{ --bv-hi:transparent; --bv-lo:transparent; --bv-out:rgba(146,64,14,0.95); --bv-in:rgba(146,64,14,0.85); }
+
+/* Rainbow — široké duhové pruhy kolem dokola, fialový obrys */
+.frame-aura.aura-frame-rainbow{
+  background:conic-gradient(#F87171 0 10%, #FB923C 0 20%, #FACC15 0 30%, #4ADE80 0 40%, #60A5FA 0 50%, #A78BFA 0 60%, #F472B6 0 70%, #FB923C 0 80%, #FACC15 0 90%, #4ADE80 0 100%);
+}
+.bv-frame-rainbow{ --bv-hi:transparent; --bv-lo:transparent; --bv-out:rgba(109,40,217,0.95); --bv-in:rgba(109,40,217,0.85); }
+/* mráčky se gumově mačkají, hvězdičky a srdíčka poskakují */
+.frame-decor .rb-squash{ transform-origin:50% 100%; animation:rb-squash 2.8s ease-in-out infinite; }
+.frame-decor .rb-pop{ transform-origin:50% 50%; animation:rb-pop 2.2s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes rb-squash{ 0%,100%{ transform:scale(1,1); } 35%{ transform:translateY(-1.5px) scale(0.95,1.08); } 55%{ transform:scale(1.07,0.92); } 75%{ transform:scale(0.99,1.03); } }
+@keyframes rb-pop{ 0%,100%{ transform:scale(1) rotate(-5deg); } 50%{ transform:scale(1.16) rotate(5deg); } }
+
+/* statické při omezení pohybu */
+@media (prefers-reduced-motion: reduce){
+  .frame-decor .ph-wl, .frame-decor .ph-wr, .frame-decor .ph-sway, .frame-decor .rb-squash, .frame-decor .rb-pop{ animation:none !important; }
 }

@@ -57,48 +57,8 @@ const FRAME_DECOR = {
     ${sparkle(96, 96, 6, '#E2E8F0', -1.1)}
     <circle class="fd-twinkle" style="animation-delay:-0.5s" cx="18" cy="-3" r="1.8" fill="#FFFFFF"/>`,
 
-  // Duha (legendární) — obláčky a jiskřičky
-  'frame-rainbow': () => `
-    <g class="fd-float" fill="#FFFFFF">
-      <circle cx="-2" cy="96" r="7"/><circle cx="7" cy="92" r="9"/><circle cx="17" cy="97" r="6.5"/>
-      <rect x="-2" y="96" width="19" height="7" rx="3.5"/>
-    </g>
-    <g class="fd-float" style="animation-delay:-2s" fill="#FFFFFF">
-      <circle cx="86" cy="4" r="5.5"/><circle cx="94" cy="0" r="7"/><circle cx="102" cy="5" r="5"/>
-      <rect x="86" y="4" width="16" height="5.5" rx="2.7"/>
-    </g>
-    ${sparkle(2, 18, 5, '#FDE68A', -0.6)}
-    ${sparkle(98, 70, 6, '#F9A8D4', -1.2)}`,
 
-  // Galaxie (legendární) — planetky a hvězdy kolem
-  'frame-galaxy': () => `
-    <g class="fd-float">
-      <circle cx="96" cy="6" r="10" fill="#8B5CF6"/>
-      <circle cx="93" cy="3" r="3" fill="#C4B5FD" opacity="0.7"/>
-      <ellipse cx="96" cy="6" rx="17" ry="4.5" fill="none" stroke="#F9A8D4" stroke-width="2.2" transform="rotate(-20 96 6)"/>
-    </g>
-    <g class="fd-float" style="animation-delay:-1.8s">
-      <circle cx="2" cy="94" r="7.5" fill="#22D3EE"/>
-      <circle cx="0" cy="92" r="2.4" fill="#A5F3FC" opacity="0.8"/>
-    </g>
-    <g class="fd-float" style="animation-delay:-3s">
-      <circle cx="-3" cy="18" r="3.6" fill="#EC4899"/>
-    </g>
-    <circle class="fd-twinkle" cx="60" cy="-5" r="1.8" fill="#FFFFFF"/>
-    <circle class="fd-twinkle" style="animation-delay:-1s" cx="104" cy="60" r="1.6" fill="#FFFFFF"/>
-    <circle class="fd-twinkle" style="animation-delay:-1.6s" cx="40" cy="105" r="1.4" fill="#FFFFFF"/>
-    ${sparkle(76, 104, 4, '#FFFFFF', -0.5)}`,
 
-  // Diamant (legendární) — víc a větší třpytky
-  'frame-diamond': () => `
-    ${sparkle(0, 2, 13, '#FFFFFF', 0)}
-    ${sparkle(98, 12, 9, '#E0F2FE', -0.5)}
-    ${sparkle(100, 94, 14, '#FFFFFF', -1)}
-    ${sparkle(4, 88, 8, '#F5D0FE', -1.5)}
-    ${sparkle(52, -6, 6, '#A5F3FC', -0.8)}
-    ${sparkle(48, 106, 5, '#FFFFFF', -1.8)}
-    ${sparkle(106, 52, 5, '#E9D5FF', -0.3)}
-    ${sparkle(-6, 46, 4, '#FFFFFF', -1.2)}`,
 };
 
 // Sněhová vločka (6 ramen) se středem cx,cy
@@ -160,61 +120,8 @@ Object.assign(FRAME_DECOR, {
     ${note(-2, 94, 8, '#F472B6', -1)}
     ${note(8, 12, 6, '#C4B5FD', -1.8)}`,
 
-  // Král (legendární) — koruna nahoře a drahokamy v rozích
-  'frame-king': () => `
-    <g class="fd-float">
-      <path d="M30 -4 L36 -18 L45 -8 L50 -22 L55 -8 L64 -18 L70 -4 Z" fill="#FBBF24" stroke="#92400E" stroke-width="1.4" stroke-linejoin="round"/>
-      <rect x="30" y="-5" width="40" height="5" rx="1.5" fill="#F59E0B" stroke="#92400E" stroke-width="1.2"/>
-      <circle cx="50" cy="-12" r="2.4" fill="#EF4444"/>
-      <circle cx="39" cy="-9" r="1.8" fill="#3B82F6"/>
-      <circle cx="61" cy="-9" r="1.8" fill="#22C55E"/>
-    </g>
-    <path class="fd-twinkle" d="M-2 92 l5 -6 l5 6 l-5 6 z" fill="#A78BFA" stroke="#fff" stroke-width="0.8"/>
-    <path class="fd-twinkle" style="animation-delay:-1s" d="M96 92 l5 -6 l5 6 l-5 6 z" fill="#F472B6" stroke="#fff" stroke-width="0.8"/>
-    ${sparkle(104, 40, 5, '#FDE68A', -0.5)}
-    ${sparkle(-4, 40, 5, '#FDE68A', -1.4)}`,
 
-  // Fénix (legendární) — plameny zdola a jiskry letící nahoru
-  'frame-phoenix': () => `
-    <g class="fd-flicker">
-      <path fill="#F97316" d="M-2 100 C-8 88 0 80 -2 70 C8 80 10 92 6 100 Z"/>
-      <path fill="#FDE047" d="M0 100 C-2 93 2 88 1 84 C6 90 6 96 4 100 Z"/>
-    </g>
-    <g class="fd-flicker" style="animation-delay:-0.4s">
-      <path fill="#EF4444" d="M94 100 C88 86 98 78 96 66 C108 78 110 92 104 100 Z"/>
-      <path fill="#FDE047" d="M97 100 C95 92 99 86 98 81 C104 88 104 95 102 100 Z"/>
-    </g>
-    <circle class="fd-spark" cx="20" cy="-2" r="2.2" fill="#FDE047"/>
-    <circle class="fd-spark" style="animation-delay:-0.7s" cx="60" cy="-6" r="1.8" fill="#FB923C"/>
-    <circle class="fd-spark" style="animation-delay:-1.4s" cx="84" cy="-2" r="2" fill="#FEF3C7"/>
-    ${sparkle(50, 106, 5, '#FDE047', -0.9)}`,
 
-  // Sladkosti (legendární) — lízátko, bonbon a posypka
-  // Sladkosti (legendární) — donut s polevou a posypem, lízátko a zabalený bonbon
-  'frame-sweets': () => `
-    <g class="fd-float">
-      <circle cx="96" cy="4" r="9" fill="none" stroke="#E9A15B" stroke-width="9"/>
-      <circle cx="96" cy="4" r="9" fill="none" stroke="#FF5FA2" stroke-width="6.5"/>
-      <path d="M89 -1 a9 9 0 0 1 9 -5" stroke="#FFC2DA" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <g stroke-width="1.5" stroke-linecap="round">
-        <path d="M91 7l2 -1" stroke="#FDE047"/><path d="M99 11l1 -2" stroke="#7DD3FC"/><path d="M103 3l1 2" stroke="#86EFAC"/>
-        <path d="M100 -3l2 1" stroke="#FFFFFF"/><path d="M92 -3l1 2" stroke="#7DD3FC"/><path d="M104 -1l-1 -2" stroke="#FDE047"/>
-      </g>
-    </g>
-    <g class="fd-float" style="animation-delay:-1.4s">
-      <path d="M2 100 L-6 112" stroke="#FFF7ED" stroke-width="2.6" stroke-linecap="round"/>
-      <circle cx="4" cy="94" r="10" fill="#FF5FA2"/>
-      <circle cx="4" cy="94" r="7.2" fill="#FFF0F6"/>
-      <circle cx="4" cy="94" r="4.6" fill="#7DD3FC"/>
-      <circle cx="4" cy="94" r="2.1" fill="#FFF0F6"/>
-      <path d="M-2 89 a8 8 0 0 1 7 -3" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-    </g>
-    <g class="fd-float" style="animation-delay:-2.6s">
-      <path d="M-11 34 l5 4 -5 4z" fill="#FDE047"/>
-      <path d="M9 34 l-5 4 5 4z" fill="#FDE047"/>
-      <ellipse cx="-1" cy="38" rx="6.5" ry="5" fill="#A78BFA"/>
-      <path d="M-4 34 q2 4 0 8 M1 34 q2 4 0 8" stroke="#EDE9FE" stroke-width="1.3" fill="none"/>
-    </g>`,
 });
 
 // Ozdoba pro rámeček (item nebo id). Běžné a vzácné rámečky nemají nic.
@@ -237,6 +144,7 @@ function lavaDrip(x, delay, s, side = false) {
 // rámečky s vlastní barevnou září za sebou (CSS .halo-<id>)
 const FRAME_HALO_IDS = new Set(['frame-sweets']);
 
+const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire']);
 const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava' };
 
 // Fortune — vrstvy navíc (vše barevné, bez bílé): paprsky, oběžná dráha mincí a čtyřlístků, plocha pro výbuchy
@@ -261,7 +169,9 @@ function frameDecorHtml(frame) {
   // common rámeček = jedna plná barva, bez odlesku
   // legendary: každý rámeček má vlastní animovaný okraj (třída aura-<id>, CSS na konci style.css)
   const auraId = auraKind === 'legendary' ? ` aura-${id}` : '';
-  const aura = auraKind && auraKind !== 'common' ? `<div class="frame-aura aura-${auraKind}${auraId}" aria-hidden="true"></div>` : '';
+  const aura = (auraKind && auraKind !== 'common' ? `<div class="frame-aura aura-${auraKind}${auraId}" aria-hidden="true"></div>` : '')
+    // legendary: tenká obrysová linka + zkosení (bevel) přes okraj, barvy podle rámečku (CSS .bv-<id>)
+    + (auraId && LG_BEVEL_IDS.has(id) ? `<div class="frame-bevel bv-${id}" aria-hidden="true"></div>` : '');
   // Upír: kapky krve, které se tvoří na spodním okraji a padají (v % rozměrech rámečku)
   const drips = id === 'frame-vampire'
     ? '<div class="vamp-drips" aria-hidden="true"><i style="left:22%"></i><i style="left:52%;animation-delay:-1.9s"></i><i style="left:78%;animation-delay:-3.6s"></i></div>' : '';
@@ -373,31 +283,7 @@ Object.assign(FRAME_DECOR, {
     ${spider(80, 16, 13, 0)}
     ${sparkle(-4, 30, 4, '#E5E7EB', -0.8)}`,
 
-  // Strašidelný dům (legendární) — dýně, duch a hejno netopýrů
-  'frame-haunted': () => `
-    ${pumpkin(96, 96, 12, 0)}
-    ${ghost(2, 6, 9, -1.2)}
-    ${bat(84, -4, 13, '#7C3AED', 0)}
-    ${bat(104, 22, 8, '#A855F7', -0.3)}
-    ${bat(-4, 64, 8, '#7C3AED', -0.6)}
-    ${sparkle(50, 106, 5, '#FDBA74', -0.9)}`,
 
-  // Upír (legendární) — netopýři nahoře, krvavé kapky dole a úplněk
-  'frame-vampire': () => `
-    <g class="fd-float">
-      <circle cx="98" cy="4" r="11" fill="#FEF3C7"/>
-      <circle cx="94" cy="1" r="2.2" fill="#FDE68A"/><circle cx="101" cy="8" r="1.6" fill="#FDE68A"/>
-    </g>
-    ${bat(84, 10, 12, '#991B1B', 0)}
-    ${bat(24, -4, 10, '#B91C1C', -0.4)}
-    ${bat(-4, 44, 8, '#7F1D1D', -0.8)}
-    <g class="fd-drip">
-      <path fill="#DC2626" d="M24 96 C24 104 27 109 30 109 C33 109 35 104 34 96 Z"/>
-    </g>
-    <g class="fd-drip" style="animation-delay:-0.9s">
-      <path fill="#B91C1C" d="M62 96 C61 102 63 106 66 106 C69 106 70 102 69 96 Z"/>
-    </g>
-    ${sparkle(106, 60, 5, '#FCA5A5', -1.3)}`,
 });
 
 // Fortune (legendární, jen z kola štěstí) — čtyřlístek, mince a třpytky
@@ -425,6 +311,409 @@ Object.assign(FRAME_DECOR, {
     ${sparkle(-4, 24, 7, '#FDE047', -0.3)}`,
 });
 
+
+// ======================= Legendary — přepracované ozdoby =======================
+// Plochá ručně "dělaná" kresba: každý tvar má tenký tmavý obrys v odstínu své barvy, stín a světlo jsou
+// vrstvy (bez id-gradientů, takže fungují i ve skrytých SVG). Světla jsou vždy barevná, žádný bílý záblesk.
+// Animace jen transform/opacity (třídy fd-bob, fd-gem, fd-lick, fd-ember, fd-fog, fd-sprinkle… viz style.css).
+
+// Mráček: obrys, stínová spodní vrstva, světlá vrstva, lehký odlesk; volitelně duha nad ním
+function lgCloudShapes(cx, cy, s) {
+  return `<circle cx="${cx - 0.75 * s}" cy="${cy + 0.1 * s}" r="${0.42 * s}"/><circle cx="${cx - 0.2 * s}" cy="${cy - 0.2 * s}" r="${0.62 * s}"/>`
+    + `<circle cx="${cx + 0.5 * s}" cy="${cy}" r="${0.5 * s}"/><circle cx="${cx + 1.0 * s}" cy="${cy + 0.18 * s}" r="${0.34 * s}"/>`
+    + `<rect x="${cx - 1.1 * s}" y="${cy + 0.1 * s}" width="${2.44 * s}" height="${0.42 * s}" rx="${0.21 * s}"/>`;
+}
+function lgCloud(cx, cy, s, delay = 0, rainbow = false) {
+  const arcs = rainbow ? ['#F87171', '#FBBF24', '#34D399', '#60A5FA'].map((c, i) => {
+    const r = s * (1.75 - i * 0.22);
+    return `<path d="M${cx - r} ${cy + 0.3 * s} A${r} ${r} 0 0 1 ${cx + r} ${cy + 0.3 * s}" stroke="${c}" stroke-width="${s * 0.2}" fill="none" stroke-linecap="round"/>`;
+  }).join('') : '';
+  return `<g class="fd-bob" style="animation-delay:${delay}s">${arcs}
+    <g fill="#8B5CF6" stroke="#8B5CF6" stroke-width="1.4" stroke-linejoin="round">${lgCloudShapes(cx, cy, s)}</g>
+    <g fill="#C4B5FD">${lgCloudShapes(cx, cy, s)}</g>
+    <g fill="#F5F3FF">${lgCloudShapes(cx, cy - 0.09 * s, s)}</g>
+    <ellipse cx="${cx - 0.4 * s}" cy="${cy - 0.5 * s}" rx="${0.3 * s}" ry="${0.11 * s}" fill="#FBCFE8" opacity="0.85" transform="rotate(-25 ${cx - 0.4 * s} ${cy - 0.5 * s})"/>
+  </g>`;
+}
+
+// Planeta se stínem, pásem a volitelným dvojitým prstencem (zadní půlka za planetou, přední před ní)
+function lgPlanet(cx, cy, r, c, rot = 0, delay = 0, ring = true) {
+  const rx = r * 1.75, ry = r * 0.42;
+  const back = `M${cx - rx} ${cy} A${rx} ${ry} 0 0 1 ${cx + rx} ${cy}`;
+  const front = `M${cx - rx} ${cy} A${rx} ${ry} 0 0 0 ${cx + rx} ${cy}`;
+  const ringG = (d, o) => `<g transform="rotate(${rot} ${cx} ${cy})" opacity="${o}"><path d="${d}" stroke="${c.ring}" stroke-width="${r * 0.22}" fill="none"/><path d="${d}" stroke="${c.ring2}" stroke-width="${r * 0.07}" fill="none"/></g>`;
+  return `<g class="fd-bob" style="animation-delay:${delay}s">
+    ${ring ? ringG(back, 0.7) : ''}
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="${c.dark}" stroke="${c.line}" stroke-width="0.8"/>
+    <circle cx="${cx - 0.14 * r}" cy="${cy - 0.14 * r}" r="${r * 0.8}" fill="${c.base}"/>
+    <path d="M${cx - 0.85 * r} ${cy + 0.18 * r} Q${cx} ${cy + 0.5 * r} ${cx + 0.85 * r} ${cy + 0.05 * r}" stroke="${c.band}" stroke-width="${r * 0.16}" fill="none" opacity="0.45" stroke-linecap="round"/>
+    <ellipse cx="${cx - 0.4 * r}" cy="${cy - 0.45 * r}" rx="${r * 0.28}" ry="${r * 0.14}" fill="${c.light}" opacity="0.6" transform="rotate(-35 ${cx - 0.4 * r} ${cy - 0.45 * r})"/>
+    ${ring ? ringG(front, 1) : ''}
+  </g>`;
+}
+
+// Briliantový kámen (korunka + spodek s fasetami), paleta p
+function lgGem(cx, cy, s, p, delay = 0) {
+  const L = cx - s, R = cx + s, T = cy - 0.85 * s, M = cy - 0.3 * s, B = cy + 0.9 * s, tl = cx - 0.5 * s, tr = cx + 0.5 * s, a = cx - 0.3 * s, b = cx + 0.3 * s;
+  const f = (pts, fill) => `<path d="M${pts.join(' L')} Z" fill="${fill}"/>`;
+  return `<g class="fd-gem" style="animation-delay:${delay}s" stroke="${p.line}" stroke-width="0.6" stroke-opacity="0.75" stroke-linejoin="round">
+    ${f([`${L} ${M}`, `${tl} ${T}`, `${tr} ${T}`, `${R} ${M}`], p.crown)}
+    ${f([`${L} ${M}`, `${tl} ${T}`, `${a} ${M}`], p.crownD)}
+    ${f([`${tl} ${T}`, `${tr} ${T}`, `${cx} ${M}`], p.crownL)}
+    ${f([`${tr} ${T}`, `${R} ${M}`, `${b} ${M}`], p.crownD)}
+    ${f([`${L} ${M}`, `${R} ${M}`, `${cx} ${B}`], p.pav)}
+    ${f([`${L} ${M}`, `${a} ${M}`, `${cx} ${B}`], p.pavD)}
+    ${f([`${b} ${M}`, `${R} ${M}`, `${cx} ${B}`], p.pavL)}
+  </g>`;
+}
+
+// Korunka s červeným sametem, kuličkami na hrotech a drahokamy v obruči
+function lgCrown() {
+  const jewel = (x, y, r, c, d, h) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="${d}" stroke-width="0.7"/><circle cx="${x - r * 0.3}" cy="${y - r * 0.32}" r="${r * 0.3}" fill="${h}" opacity="0.85"/>`;
+  return `<g class="fd-bob">
+    <path d="M33 -6 Q50 -17 67 -6 L67 -3 L33 -3 Z" fill="#B91C1C" stroke="#7F1D1D" stroke-width="0.9" stroke-linejoin="round"/>
+    <path d="M29 -3 L31 -21 L41 -11 L50 -26 L59 -11 L69 -21 L71 -3 Z" fill="#FBBF24" stroke="#92400E" stroke-width="1.1" stroke-linejoin="round"/>
+    <path d="M50 -26 L59 -11 L69 -21 L71 -3 L50 -3 Z" fill="#D97706" opacity="0.42"/>
+    <path d="M32.5 -6 L33.3 -17 L40.5 -10" stroke="#FDE68A" stroke-width="1" fill="none" opacity="0.9" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="#FDE68A" stroke="#92400E" stroke-width="0.8"><circle cx="31" cy="-22.5" r="2"/><circle cx="50" cy="-27.8" r="2.5"/><circle cx="69" cy="-22.5" r="2"/></g>
+    <rect x="28" y="-5" width="44" height="6.5" rx="2" fill="#F59E0B" stroke="#92400E" stroke-width="1.1"/>
+    <rect x="29.6" y="-4.3" width="40.8" height="1.5" rx="0.75" fill="#FDE68A" opacity="0.7"/>
+    ${jewel(50, -1.8, 2.3, '#EF4444', '#7F1D1D', '#FECACA')}
+    ${jewel(39.5, -1.8, 1.7, '#3B82F6', '#1E3A8A', '#BFDBFE')}
+    ${jewel(60.5, -1.8, 1.7, '#22C55E', '#14532D', '#BBF7D0')}
+  </g>`;
+}
+
+// Plamen ze tří jazyků (vnější / střední / jádro), y = základna, w = šířka, h = výška, lean = náklon špičky
+function lgFlame(x, y, w, h, lean, delay = 0) {
+  const tongue = (x0, hw, th, ln, fill) => `<path fill="${fill}" d="M${x0 - hw} ${y} C${x0 - hw} ${y - th * 0.45} ${x0 - hw * 0.3 + ln * 0.3} ${y - th * 0.6} ${x0 + ln} ${y - th} C${x0 + hw * 0.3 + ln * 0.2} ${y - th * 0.55} ${x0 + hw} ${y - th * 0.4} ${x0 + hw} ${y} Z"/>`;
+  const layers = [[1, '#DC2626'], [0.7, '#F97316'], [0.4, '#FDE047']];
+  const set = [[-0.85 * w, 0.6, lean * 0.6], [0.85 * w, 0.72, lean * 1.2], [0, 1, lean]];
+  return `<g class="fd-lick" style="animation-delay:${delay}s">${set.map(([dx, sc, ln]) => layers.map(([k, fill]) => tongue(x + dx, w * (0.35 + 0.3 * sc) * k, h * sc * k, ln * k, fill)).join('')).join('')}</g>`;
+}
+
+// Donut shora: těsto, růžová poleva, barevný posyp a tónovaný odlesk
+function lgDonut(cx, cy, r, delay = 0) {
+  const m = 0.72 * r, pt = (ang, rad) => [cx + Math.cos(ang) * rad, cy + Math.sin(ang) * rad];
+  const cols = ['#FDE047', '#7DD3FC', '#86EFAC', '#FFF0F6', '#A78BFA', '#FDE047'];
+  const sp = cols.map((c, i) => { const a = i * 1.05 + 0.4, [x, y] = pt(a, m), dx = -Math.sin(a) * 0.1 * r, dy = Math.cos(a) * 0.1 * r; return `<path d="M${(x - dx).toFixed(1)} ${(y - dy).toFixed(1)} L${(x + dx).toFixed(1)} ${(y + dy).toFixed(1)}" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/>`; }).join('');
+  const [hx1, hy1] = pt(3.5, m), [hx2, hy2] = pt(4.35, m);
+  return `<g class="fd-bob" style="animation-delay:${delay}s">
+    <circle cx="${cx}" cy="${cy}" r="${m}" fill="none" stroke="#9A3412" stroke-width="${0.6 * r + 1.4}"/>
+    <circle cx="${cx}" cy="${cy}" r="${m}" fill="none" stroke="#E9A15B" stroke-width="${0.6 * r}"/>
+    <circle cx="${cx}" cy="${cy}" r="${m}" fill="none" stroke="#FF5FA2" stroke-width="${0.46 * r}"/>
+    <circle cx="${cx}" cy="${cy}" r="${m - 0.25 * r}" fill="none" stroke="#D97706" stroke-width="0.7" opacity="0.8"/>
+    <path d="M${hx1.toFixed(1)} ${hy1.toFixed(1)} A${m} ${m} 0 0 1 ${hx2.toFixed(1)} ${hy2.toFixed(1)}" stroke="#FFB3D4" stroke-width="${0.12 * r}" fill="none" stroke-linecap="round" opacity="0.8"/>
+    ${sp}
+  </g>`;
+}
+
+// Lízátko se spirálou (kotouč pomalu rotuje, odlesk stojí), stopka za ním
+function lgLolly(cx, cy, r, delay = 0) {
+  const spiral = (off) => { let d = ''; for (let i = 0; i <= 36; i++) { const t = i / 36, a = t * 4 * Math.PI + off, rad = r * 0.86 * t; d += `${i ? 'L' : 'M'}${(cx + Math.cos(a) * rad).toFixed(1)} ${(cy + Math.sin(a) * rad).toFixed(1)} `; } return d; };
+  return `<g class="fd-bob" style="animation-delay:${delay}s">
+    <path d="M${cx - 0.5 * r} ${cy + 0.6 * r} L${cx - 1.4 * r} ${cy + 1.6 * r}" stroke="#BE185D" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M${cx - 0.5 * r} ${cy + 0.6 * r} L${cx - 1.4 * r} ${cy + 1.6 * r}" stroke="#FFF1E6" stroke-width="2.1" stroke-linecap="round"/>
+    <g class="fd-spin" style="animation-duration:18s">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#FF5FA2" stroke="#BE185D" stroke-width="0.8"/>
+      <path d="${spiral(0)}" stroke="#FFF0F6" stroke-width="${r * 0.2}" fill="none" stroke-linecap="round"/>
+      <path d="${spiral(Math.PI)}" stroke="#7DD3FC" stroke-width="${r * 0.2}" fill="none" stroke-linecap="round"/>
+    </g>
+    <path d="M${cx - 0.75 * r} ${cy - 0.3 * r} A${0.8 * r} ${0.8 * r} 0 0 1 ${cx - 0.2 * r} ${cy - 0.78 * r}" stroke="#FFD1E5" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+  </g>`;
+}
+
+// Zabalený bonbon s překroucenými konci a pruhy
+function lgBonbon(cx, cy, delay = 0) {
+  return `<g class="fd-bob" style="animation-delay:${delay}s" stroke="#6D28D9" stroke-width="0.7" stroke-linejoin="round">
+    <path d="M${cx - 12} ${cy - 4.5} L${cx - 6} ${cy} L${cx - 12} ${cy + 4.5} Z" fill="#FDE047" stroke="#B45309"/>
+    <path d="M${cx + 12} ${cy - 4.5} L${cx + 6} ${cy} L${cx + 12} ${cy + 4.5} Z" fill="#FDE047" stroke="#B45309"/>
+    <ellipse cx="${cx}" cy="${cy}" rx="7" ry="5.4" fill="#A78BFA"/>
+    <path d="M${cx - 3.6} ${cy - 4.8} q2.2 4.8 0 9.6 M${cx + 1.6} ${cy - 5.2} q2.2 5.2 0 10.4" stroke="#DDD6FE" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <ellipse cx="${cx - 2.5}" cy="${cy - 2.6}" rx="2" ry="0.9" fill="#C4B5FD" stroke="none" transform="rotate(-20 ${cx - 2.5} ${cy - 2.6})"/>
+  </g>`;
+}
+
+// Posypka padající kolem (kapsle); rotace je na vnější g, aby ji animace nepřepsala
+function lgSprinkle(x, y, rot, c, delay) {
+  return `<g transform="translate(${x} ${y}) rotate(${rot})"><path class="fd-sprinkle" style="animation-delay:${delay}s" d="M-2 0 L2 0" stroke="${c}" stroke-width="1.6" stroke-linecap="round"/></g>`;
+}
+
+// Netopýr: křídla s vlnitým okrajem (máchají), tělo s ušima, očima a (volitelně) tesáky
+function lgBat(cx, cy, s, fill, edge, eye, delay = 0, fangs = false) {
+  const wing = (d) => `M${cx + d * 0.15 * s} ${cy - 0.05 * s} C${cx + d * 0.5 * s} ${cy - 0.75 * s} ${cx + d * 1.1 * s} ${cy - 0.7 * s} ${cx + d * 1.4 * s} ${cy - 0.3 * s}`
+    + ` Q${cx + d * 1.2 * s} ${cy - 0.05 * s} ${cx + d * 1.25 * s} ${cy + 0.28 * s} Q${cx + d * 0.95 * s} ${cy + 0.05 * s} ${cx + d * 0.8 * s} ${cy + 0.32 * s}`
+    + ` Q${cx + d * 0.6 * s} ${cy + 0.05 * s} ${cx + d * 0.4 * s} ${cy + 0.28 * s} Q${cx + d * 0.3 * s} ${cy + 0.12 * s} ${cx + d * 0.15 * s} ${cy + 0.25 * s} Z`;
+  return `<g class="fd-float" style="animation-delay:${delay}s" fill="${fill}" stroke="${edge}" stroke-width="0.6" stroke-linejoin="round">
+    <g class="fd-flap2" style="animation-delay:${delay}s"><path d="${wing(1)}"/><path d="${wing(-1)}"/></g>
+    <ellipse cx="${cx}" cy="${cy + 0.05 * s}" rx="${0.22 * s}" ry="${0.32 * s}"/>
+    <path d="M${cx - 0.17 * s} ${cy - 0.22 * s} L${cx - 0.2 * s} ${cy - 0.52 * s} L${cx - 0.03 * s} ${cy - 0.3 * s} Z M${cx + 0.17 * s} ${cy - 0.22 * s} L${cx + 0.2 * s} ${cy - 0.52 * s} L${cx + 0.03 * s} ${cy - 0.3 * s} Z"/>
+    <circle cx="${cx - 0.08 * s}" cy="${cy - 0.05 * s}" r="${0.05 * s}" fill="${eye}" stroke="none"/><circle cx="${cx + 0.08 * s}" cy="${cy - 0.05 * s}" r="${0.05 * s}" fill="${eye}" stroke="none"/>
+    ${fangs ? `<path d="M${cx - 0.07 * s} ${cy + 0.1 * s} l0 ${0.11 * s} l${0.04 * s} -${0.11 * s} Z M${cx + 0.07 * s} ${cy + 0.1 * s} l0 ${0.11 * s} l-${0.04 * s} -${0.11 * s} Z" fill="#FEF3C7" stroke="none"/>` : ''}
+  </g>`;
+}
+
+// Duch: průsvitné tělo s vnitřním stínem, zářící oči, vlnitý spodek
+function lgGhost(cx, cy, s, delay = 0) {
+  const d = `M${cx - s} ${cy + 1.15 * s} V${cy} A${s} ${s} 0 0 1 ${cx + s} ${cy} V${cy + 1.15 * s} Q${cx + 0.67 * s} ${cy + 0.85 * s} ${cx + 0.33 * s} ${cy + 1.15 * s} Q${cx} ${cy + 0.85 * s} ${cx - 0.33 * s} ${cy + 1.15 * s} Q${cx - 0.67 * s} ${cy + 0.85 * s} ${cx - s} ${cy + 1.15 * s} Z`;
+  return `<g class="fd-bob" style="animation-delay:${delay}s">
+    <path d="${d}" fill="#C4B5FD" stroke="#7C3AED" stroke-width="0.8" stroke-linejoin="round"/>
+    <path d="${d}" fill="#EDE9FE" transform="translate(${cx - 0.05 * s} ${cy - 0.05 * s}) scale(0.92) translate(${-cx} ${-cy})"/>
+    <ellipse cx="${cx - 0.36 * s}" cy="${cy}" rx="${0.15 * s}" ry="${0.23 * s}" fill="#1E1B4B"/><ellipse cx="${cx + 0.36 * s}" cy="${cy}" rx="${0.15 * s}" ry="${0.23 * s}" fill="#1E1B4B"/>
+    <circle cx="${cx - 0.4 * s}" cy="${cy - 0.08 * s}" r="${0.05 * s}" fill="#86EFAC"/><circle cx="${cx + 0.32 * s}" cy="${cy - 0.08 * s}" r="${0.05 * s}" fill="#86EFAC"/>
+    <ellipse cx="${cx}" cy="${cy + 0.42 * s}" rx="${0.12 * s}" ry="${0.16 * s}" fill="#4C1D95" opacity="0.8"/>
+  </g>`;
+}
+
+// Dýně se žebry, stopkou a svítícím obličejem
+function lgPumpkin(cx, cy, r, delay = 0) {
+  const e = (dx, rx, fill) => `<ellipse cx="${cx + dx * r}" cy="${cy}" rx="${rx * r}" ry="${0.85 * r}" fill="${fill}"/>`;
+  return `<g class="fd-bob" style="animation-delay:${delay}s">
+    <path d="M${cx} ${cy - 0.8 * r} q${0.05 * r} -${0.45 * r} ${0.45 * r} -${0.55 * r}" stroke="#14532D" stroke-width="${0.3 * r}" stroke-linecap="round" fill="none"/>
+    <path d="M${cx} ${cy - 0.8 * r} q${0.05 * r} -${0.45 * r} ${0.45 * r} -${0.55 * r}" stroke="#65A30D" stroke-width="${0.16 * r}" stroke-linecap="round" fill="none"/>
+    <ellipse cx="${cx}" cy="${cy}" rx="${1.12 * r}" ry="${0.9 * r}" fill="#9A3412"/>
+    ${e(-0.6, 0.55, '#C2410C')}${e(0.6, 0.55, '#C2410C')}${e(-0.3, 0.55, '#EA580C')}${e(0.3, 0.55, '#EA580C')}${e(0, 0.5, '#F97316')}
+    <path d="M${cx - 0.75 * r} ${cy - 0.45 * r} Q${cx - 0.55 * r} ${cy - 0.7 * r} ${cx - 0.25 * r} ${cy - 0.72 * r}" stroke="#FDBA74" stroke-width="${0.12 * r}" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <g class="fd-glow" style="animation-delay:${delay}s" fill="#FDE047">
+      <path d="M${cx - 0.55 * r} ${cy - 0.05 * r} l${0.2 * r} -${0.35 * r} l${0.2 * r} ${0.35 * r} Z"/>
+      <path d="M${cx + 0.15 * r} ${cy - 0.05 * r} l${0.2 * r} -${0.35 * r} l${0.2 * r} ${0.35 * r} Z"/>
+      <path d="M${cx - 0.5 * r} ${cy + 0.22 * r} q${0.5 * r} ${0.42 * r} ${r} 0 l-${0.2 * r} ${0.14 * r} l-${0.15 * r} -${0.1 * r} l-${0.15 * r} ${0.12 * r} l-${0.15 * r} -${0.12 * r} l-${0.15 * r} ${0.1 * r} Z"/>
+    </g>
+  </g>`;
+}
+
+// Chuchvalec mlhy: tři překrývající se elipsy, pomalu pluje do stran a mění průsvitnost
+function lgFog(cx, cy, s, c, delay = 0) {
+  return `<g class="fd-fog" style="animation-delay:${delay}s" fill="${c}"><ellipse cx="${cx - 0.7 * s}" cy="${cy + 0.1 * s}" rx="${0.9 * s}" ry="${0.45 * s}"/><ellipse cx="${cx}" cy="${cy - 0.1 * s}" rx="${1.1 * s}" ry="${0.55 * s}"/><ellipse cx="${cx + 0.8 * s}" cy="${cy + 0.12 * s}" rx="${0.8 * s}" ry="${0.4 * s}"/></g>`;
+}
+
+// Měsíc s krátery
+function lgMoon(cx, cy, r, delay = 0) {
+  return `<g class="fd-bob" style="animation-delay:${delay}s">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#FCD34D" stroke="#B45309" stroke-width="0.8"/>
+    <circle cx="${cx - 0.12 * r}" cy="${cy - 0.12 * r}" r="${0.82 * r}" fill="#FEF3C7"/>
+    <ellipse cx="${cx - 0.35 * r}" cy="${cy - 0.2 * r}" rx="${0.22 * r}" ry="${0.2 * r}" fill="#FDE68A"/><ellipse cx="${cx + 0.25 * r}" cy="${cy + 0.3 * r}" rx="${0.28 * r}" ry="${0.25 * r}" fill="#FDE68A"/>
+    <circle cx="${cx + 0.3 * r}" cy="${cy - 0.35 * r}" r="${0.12 * r}" fill="#FCD34D"/>
+  </g>`;
+}
+
+// Kapka krve se světlým odleskem
+function lgDrip(x, w, h, c, delay = 0) {
+  return `<g class="fd-drip" style="animation-delay:${delay}s">
+    <path fill="${c}" stroke="#7F1D1D" stroke-width="0.6" stroke-linejoin="round" d="M${x - w} 96 C${x - w} ${96 + h * 0.5} ${x - w * 0.5} ${96 + h} ${x} ${96 + h} C${x + w * 0.5} ${96 + h} ${x + w} ${96 + h * 0.5} ${x + w} 96 Z"/>
+    <path d="M${x - w * 0.45} 98 Q${x - w * 0.55} ${96 + h * 0.5} ${x - w * 0.2} ${96 + h * 0.75}" stroke="#F87171" stroke-width="0.9" fill="none" stroke-linecap="round" opacity="0.85"/>
+  </g>`;
+}
+
+const LG_GEM_CYAN = { crown: '#67E8F9', crownL: '#A5F3FC', crownD: '#22D3EE', pav: '#0891B2', pavD: '#155E75', pavL: '#6366F1', line: '#0E7490' };
+const LG_GEM_VIOLET = { crown: '#C4B5FD', crownL: '#E9D5FF', crownD: '#A78BFA', pav: '#7C3AED', pavD: '#4C1D95', pavL: '#D946EF', line: '#5B21B6' };
+const LG_GEM_PINK = { crown: '#F9A8D4', crownL: '#FBCFE8', crownD: '#F472B6', pav: '#DB2777', pavD: '#831843', pavL: '#A855F7', line: '#9D174D' };
+const LG_GEM_RUBY = { crown: '#F87171', crownL: '#FCA5A5', crownD: '#DC2626', pav: '#B91C1C', pavD: '#7F1D1D', pavL: '#E11D48', line: '#7F1D1D' };
+
+// ---- Redesign 3 legendárních rámečků v kresleném stylu hry: Fénix, Král, Duha ----
+// Společné rysy (jako mince / truhly / korunka): tlusté kulaté tvary, tmavší obrys stejného odstínu,
+// plná barva + jeden stín dole + jedna tónovaná skvrna odlesku (statická), sytě veselé barvy.
+
+// Kreslená elipsa: obrys + tmavší spodek (stín) + světlejší horní část posunutá nahoru
+function ctEll(cx, cy, rx, ry, light, dark, line, sw = 1.6) {
+  return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${dark}" stroke="${line}" stroke-width="${sw}"/>
+    <ellipse cx="${cx}" cy="${cy - ry * 0.2}" rx="${rx * 0.86}" ry="${ry * 0.7}" fill="${light}"/>`;
+}
+
+// Fénix: plamínek na horním okraji (kořen y=3, špička nahoře), uvnitř žlutý plamínek
+function phFlamePath(x, h, w) {
+  return `M${x - w} 3 C${x - w} ${3 - h * 0.45} ${x - w * 0.3} ${3 - h * 0.6} ${x + w * 0.15} ${3 - h} C${x + w * 0.3} ${3 - h * 0.6} ${x + w} ${3 - h * 0.45} ${x + w} 3Z`;
+}
+function phFlame(x, h, w, delay) {
+  return `<g class="fd-lick" style="animation-delay:${delay}s">
+    <path d="${phFlamePath(x, h, w)}" fill="#F97316" stroke="#9A3412" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="${phFlamePath(x, h * 0.6, w * 0.5)}" fill="#FDE047"/></g>`;
+}
+// křídlo (kořen v 3,44, vějíř tří kulatých per směrem doleva); pravé se zrcadlí v dekoru
+function phWing() {
+  const f = (a, l, d, ln) => `<g transform="rotate(${a})">${ctEll(-7.4, 0, 7.8, 5.4, l, d, ln)}</g>`;
+  return `<g transform="translate(3 44)">
+    ${f(40, '#F97316', '#DC2626', '#7F1D1D')}${f(-40, '#F97316', '#DC2626', '#7F1D1D')}
+    ${f(0, '#FB923C', '#EA580C', '#9A3412')}
+    ${ctEll(-2.2, 0, 4.6, 4.6, '#FDE047', '#FBBF24', '#B45309', 1.4)}</g>`;
+}
+// ocasní pírko (kulatá kapka) visící z dolního středu, kořen v 50,93
+function phTail(a, ry, delay) {
+  return `<g transform="translate(50 93) rotate(${a})"><g class="ph-sway" style="animation-delay:${delay}s">
+    ${ctEll(0, ry, 4.3, ry, '#F97316', '#DC2626', '#7F1D1D')}
+    <circle cx="0" cy="${ry * 1.45}" r="1.7" fill="#FDE047"/></g></g>`;
+}
+// roztomilý pták: kulatá hlava, velké oči, zobák a chocholka (sedí na horním okraji)
+function phBird() {
+  return `<g class="fd-bob">
+    <ellipse cx="50" cy="-9.4" rx="2.1" ry="2.7" fill="#FBBF24" stroke="#B45309" stroke-width="1.2"/>
+    <ellipse cx="45.8" cy="-8.2" rx="2" ry="2.6" fill="#DC2626" stroke="#7F1D1D" stroke-width="1.2" transform="rotate(-35 45.8 -8.2)"/>
+    <ellipse cx="54.2" cy="-8.2" rx="2" ry="2.6" fill="#DC2626" stroke="#7F1D1D" stroke-width="1.2" transform="rotate(35 54.2 -8.2)"/>
+    <circle cx="50" cy="-1.5" r="8.6" fill="#DC2626" stroke="#7F1D1D" stroke-width="1.8"/>
+    <circle cx="50" cy="-2.7" r="7.4" fill="#F97316"/>
+    <ellipse cx="45" cy="-7" rx="2.6" ry="1.3" fill="#FDBA74" transform="rotate(-28 45 -7)"/>
+    <circle cx="45.8" cy="-3.6" r="2.9" fill="#FFF" stroke="#7F1D1D" stroke-width="0.9"/>
+    <circle cx="54.2" cy="-3.6" r="2.9" fill="#FFF" stroke="#7F1D1D" stroke-width="0.9"/>
+    <circle cx="46.2" cy="-3.2" r="1.5" fill="#1F1235"/><circle cx="53.8" cy="-3.2" r="1.5" fill="#1F1235"/>
+    <circle cx="46.7" cy="-3.8" r="0.5" fill="#FFF"/><circle cx="54.3" cy="-3.8" r="0.5" fill="#FFF"/>
+    <path d="M47.4 0.4 Q50 -0.6 52.6 0.4 Q52.2 4 50 5 Q47.8 4 47.4 0.4Z" fill="#FBBF24" stroke="#B45309" stroke-width="1.2" stroke-linejoin="round"/></g>`;
+}
+// jiskra s obrysem
+function phSpark(cx, cy, r, delay) {
+  return `<g stroke="#EA580C" stroke-width="0.9" stroke-linejoin="round">${sparkle(cx, cy, r, '#FDE047', delay)}</g>`;
+}
+
+// Král: velký kulatý drahokam v zlatém lůžku (tmavý spodek, světlejší horní část, tónovaná skvrna)
+function kgGem(cx, cy, dark, light, line, tint, delay) {
+  return `<g class="fd-gem" style="animation-delay:${delay}s">
+    <circle cx="${cx}" cy="${cy}" r="6.6" fill="#FBBF24" stroke="#92400E" stroke-width="1.7"/>
+    <circle cx="${cx}" cy="${cy}" r="4.5" fill="${dark}" stroke="${line}" stroke-width="1.2"/>
+    <circle cx="${cx - 0.4}" cy="${cy - 0.7}" r="3.4" fill="${light}"/>
+    <ellipse cx="${cx - 1.4}" cy="${cy - 1.8}" rx="1.4" ry="0.8" fill="${tint}" transform="rotate(-35 ${cx - 1.4} ${cy - 1.8})"/></g>`;
+}
+// Král: tlustá kulatá korunka (hroty s kuličkami, pás s kameny), mírně nakloněná a houpavá
+function kgCrown() {
+  const body = 'M35 3 L34 -6.5 L41.5 -1.5 L50 -8.5 L58.5 -1.5 L66 -6.5 L65 3Z';
+  const ball = (x, y, r, c, l) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="${l}" stroke-width="1.2"/>`;
+  return `<g transform="rotate(-7 50 0) translate(50 3) scale(1.14) translate(-50 -3)"><g class="fd-bob">
+    <path d="${body}" fill="#FCD34D" stroke="#92400E" stroke-width="1.8" stroke-linejoin="round"/>
+    <ellipse cx="41" cy="-3.4" rx="2.2" ry="1" fill="#FEF08A" transform="rotate(-35 41 -3.4)"/>
+    <rect x="34.2" y="-1" width="31.6" height="4.6" rx="1.8" fill="#F59E0B" stroke="#92400E" stroke-width="1.6"/>
+    ${ball(42, 1.3, 1.25, '#EF4444', '#991B1B')}${ball(50, 1.3, 1.6, '#3B82F6', '#1E3A8A')}${ball(58, 1.3, 1.25, '#22C55E', '#166534')}
+    ${ball(34, -6.5, 1.9, '#EF4444', '#991B1B')}${ball(50, -8.5, 2.2, '#3B82F6', '#1E3A8A')}${ball(66, -6.5, 1.9, '#22C55E', '#166534')}
+  </g></g>`;
+}
+// Král: červená stuha (banner) dole uprostřed se zlatým knoflíkem
+function kgRibbon() {
+  return `<g class="fd-bob" style="animation-delay:-1.4s">
+    <path d="M40 98.5 L31 98.5 L34.5 103 L31 107.5 L40 105.5Z" fill="#B91C1C" stroke="#7F1D1D" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M60 98.5 L69 98.5 L65.5 103 L69 107.5 L60 105.5Z" fill="#B91C1C" stroke="#7F1D1D" stroke-width="1.5" stroke-linejoin="round"/>
+    <rect x="38" y="97" width="24" height="8.6" rx="2.6" fill="#DC2626" stroke="#7F1D1D" stroke-width="1.6"/>
+    <rect x="39.2" y="101.6" width="21.6" height="2.8" rx="1.2" fill="#B91C1C"/>
+    <ellipse cx="43.5" cy="99.3" rx="3" ry="0.8" fill="#FCA5A5"/>
+    <circle cx="50" cy="101.3" r="2.5" fill="#FBBF24" stroke="#92400E" stroke-width="1"/></g>`;
+}
+
+// Duha: nadýchaný obrysový mráček (obrys, stín dole, světlá horní část, odlesk) — houpe se jako gumový
+function rbCloud(cx, cy, s, delay = 0) {
+  return `<g class="rb-squash" style="animation-delay:${delay}s">
+    <g fill="#7C3AED" stroke="#7C3AED" stroke-width="3.2" stroke-linejoin="round">${lgCloudShapes(cx, cy, s)}</g>
+    <g fill="#C4B5FD">${lgCloudShapes(cx, cy, s)}</g>
+    <g fill="#F5F3FF">${lgCloudShapes(cx, cy - 0.14 * s, s * 0.9)}</g>
+    <ellipse cx="${cx - 0.4 * s}" cy="${cy - 0.5 * s}" rx="${0.34 * s}" ry="${0.13 * s}" fill="#FFFFFF" transform="rotate(-20 ${cx - 0.4 * s} ${cy - 0.5 * s})"/></g>`;
+}
+// Duha: tlustý oblouk ze čtyř pásů s jedním tmavším obrysem kolem všech
+function rbArc() {
+  const arc = (rx, ry) => `M${50 - rx} 0 A${rx} ${ry} 0 0 1 ${50 + rx} 0`;
+  const cols = ['#F87171', '#FBBF24', '#4ADE80', '#60A5FA'];
+  return `<path d="${arc(27.8, 6.2)}" stroke="#7C3AED" stroke-width="14.4" fill="none" stroke-linejoin="round"/>`
+    + cols.map((c, i) => `<path d="${arc(32.2 - i * 2.8, 9 - i * 2.3)}" stroke="${c}" stroke-width="2.9" fill="none"/>`).join('');
+}
+// Duha: hvězda s obrysem (kulaté rohy) a srdíčko s obrysem; poskakují
+function rbStar(cx, cy, r, fill, line, delay) {
+  const pts = Array.from({ length: 10 }, (_, i) => {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.5 : r;
+    return `${(cx + Math.cos(a) * rr).toFixed(2)},${(cy + Math.sin(a) * rr).toFixed(2)}`;
+  }).join(' ');
+  return `<g class="rb-pop" style="animation-delay:${delay}s"><polygon points="${pts}" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round"/>
+    <ellipse cx="${cx - r * 0.25}" cy="${cy - r * 0.3}" rx="${r * 0.22}" ry="${r * 0.13}" fill="#FEF9C3" transform="rotate(-30 ${cx} ${cy})"/></g>`;
+}
+function rbHeart(cx, cy, s, fill, line, delay) {
+  return `<g class="rb-pop" style="animation-delay:${delay}s"><path fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round"
+    d="M${cx} ${cy + s * 0.95} C${cx - s * 1.7} ${cy - s * 0.2} ${cx - s * 0.7} ${cy - s * 1.15} ${cx} ${cy - s * 0.35} C${cx + s * 0.7} ${cy - s * 1.15} ${cx + s * 1.7} ${cy - s * 0.2} ${cx} ${cy + s * 0.95}Z"/>
+    <ellipse cx="${cx - s * 0.6}" cy="${cy - s * 0.4}" rx="${s * 0.3}" ry="${s * 0.18}" fill="#FBCFE8" transform="rotate(-30 ${cx - s * 0.6} ${cy - s * 0.4})"/></g>`;
+}
+
+Object.assign(FRAME_DECOR, {
+  // Duha — kreslená duha: tlustý oblouk přes horní okraj mezi dvěma gumovými mráčky, obrysové hvězdy a srdíčka
+  'frame-rainbow': () => `
+    ${rbArc()}
+    ${rbCloud(15, -1, 6, 0)}
+    ${rbCloud(77, -1, 6, -1.4)}
+    ${rbStar(-4, 44, 5.2, '#FACC15', '#CA8A04', -0.3)}
+    ${rbHeart(105, 34, 3.4, '#F472B6', '#BE185D', -1)}
+    ${rbStar(106, 78, 4.8, '#FACC15', '#CA8A04', -1.7)}
+    ${rbHeart(-5, 84, 3.2, '#A78BFA', '#5B21B6', -0.7)}`,
+
+  // Galaxie — planeta s prstencem a obíhajícím měsícem, malé planetky, oběžný hvězdný prach
+  'frame-galaxy': () => `
+    ${lgPlanet(96, 6, 9, { base: '#8B5CF6', dark: '#4C1D95', line: '#2E1065', light: '#DDD6FE', band: '#F0ABFC', ring: '#F9A8D4', ring2: '#C084FC' }, -20, 0)}
+    <g class="fd-revolve" style="transform-origin:96px 6px;animation-duration:14s"><circle cx="116" cy="6" r="1.7" fill="#22D3EE" stroke="#0E7490" stroke-width="0.5"/></g>
+    ${lgPlanet(2, 94, 6.5, { base: '#22D3EE', dark: '#155E75', line: '#0E7490', light: '#A5F3FC', band: '#0E7490', ring: '', ring2: '' }, 0, -1.8, false)}
+    ${lgPlanet(-3, 18, 3.6, { base: '#EC4899', dark: '#831843', line: '#500724', light: '#FBCFE8', band: '#9D174D', ring: '', ring2: '' }, 0, -3, false)}
+    <g class="fd-dust" style="animation-duration:46s">
+      <circle cx="110" cy="50" r="1.1" fill="#A5F3FC"/><circle cx="50" cy="-10" r="0.9" fill="#F9A8D4"/><circle cx="-10" cy="56" r="1" fill="#C4B5FD"/><circle cx="64" cy="110" r="0.8" fill="#67E8F9"/>
+    </g>
+    <g class="fd-dust rev" style="animation-duration:70s">
+      <circle cx="104" cy="82" r="0.8" fill="#F0ABFC"/><circle cx="22" cy="-6" r="1" fill="#A5F3FC"/><circle cx="-6" cy="30" r="0.8" fill="#F9A8D4"/>
+    </g>
+    ${sparkle(60, -5, 3.4, '#A5F3FC', 0)}
+    ${sparkle(106, 58, 3, '#F9A8D4', -1)}
+    ${sparkle(40, 105, 2.8, '#C4B5FD', -1.6)}`,
+
+  // Diamant — tři broušené kameny v rozích a barevné jiskřičky
+  'frame-diamond': () => `
+    ${lgGem(97, 4, 9, LG_GEM_CYAN, 0)}
+    ${lgGem(3, 93, 6.2, LG_GEM_VIOLET, -1.6)}
+    ${lgGem(101, 92, 3.6, LG_GEM_PINK, -3)}
+    ${sparkle(0, 4, 8, '#A5F3FC', 0)}
+    ${sparkle(46, -7, 5, '#E9D5FF', -0.8)}
+    ${sparkle(52, 107, 5.5, '#A5F3FC', -1.5)}
+    ${sparkle(106, 50, 4.6, '#F5D0FE', -0.3)}
+    ${sparkle(-6, 56, 4, '#BAE6FD', -1.1)}`,
+
+  // Král — kreslený král: zlatý kroužek s nýty, tlustá korunka nahoře, velké drahokamy v rozích a stuha dole
+  'frame-king': () => `
+    <rect x="3" y="3" width="94" height="94" rx="20" fill="none" stroke="#92400E" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0 7.4"/>
+    <rect x="3" y="2.6" width="94" height="94" rx="20" fill="none" stroke="#FEF08A" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="0 7.4"/>
+    ${kgGem(7, 7, '#DC2626', '#F87171', '#7F1D1D', '#FECACA', 0)}
+    ${kgGem(93, 7, '#2563EB', '#60A5FA', '#1E3A8A', '#BFDBFE', -0.9)}
+    ${kgGem(93, 93, '#16A34A', '#4ADE80', '#14532D', '#BBF7D0', -1.8)}
+    ${kgGem(7, 93, '#7C3AED', '#A78BFA', '#4C1D95', '#DDD6FE', -2.7)}
+    ${kgCrown()}
+    ${kgRibbon()}`,
+
+  // Fénix — kreslený ohnivý pták: plamínky po horním okraji, pták nahoře, poskakující křídla, ocasní pírka a jiskry
+  'frame-phoenix': () => `
+    ${phTail(32, 8.2, -0.8)}${phTail(-32, 8.2, -1.6)}${phTail(0, 9, 0)}
+    <g class="ph-wing ph-wl">${phWing()}</g>
+    <g class="ph-wing ph-wr"><g transform="translate(100 0) scale(-1 1)">${phWing()}</g></g>
+    ${phFlame(13, 9, 4.3, 0)}${phFlame(28, 7.5, 3.8, -0.7)}${phFlame(72, 7.5, 3.8, -1.3)}${phFlame(87, 9, 4.3, -0.4)}
+    ${phBird()}
+    ${phSpark(-6, 18, 3.6, 0)}${phSpark(106, 14, 3.2, -0.9)}${phSpark(108, 70, 3.4, -1.5)}${phSpark(14, 107, 3, -0.4)}`,
+
+  // Sladkosti — donut, lízátko se spirálou, zabalený bonbon a padající posypka
+  'frame-sweets': () => `
+    ${lgDonut(96, 4, 10.5, 0)}
+    ${lgLolly(5, 93, 9.5, -1.4)}
+    ${lgBonbon(-1, 38, -2.6)}
+    ${lgSprinkle(24, 106, 25, '#7DD3FC', 0)}
+    ${lgSprinkle(62, -7, -30, '#FDE047', -1.3)}
+    ${lgSprinkle(106, 34, 60, '#FF5FA2', -2.2)}
+    ${lgSprinkle(76, 107, -15, '#86EFAC', -3)}`,
+
+  // Strašidelný dům — dýně, duch, netopýři a plující mlha
+  'frame-haunted': () => `
+    ${lgFog(22, 106, 9, '#C4B5FD', 0)}
+    ${lgFog(76, 108, 8, '#86EFAC', -4)}
+    ${lgFog(-6, 60, 6, '#C4B5FD', -7)}
+    ${lgPumpkin(96, 95, 11, 0)}
+    ${lgGhost(2, 6, 8.5, -1.2)}
+    ${lgBat(84, -5, 12, '#2E1065', '#A78BFA', '#86EFAC', 0)}
+    ${lgBat(104, 24, 7, '#3B0764', '#C084FC', '#86EFAC', -0.3)}
+    ${lgBat(-5, 62, 7, '#2E1065', '#A78BFA', '#86EFAC', -0.6)}
+    ${sparkle(50, 106, 4, '#FDBA74', -0.9)}`,
+
+  // Upír — úplněk, netopýři s tesáky a kapky krve
+  'frame-vampire': () => `
+    ${lgMoon(98, 4, 11, 0)}
+    ${lgBat(84, 12, 11, '#7F1D1D', '#F87171', '#FDE68A', 0, true)}
+    ${lgBat(24, -5, 9, '#991B1B', '#FCA5A5', '#FDE68A', -0.4, true)}
+    ${lgBat(-4, 46, 7, '#7F1D1D', '#F87171', '#FDE68A', -0.8, true)}
+    ${lgDrip(28, 3.2, 12, '#DC2626', 0)}
+    ${lgDrip(66, 2.8, 9, '#B91C1C', -0.9)}
+    ${sparkle(106, 60, 4, '#FCA5A5', -1.3)}`,
+});
 
 // ------------------------------------------ Legendary: průlety předmětů ---
 // Každý předmět je malé barevné SVG (bez bílých záblesků), míří doprava; doleva se jen zrcadlí.
