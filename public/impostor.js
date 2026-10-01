@@ -39,9 +39,17 @@ function buildImpostorVotingView(state) {
     <div class="screen">
       <div class="prompt-box">
         <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds} — who's the impostor?</div>
-        ${roleBadgeHtml(state)}
-        <div class="prompt-text">${escapeHtml(state.prompt)}</div>
+        ${state.isImpostor ? '' : roleBadgeHtml(state)}
+        ${state.isImpostor ? '' : `<div class="prompt-text">${escapeHtml(state.prompt)}</div>`}
       </div>
+      ${state.isImpostor ? `
+      <div class="impostor-banner">
+        <div class="impostor-banner-title">${icon('spy')} You're the impostor! Don't get caught.</div>
+        <div class="impostor-prompts">
+          <div><span>${tr('Everyone had', getLang())}</span>${escapeHtml(state.civilPrompt || '')}</div>
+          <div class="imp"><span>${tr('You had', getLang())}</span>${escapeHtml(state.impostorPrompt || state.prompt || '')}</div>
+        </div>
+      </div>` : ''}
       <div class="timer" id="timer-el">--</div>
       <div class="grid" id="ivote-grid">${cardsHtml}</div>
       <p class="wait-note" id="ivote-count"></p>
@@ -80,6 +88,12 @@ function renderImpostorResults(state, r) {
   const gain = r.caught
     ? (youImpostor ? null : { points: r.civPoints, coins: r.civCoins })
     : (youImpostor ? { points: r.impostorPoints, coins: r.impostorCoins } : null);
+  // impostor dostane body vždy (i když je chycený) — podle počtu správných hlasů
+  const shownGain = youImpostor ? { points: r.impostorPoints, coins: r.caught ? 0 : r.impostorCoins } : gain;
+  const guessedText = r.correctVotes > 0 ? `${r.correctVotes} of ${r.eligibleVoters} guessed the impostor` : 'Nobody guessed the impostor';
+  const impBanner = r.caught
+    ? (r.impostorPoints > 0 ? `You were caught… but still got +${r.impostorPoints} pts` : 'You were caught… no points this time')
+    : `You escaped! +${r.impostorPoints} pts`;
 
   const impostorCard = r.cards.find((c) => c.isImpostor);
   const impostorLooks = looksOf(state, r.impostorId);
@@ -103,9 +117,10 @@ function renderImpostorResults(state, r) {
       <div class="impostor-outcome ${r.caught ? 'caught' : 'escaped'}">
         <div class="impostor-outcome-title">${r.caught ? 'Impostor caught!' : 'The impostor escaped!'}</div>
         <div class="impostor-outcome-sub">${youImpostor
-          ? (r.caught ? 'Surprise — you were the impostor, and they caught you!' : 'Surprise — you were the impostor, and you got away!')
+          ? impBanner
           : (youWon ? 'You won this round' : 'You lost this round')}</div>
-        ${gain ? `<div class="impostor-gain">+${gain.points} pts · ${COIN_SVG}<span class="num">+${gain.coins}</span></div>` : ''}
+        <div class="impostor-outcome-sub">${guessedText}</div>
+        ${shownGain ? `<div class="impostor-gain">+${shownGain.points} pts${shownGain.coins ? ` · ${COIN_SVG}<span class="num">+${shownGain.coins}</span>` : ''}</div>` : ''}
       </div>
 
       <div class="impostor-reveal">
@@ -114,12 +129,13 @@ function renderImpostorResults(state, r) {
           ? framedPhotoHtml(impostorCard.photoDataUrl, impostorLooks, 'max-width:200px; width:100%; margin:0 auto;')
           : `<div class="impostor-missed">${icon('sad')}</div>`}
         <div class="impostor-reveal-name">${playerNameHtml(r.impostorName, impostorLooks)}</div>
+        <div class="impostor-reveal-pts">+${r.impostorPoints} pts</div>
         <div class="impostor-reveal-votes">${impostorCard ? impostorCard.votes : 0} ${impostorCard && impostorCard.votes === 1 ? 'vote' : 'votes'}</div>
       </div>
 
       <div class="impostor-prompts">
-        <div><span>Everyone had</span>${escapeHtml(r.civilPrompt)}</div>
-        <div class="imp"><span>Impostor had</span>${escapeHtml(r.impostorPrompt)}</div>
+        <div><span>${tr('Everyone had', getLang())}</span>${escapeHtml(r.civilPrompt)}</div>
+        <div class="imp"><span>${tr('Impostor had', getLang())}</span>${escapeHtml(r.impostorPrompt)}</div>
       </div>
 
       <div class="grid">${othersHtml}</div>

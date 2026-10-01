@@ -579,19 +579,20 @@ const RULES_BY_MODE = {
   ],
   impostor: [
     'The host creates a lobby, shares the code — you need at least 3 players — and picks the question pack: Classic, Spicy, Family or School.',
-    'Each round everyone gets the same photo prompt, except one random player — the impostor — who gets a similar but different one.',
-    'Nobody knows who the impostor is — not even the impostor! They find out at the reveal.',
+    'Each round everyone gets the same photo prompt, except one random player — the impostor — who gets a different one: sometimes very similar, sometimes completely different.',
+    'While taking the photo, nobody knows who the impostor is — not even the impostor!',
     'Everyone has 30 seconds to snap a photo.',
-    'Then all photos are shown with names and you have 30 seconds to vote for the impostor.',
+    'When the photos appear, the impostor finds out and sees both prompts. Then you have 30 seconds to vote for who you think the impostor is.',
+    'The impostor gets points based on how many players guess them: nobody guesses → 250 pts, everybody guesses → 0 pts.',
     'If the impostor gets the most votes, everyone else wins: +100 pts and +3 coins each.',
-    'If they escape (a tie counts too), the impostor wins: +250 pts and +10 coins.',
+    'If they escape (a tie counts too), the impostor also gets +10 coins.',
   ],
   copycat: [
     'The host creates a lobby and shares the code with friends — you need at least 3 players.',
     'Each round a different player is the original — everyone gets a turn.',
     'The original snaps a selfie with a crazy face or pose, with no time limit.',
-    'Everyone else gets 3 seconds to memorise it.',
-    'Then the photo disappears and you copy it from memory with your own selfie (the host sets how long).',
+    'Everyone else sees it for a few seconds to memorise it (the host sets how long).',
+    'Then the photo disappears and you have 20 seconds to copy it from memory with your own selfie.',
     'The original picks the best copy anonymously — its author gets 100 pts.',
     'After the last round, whoever has the most points wins.',
   ],
@@ -704,7 +705,7 @@ function pendingLobbyState(mode, name) {
   return {
     pending: true, code: '', mode, phase: 'lobby', isHost: true, joinRequests: [],
     players: [{ id: 'me', name, looks: myLooks(), isHost: true, isYou: true, connected: true }],
-    totalRounds: 5, drawEnabled: mode === 'draw', drawSeconds: 20, captionSeconds: 40, copySeconds: 20,
+    totalRounds: 5, drawEnabled: mode === 'draw', drawSeconds: 20, captionSeconds: 40, copySeconds: 20, peekSeconds: 3,
     huntSeconds: 60, huntPack: 'anywhere', promptPack: 'classic',
   };
 }
@@ -788,8 +789,8 @@ function renderLobbyScreen(state) {
 
         ${state.mode === 'copycat' ? `
           <div class="card setting-card">
-            <h3 class="setting-title">${icon('timer')} Copy time</h3>
-            ${optionPicker('copy-seconds', COPY_SECONDS_OPTIONS, state.copySeconds, 's')}
+            <h3 class="setting-title">${icon('timer')} Photo shown for</h3>
+            ${optionPicker('peek-seconds', PEEK_SECONDS_OPTIONS, state.peekSeconds, 's')}
           </div>
         ` : ''}
 
@@ -809,7 +810,7 @@ function renderLobbyScreen(state) {
     wireOptionPicker('rounds', (v) => send({ type: 'set_rounds', rounds: v }));
     wireOptionPicker('draw-seconds', (v) => send({ type: 'set_draw_settings', seconds: v }));
     wireOptionPicker('caption-seconds', (v) => send({ type: 'set_caption_settings', seconds: v }));
-    wireOptionPicker('copy-seconds', (v) => send({ type: 'set_copy_settings', seconds: v }));
+    wireOptionPicker('peek-seconds', (v) => send({ type: 'set_copy_settings', seconds: v }));
     wireOptionPicker('hunt-seconds', (v) => send({ type: 'set_hunt_settings', seconds: v }));
     wireAddBot();
     document.querySelectorAll('#picker-hunt-pack .pack-chip').forEach((b) => {

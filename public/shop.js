@@ -77,6 +77,19 @@ const SHOP_SECTIONS = [
       { id: 'frame-spider', name: 'Spider', rarity: 'epic', style: 'linear-gradient(135deg,#6B7280,#1F2937 50%,#9CA3AF)' },
       { id: 'frame-haunted', name: 'Haunted', rarity: 'legendary', style: 'conic-gradient(from 45deg,#F97316,#7C3AED,#1E1B4B,#7C3AED,#F97316)' },
       { id: 'frame-vampire', name: 'Vampire', rarity: 'legendary', style: 'linear-gradient(160deg,#FECACA,#DC2626 35%,#7F1D1D 65%,#18181B)' },
+      // Nová sada (Arcade, Pizza, Disco, Ninja, Robot, Space Cat, Dino…)
+      { id: 'frame-lemon', name: 'Lemon', rarity: 'common', style: '#FACC15' },
+      { id: 'frame-sky', name: 'Sky Blue', rarity: 'common', style: '#38BDF8' },
+      { id: 'frame-berry', name: 'Berry', rarity: 'common', style: '#DB2777' },
+      { id: 'frame-cocoa', name: 'Cocoa', rarity: 'common', style: '#92400E' },
+      { id: 'frame-arcade', name: 'Arcade', rarity: 'rare', style: 'linear-gradient(135deg,#FACC15,#F43F5E,#6366F1)' },
+      { id: 'frame-jungle', name: 'Jungle', rarity: 'rare', style: 'linear-gradient(135deg,#A3E635,#16A34A,#713F12)' },
+      { id: 'frame-pizza', name: 'Pizza', rarity: 'rare', style: 'linear-gradient(135deg,#FDE68A,#F59E0B 45%,#DC2626)' },
+      { id: 'frame-disco', name: 'Disco', rarity: 'epic', style: 'linear-gradient(135deg,#F472B6,#8B5CF6,#22D3EE,#FDE047)' },
+      { id: 'frame-ninja', name: 'Ninja', rarity: 'epic', style: 'linear-gradient(135deg,#374151,#111827 50%,#DC2626)' },
+      { id: 'frame-robot', name: 'Robot', rarity: 'epic', style: 'linear-gradient(135deg,#CBD5E1,#38BDF8 45%,#475569)' },
+      { id: 'frame-spacecat', name: 'Space Cat', rarity: 'legendary', style: 'linear-gradient(160deg,#A78BFA,#7C3AED 50%,#5B21B6 50%,#4C1D95)' },
+      { id: 'frame-dino', name: 'Dino', rarity: 'legendary', style: 'linear-gradient(160deg,#4ADE80,#22C55E 50%,#16A34A 50%,#166534)' },
       // jen z kola štěstí (wheel.js)
       { id: 'frame-fortune', name: 'Fortune', rarity: 'mythic', wheelOnly: true, style: 'conic-gradient(from 20deg,#FDE047,#22C55E,#FDE047,#A855F7,#FDE047)' },
     ],
@@ -121,6 +134,16 @@ const SHOP_SECTIONS = [
       { id: 'name-witch', name: 'Witchy', rarity: 'epic', gradient: 'linear-gradient(90deg,#86EFAC,#A855F7,#86EFAC)' },
       { id: 'name-haunted', name: 'Haunted', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FDBA74,#F97316,#A855F7,#F97316)' },
       { id: 'name-vampire', name: 'Vampire', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FECACA,#EF4444,#B91C1C,#EF4444)' },
+      // Nová sada
+      { id: 'name-lemon', name: 'Lemon', rarity: 'common', color: '#FDE047' },
+      { id: 'name-blueberry', name: 'Blueberry', rarity: 'common', color: '#818CF8' },
+      { id: 'name-cocoa', name: 'Cocoa', rarity: 'common', color: '#D6A77A' },
+      { id: 'name-arcade', name: 'Arcade', rarity: 'rare', gradient: 'linear-gradient(90deg,#22D3EE,#F472B6,#FACC15)' },
+      { id: 'name-jungle', name: 'Jungle', rarity: 'rare', gradient: 'linear-gradient(90deg,#A3E635,#15803D)' },
+      { id: 'name-pizza', name: 'Pizza', rarity: 'rare', gradient: 'linear-gradient(90deg,#FDE047,#F97316,#EF4444)' },
+      { id: 'name-disco', name: 'Disco', rarity: 'epic', gradient: 'linear-gradient(90deg,#F472B6,#A78BFA,#22D3EE,#FDE047,#F472B6)' },
+      { id: 'name-robot', name: 'Robot', rarity: 'epic', gradient: 'linear-gradient(90deg,#67E8F9,#818CF8,#67E8F9,#A3E635)' },
+      { id: 'name-spacecat', name: 'Space Cat', rarity: 'legendary', gradient: 'linear-gradient(90deg,#C4B5FD,#F472B6,#FDE047,#4ADE80,#22D3EE,#C4B5FD)' },
       // jen z kola štěstí (wheel.js)
       { id: 'name-jackpot', name: 'Jackpot', rarity: 'epic', wheelOnly: true, gradient: 'linear-gradient(90deg,#FDE047,#4ADE80,#FDE047,#4ADE80)' },
     ],
@@ -462,6 +485,7 @@ function renderInventoryScreen() {
       if (btn.dataset.id) d.equipped[btn.dataset.section] = btn.dataset.id;
       else delete d.equipped[btn.dataset.section];
       shopSave(d);
+      sendHello(); // přátelé mají vidět nový vzhled hned
       renderInventoryScreen();
     };
   });

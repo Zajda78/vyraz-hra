@@ -2,7 +2,8 @@
 // Fáze: copy_original -> copy_peek -> copy_copying -> copy_pick -> results.
 // Skript se načítá před app.js; funkce jsou globální a volá je renderApp().
 
-const COPY_SECONDS_OPTIONS = [10, 15, 20, 30];
+// hostitel volí, kolik vteřin je vidět fotka originálu
+const PEEK_SECONDS_OPTIONS = [2, 3, 5, 8, 10];
 
 // Čekací obrazovka (originál čeká na ostatní, ostatní na originál…)
 function copyWaitHtml(state, iconName, bodyHtml) {

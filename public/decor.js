@@ -144,7 +144,7 @@ function lavaDrip(x, delay, s, side = false) {
 // rámečky s vlastní barevnou září za sebou (CSS .halo-<id>)
 const FRAME_HALO_IDS = new Set(['frame-sweets']);
 
-const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire']);
+const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire', 'frame-spacecat', 'frame-dino']);
 const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava' };
 
 // Fortune — vrstvy navíc (vše barevné, bez bílé): paprsky, oběžná dráha mincí a čtyřlístků, plocha pro výbuchy
@@ -715,6 +715,139 @@ Object.assign(FRAME_DECOR, {
     ${sparkle(106, 60, 4, '#FCA5A5', -1.3)}`,
 });
 
+// ------------------------------- Nová sada: Disco / Ninja / Robot / Space Cat / Dino ---
+// Disco koule: houpe se na provázku, barevná políčka blikají
+function dcBall(cx, cy, r, delay = 0) {
+  return `<g class="fd-bob" style="animation-delay:${delay}s">
+    <line x1="${cx}" y1="${cy - r - 9}" x2="${cx}" y2="${cy - r}" stroke="#94A3B8" stroke-width="1.4"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="#CBD5E1" stroke="#475569" stroke-width="1.4"/>
+    <path d="M${cx - r} ${cy} H${cx + r} M${cx} ${cy - r} V${cy + r}" stroke="#64748B" stroke-width="0.8"/>
+    <ellipse cx="${cx}" cy="${cy}" rx="${r * 0.5}" ry="${r}" fill="none" stroke="#64748B" stroke-width="0.8"/>
+    <rect class="fd-twinkle" x="${cx - r * 0.6}" y="${cy - r * 0.55}" width="${r * 0.4}" height="${r * 0.4}" fill="#F472B6"/>
+    <rect class="fd-twinkle" style="animation-delay:-0.8s" x="${cx + r * 0.2}" y="${cy + r * 0.1}" width="${r * 0.4}" height="${r * 0.4}" fill="#22D3EE"/>
+    <rect class="fd-twinkle" style="animation-delay:-1.6s" x="${cx + r * 0.1}" y="${cy - r * 0.65}" width="${r * 0.35}" height="${r * 0.35}" fill="#FDE047"/></g>`;
+}
+// Ninja: točící se hvězdice (shuriken)
+function shuriken(cx, cy, r, delay = 0) {
+  const k = r * 0.28;
+  const d = `M${cx} ${cy - r} L${cx + k} ${cy - k} L${cx + r} ${cy} L${cx + k} ${cy + k} L${cx} ${cy + r} L${cx - k} ${cy + k} L${cx - r} ${cy} L${cx - k} ${cy - k}Z`;
+  return `<g class="fd-spin" style="animation-delay:${delay}s;animation-duration:4s"><path d="${d}" fill="#9CA3AF" stroke="#111827" stroke-width="1.2" stroke-linejoin="round"/><circle cx="${cx}" cy="${cy}" r="${r * 0.2}" fill="#111827"/></g>`;
+}
+// Robot: otáčející se ozubené kolo
+function gear(cx, cy, r, fill, line, delay = 0, dur = 8) {
+  const teeth = Array.from({ length: 8 }, (_, i) => `<rect x="${cx - r * 0.2}" y="${cy - r * 1.3}" width="${r * 0.4}" height="${r * 0.5}" rx="0.6" transform="rotate(${i * 45} ${cx} ${cy})"/>`).join('');
+  return `<g class="fd-spin" style="animation-delay:${delay}s;animation-duration:${dur}s"><g fill="${fill}" stroke="${line}" stroke-width="1">${teeth}</g>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${line}" stroke-width="1.2"/><circle cx="${cx}" cy="${cy}" r="${r * 0.4}" fill="#0F172A"/></g>`;
+}
+function bolt2(cx, cy, r) {
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#94A3B8" stroke="#334155" stroke-width="1"/><path d="M${cx - r * 0.55} ${cy} H${cx + r * 0.55}" stroke="#334155" stroke-width="1" stroke-linecap="round"/>`;
+}
+
+// Space Cat: kočka v kosmické helmě — tlustý fialový obrys, plná výplň, jeden stín dole a tónovaná odlesková skvrna (kreslí se kolem 0,0)
+function scCatShapes() {
+  const f = '#C4B5FD', l = '#5B21B6';
+  return `<g fill="${f}" stroke="${l}" stroke-width="2.2" stroke-linejoin="round">
+      <path d="M-9.5 -3 L-10 -14.5 L-2.5 -8.5Z"/><path d="M9.5 -3 L10 -14.5 L2.5 -8.5Z"/>
+      <ellipse cx="0" cy="0" rx="10.5" ry="9"/></g>
+    <path d="M-9.4 3 Q0 13.5 9.4 3 Q8.6 9.3 0 9.5 Q-8.6 9.3 -9.4 3Z" fill="#A78BFA"/>
+    <path d="M-8 -5 L-8.2 -11 L-4.5 -8Z M8 -5 L8.2 -11 L4.5 -8Z" fill="#F9A8D4"/>
+    <ellipse cx="-4.2" cy="-0.5" rx="1.7" ry="2.3" fill="#2E1065"/><ellipse cx="4.2" cy="-0.5" rx="1.7" ry="2.3" fill="#2E1065"/>
+    <circle cx="-3.6" cy="-1.4" r="0.7" fill="#DDD6FE"/><circle cx="4.8" cy="-1.4" r="0.7" fill="#DDD6FE"/>
+    <path d="M-1.5 2.6 H1.5 L0 4.2Z" fill="#F472B6"/>
+    <path d="M-2.6 5 Q-1.3 6.5 0 4.6 Q1.3 6.5 2.6 5" fill="none" stroke="${l}" stroke-width="0.9" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="14" fill="#67E8F9" fill-opacity="0.2" stroke="#0E7490" stroke-width="2.2"/>
+    <ellipse cx="-7.5" cy="-8.5" rx="3.4" ry="1.7" fill="#A5F3FC" transform="rotate(-38 -7.5 -8.5)"/>`;
+}
+function scCat(cx, cy, k, delay = 0) {
+  return `<g class="rb-squash" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">${scCatShapes()}</g></g>`;
+}
+// Space Cat: rybička (pamlsek) — poskakuje
+function scFish(cx, cy, s, delay = 0) {
+  return `<g class="rb-pop" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${s})">
+    <path d="M-7 0 L-12 -4.5 L-12 4.5Z" fill="#FDBA74" stroke="#C2410C" stroke-width="1.6" stroke-linejoin="round"/>
+    <ellipse cx="0" cy="0" rx="7.5" ry="5" fill="#FB923C" stroke="#C2410C" stroke-width="1.6"/>
+    <path d="M-5 1.2 Q0 5.6 6 1.2 Q4 4.8 0 4.9 Q-4 4.8 -5 1.2Z" fill="#EA580C"/>
+    <circle cx="3.6" cy="-1.2" r="1.1" fill="#7C2D12"/><ellipse cx="-1.5" cy="-2.6" rx="2" ry="0.9" fill="#FED7AA" transform="rotate(-15 -1.5 -2.6)"/></g></g>`;
+}
+// Dino: kreslená dinosauří hlavička s oranžovými hřebínky (kolem 0,0)
+function dnHeadShapes() {
+  const l = '#166534';
+  return `<g fill="#FB923C" stroke="#9A3412" stroke-width="1.8" stroke-linejoin="round">
+      <path d="M-8 -6 L-6 -15 L-2 -8Z"/><path d="M-3 -8.5 L0 -17.5 L3 -8.5Z"/><path d="M2 -8 L6 -15 L8 -6Z"/></g>
+    <ellipse cx="0" cy="0" rx="12" ry="10" fill="#4ADE80" stroke="${l}" stroke-width="2.2"/>
+    <path d="M-10.8 3.5 Q0 14 10.8 3.5 Q9.5 9.6 0 9.8 Q-9.5 9.6 -10.8 3.5Z" fill="#22C55E"/>
+    <ellipse cx="0" cy="4.5" rx="7.5" ry="4.8" fill="#86EFAC" stroke="${l}" stroke-width="1.4"/>
+    <circle cx="-2.6" cy="4" r="0.9" fill="${l}"/><circle cx="2.6" cy="4" r="0.9" fill="${l}"/>
+    <circle cx="-5.6" cy="-2.4" r="3.1" fill="#FEF9C3" stroke="${l}" stroke-width="1.4"/><circle cx="5.6" cy="-2.4" r="3.1" fill="#FEF9C3" stroke="${l}" stroke-width="1.4"/>
+    <circle cx="-5" cy="-2" r="1.5" fill="#14532D"/><circle cx="6.2" cy="-2" r="1.5" fill="#14532D"/>
+    <path d="M-3 7.4 Q0 9.4 3 7.4" fill="none" stroke="${l}" stroke-width="1" stroke-linecap="round"/>
+    <ellipse cx="-9" cy="3" rx="2" ry="1.2" fill="#F9A8D4"/><ellipse cx="9" cy="3" rx="2" ry="1.2" fill="#F9A8D4"/>
+    <ellipse cx="-8" cy="-7" rx="3" ry="1.5" fill="#BBF7D0" transform="rotate(-35 -8 -7)"/>`;
+}
+function dnHead(cx, cy, k, delay = 0) {
+  return `<g class="rb-squash" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">${dnHeadShapes()}</g></g>`;
+}
+// Dino: skvrnité vajíčko, které se kroutí
+function dnEgg(cx, cy, k, base, spot, line, delay = 0) {
+  return `<g class="dn-wobble" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">
+    <path d="M0 -9 C6 -9 8 -1 8 3 C8 8 4.5 10 0 10 C-4.5 10 -8 8 -8 3 C-8 -1 -6 -9 0 -9Z" fill="${base}" stroke="${line}" stroke-width="2"/>
+    <path d="M-7.6 4.5 Q0 12 7.6 4.5 Q6 9.8 0 10 Q-6 9.8 -7.6 4.5Z" fill="${spot}" fill-opacity="0.35"/>
+    <circle cx="-2.6" cy="-1" r="1.9" fill="${spot}"/><circle cx="2.8" cy="3" r="1.5" fill="${spot}"/><circle cx="-2" cy="5.4" r="1.1" fill="${spot}"/>
+    <ellipse cx="-3.6" cy="-5.2" rx="1.8" ry="1" fill="#FFFBEB" fill-opacity="0.8" transform="rotate(-40 -3.6 -5.2)"/></g></g>`;
+}
+function dnPrint(cx, cy, k, delay = 0) {
+  return `<g class="rb-pop" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})" fill="#4ADE80" stroke="#166534" stroke-width="1.4" stroke-linejoin="round">
+    <ellipse cx="-4.5" cy="-4" rx="2" ry="3.2" transform="rotate(-25 -4.5 -4)"/><ellipse cx="0" cy="-5.5" rx="2" ry="3.4"/><ellipse cx="4.5" cy="-4" rx="2" ry="3.2" transform="rotate(25 4.5 -4)"/>
+    <path d="M-4.5 1 Q0 -2 4.5 1 Q4 6 0 6.5 Q-4 6 -4.5 1Z"/></g></g>`;
+}
+
+Object.assign(FRAME_DECOR, {
+  // Disco (epická) — houpající se disco koule a barevné jiskřičky
+  'frame-disco': () => `
+    ${dcBall(93, 4, 7.5, 0)}
+    ${dcBall(4, 92, 5, -1.2)}
+    ${sparkle(2, 8, 8, '#F472B6', 0)}
+    ${sparkle(100, 62, 6, '#22D3EE', -0.7)}
+    ${sparkle(50, 106, 7, '#FDE047', -1.3)}
+    ${sparkle(30, -6, 4.5, '#A78BFA', -0.4)}`,
+
+  // Ninja (epická) — točící se shurikeny a obláčky kouře
+  'frame-ninja': () => `
+    ${shuriken(96, 6, 9, 0)}
+    ${shuriken(4, 92, 6.5, -1.5)}
+    <circle class="fd-pop" cx="8" cy="8" r="4" fill="#6B7280"/>
+    <circle class="fd-pop" style="animation-delay:-0.9s" cx="48" cy="-2" r="3" fill="#9CA3AF"/>
+    <circle class="fd-pop" style="animation-delay:-1.4s" cx="100" cy="86" r="3.6" fill="#6B7280"/>
+    ${sparkle(104, 52, 5, '#EF4444', -0.6)}`,
+
+  // Robot (epická) — otáčející se ozubená kola, šroubky a blesky
+  'frame-robot': () => `
+    ${gear(95, 5, 6.5, '#94A3B8', '#334155', 0, 9)}
+    ${gear(106, 20, 3.8, '#38BDF8', '#0C4A6E', -2, 6)}
+    ${gear(4, 94, 5.5, '#38BDF8', '#0C4A6E', -1, 7)}
+    ${bolt2(3, 4, 2.6)}${bolt2(97, 96, 2.6)}
+    ${bolt(-3, 50, 7, -0.6)}`,
+
+  // Space Cat (legendary) — kočka v helmě nahoře, planeta, rybičky a poskakující hvězdičky
+  'frame-spacecat': () => `
+    ${lgPlanet(97, 93, 8.5, { base: '#F472B6', dark: '#9D174D', line: '#500724', light: '#FBCFE8', band: '#DB2777', ring: '#FDE047', ring2: '#F59E0B' }, -20, 0)}
+    ${scCat(50, -4, 0.85, 0)}
+    ${scFish(4, 88, 0.8, -0.8)}
+    ${scFish(104, 36, 0.65, -1.6)}
+    ${rbStar(-4, 36, 5, '#FDE047', '#CA8A04', -0.3)}
+    ${rbStar(24, 106, 4.4, '#67E8F9', '#0E7490', -1.2)}
+    ${rbStar(80, -6, 3.8, '#F9A8D4', '#BE185D', -1.9)}`,
+
+  // Dino (legendary) — dinosauří hlava nahoře, skvrnitá vajíčka, šlápota a hvězdičky
+  'frame-dino': () => `
+    ${dnHead(50, -4, 0.9, 0)}
+    ${dnEgg(96, 92, 0.95, '#FEF3C7', '#FB923C', '#B45309', -0.4)}
+    ${dnEgg(3, 80, 0.7, '#BAE6FD', '#FACC15', '#0369A1', -1.3)}
+    ${dnPrint(106, 40, 0.8, -0.9)}
+    ${rbStar(-4, 22, 4.6, '#FDE047', '#CA8A04', -0.5)}
+    ${rbStar(84, -6, 3.8, '#FB923C', '#9A3412', -1.5)}`,
+});
+
 // ------------------------------------------ Legendary: průlety předmětů ---
 // Každý předmět je malé barevné SVG (bez bílých záblesků), míří doprava; doleva se jen zrcadlí.
 const FLYBY_ART = {
@@ -736,6 +869,12 @@ const FLYBY_ART = {
   'frame-haunted': { w: 24, h: 24, svg: `<svg viewBox="0 0 24 24"><path d="M4 22 V11 a8 8 0 0 1 16 0 V22 l-3-2.5 -2.5 2.5 -2.5-2.5 -2.5 2.5 -2.5-2.5Z" fill="#A78BFA"/><circle cx="9" cy="11" r="1.8" fill="#1E1B4B"/><circle cx="15" cy="11" r="1.8" fill="#1E1B4B"/></svg>` },
   // netopýr s mávajícími křídly
   'frame-vampire': { w: 32, h: 20, flap: true, svg: `<svg viewBox="0 0 32 20"><path class="fb-wing" d="M16 6 Q10 0 0 3 Q4 7 3 12 Q8 9 11 14 Q13 10 16 13 Q19 10 21 14 Q24 9 29 12 Q28 7 32 3 Q22 0 16 6Z" fill="#DC2626"/><ellipse cx="16" cy="10" rx="3" ry="4.5" fill="#7F1D1D"/></svg>` },
+  // Space Cat — kočka v helmě s barevnou stopou
+  'frame-spacecat': { w: 48, h: 24, dir: true, svg: `<svg viewBox="0 0 48 24"><rect x="0" y="6.5" width="27" height="3.4" rx="1.7" fill="#F472B6" stroke="#9D174D" stroke-width="0.8"/><rect x="3" y="10.3" width="24" height="3.4" rx="1.7" fill="#FDE047" stroke="#CA8A04" stroke-width="0.8"/><rect x="1" y="14.1" width="26" height="3.4" rx="1.7" fill="#22D3EE" stroke="#0E7490" stroke-width="0.8"/><g transform="translate(36 12) scale(0.72)">${scCatShapes()}</g></svg>` },
+
+  // Dino — kreslený pterodaktyl, mává křídly
+  'frame-dino': { w: 56, h: 32, dir: true, flap: true, svg: `<svg viewBox="0 0 56 32"><g stroke="#166534" stroke-width="1.6" stroke-linejoin="round"><path d="M20 18 L3 22 L19 22.5Z" fill="#22C55E"/><path class="fb-wing" d="M33 14 Q30 3 13 1 Q20 7 19 13 Q25 8 27 15Z" fill="#22C55E"/><ellipse cx="29" cy="18" rx="11" ry="6.3" fill="#4ADE80"/><path class="fb-wing fb-wing2" d="M29 21 Q29 29 16 31 Q23 26 21 21Z" fill="#16A34A"/><circle cx="40" cy="14" r="5.5" fill="#4ADE80"/></g><path d="M44 12.2 L54.5 15 L44 16.8Z" fill="#FDBA74" stroke="#9A3412" stroke-width="1.4" stroke-linejoin="round"/><path d="M37 9.5 L31.5 5.5 L38.5 8Z" fill="#FB923C" stroke="#9A3412" stroke-width="1.2" stroke-linejoin="round"/><path d="M24 15 Q29 13 34 15 Q29 18.6 24 15Z" fill="#86EFAC"/><circle cx="41.6" cy="12.8" r="1.2" fill="#14532D"/></svg>` },
+
 };
 
 const FLYBY_MAX = 4;        // nejvýš tolik průletů naráz
@@ -762,14 +901,14 @@ function flybySpawn(host) {
   const px = -dy * off, py = dx * off;
   // směrové předměty (kometa, fénix…) se natočí po dráze, doleva letící se převrátí, ať nejsou vzhůru nohama
   const rot = art.dir ? `rotate(${a}rad)${dx < 0 ? ' scaleY(-1)' : ''}` : (dx < 0 ? 'scaleX(-1)' : '');
-  obj.style.cssText = `width:${wPct}%; aspect-ratio:${art.w}/${art.h}; animation-duration:${(1 + Math.random() * 0.6).toFixed(2)}s;`
+  obj.style.cssText = `width:${wPct}%; aspect-ratio:${art.w}/${art.h}; animation-duration:${(3 + Math.random() * 1.2).toFixed(2)}s;` // pomalý průlet ~3–4 s, ať si ho hráč všimne
     + `--x0:${(px - dx * R).toFixed(1)}px; --y0:${(py - dy * R).toFixed(1)}px; --x1:${(px + dx * R).toFixed(1)}px; --y1:${(py + dy * R).toFixed(1)}px; --rot:${rot || 'none'};`;
   obj.innerHTML = art.svg;
   flybyActive++;
   let done = false;
   const end = () => { if (done) return; done = true; flybyActive--; obj.remove(); };
   obj.addEventListener('animationend', (e) => { if (e.target === obj) end(); });
-  setTimeout(end, 2200); // pojistka, kdyby animationend nepřišel
+  setTimeout(end, 5000); // pojistka, kdyby animationend nepřišel
   host.appendChild(obj);
 }
 
@@ -782,7 +921,7 @@ function flybyTick() {
     let t = flybyNext.get(host);
     if (t === undefined) { t = now + 500 + Math.random() * 5000; flybyNext.set(host, t); }
     if (now < t) return;
-    flybyNext.set(host, now + 3000 + Math.random() * 4000); // další za ~3–7 s
+    flybyNext.set(host, now + 6000 + Math.random() * 4000); // další za ~6–10 s (průlet sám trvá ~3–4 s)
     const r = host.getBoundingClientRect();
     if (r.width < 8 || r.bottom < 0 || r.top > vh) return; // neviditelné (skryté / mimo obrazovku)
     flybySpawn(host);

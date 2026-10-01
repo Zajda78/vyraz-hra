@@ -35,7 +35,7 @@ function isFriend(code) {
 // Představí telefon serveru (kód přítele, jméno, vzhled) — volá se po
 // každém připojení a při změně jména/vzhledu.
 function sendHello() {
-  send({ type: 'hello', friendCode: getFriendCode(), name: getSavedName() || 'Player', looks: myLooks() });
+  send({ type: 'hello', friendCode: getFriendCode(), name: getSavedName() || 'Player', looks: myLooks(), friends: getFriends().map((f) => f.code) });
   sendDevLogin(); // jen když má tohle zařízení vývojářský klíč
 }
 
@@ -58,6 +58,7 @@ function addFriend(friend) {
   saveList('vyraz_friends', list);
   saveList('vyraz_friend_requests', getFriendRequests().filter((r) => r.code !== friend.code));
   saveList('vyraz_friend_sent', getSentRequests().filter((r) => r.code !== friend.code));
+  sendHello(); // server pozná vzájemné přátelství
 }
 
 function sendFriendRequest(code, name) {
@@ -88,6 +89,7 @@ function declineFriend(code) {
 function removeFriend(code) {
   saveList('vyraz_friends', getFriends().filter((f) => f.code !== code));
   delete friendStatuses[code];
+  sendHello();
 }
 
 function joinFriend(code) {
@@ -99,14 +101,20 @@ function handleFriendMessage(msg) {
   if (msg.type === 'friends_status') {
     for (const f of msg.friends) {
       friendStatuses[f.code] = f;
-      // průběžně aktualizuj uložené jméno a vzhled přítele
-      if (f.online && f.name) {
+      // průběžně aktualizuj uložené jméno a vzhled přítele; profil (profilovka,
+      // sbírka) chodí jen od vzájemných přátel a ukládá se pro případ, že je offline
+      if ((f.online && f.name) || f.profile) {
         const list = getFriends();
         const item = list.find((x) => x.code === f.code);
-        if (item) { item.name = f.name; item.looks = f.looks; saveList('vyraz_friends', list); }
+        if (item) {
+          if (f.online && f.name) { item.name = f.name; item.looks = f.looks; }
+          if (f.profile) { item.looks = f.profile.looks; item.ownedCount = f.profile.ownedCount; }
+          saveList('vyraz_friends', list);
+        }
       }
     }
     if (mountedKey === 'friends') patchFriendsList();
+    patchFriendProfile();
     if (document.getElementById('invite-friends-list')) patchInviteList();
     return true;
   }
@@ -164,10 +172,12 @@ function friendRowHtml(f) {
   const canJoin = st && st.online && st.lobby && st.lobby.joinable;
   return `
     <div class="friend-row" data-code="${f.code}">
-      <div class="friend-avatar">${avatarHtml(f.name || '?', f.looks, 44)}<span class="presence-dot ${label.cls}"></span></div>
-      <div class="friend-info">
-        ${playerNameHtml(f.name || f.code, f.looks)}
-        <span class="friend-status ${label.cls}">${label.text}</span>
+      <div class="friend-open" data-profile="${f.code}" role="button" tabindex="0" aria-label="View profile">
+        <div class="friend-avatar">${avatarHtml(f.name || '?', f.looks, 44)}<span class="presence-dot ${label.cls}"></span></div>
+        <div class="friend-info">
+          ${playerNameHtml(f.name || f.code, f.looks)}
+          <span class="friend-status ${label.cls}">${label.text}</span>
+        </div>
       </div>
       ${canJoin ? `<button class="friend-join" data-join="${f.code}">Join</button>` : ''}
       <button class="friend-remove" data-remove="${f.code}" aria-label="Remove friend">${icon('close')}</button>
@@ -275,6 +285,10 @@ function patchFriendsList() {
     : `<div class="friends-empty">${icon('users')}<span>No friends yet. Send a friend your code, or add them from a lobby.</span></div>`;
 
   el.querySelectorAll('[data-join]').forEach((b) => { b.onclick = () => joinFriend(b.dataset.join); });
+  el.querySelectorAll('[data-profile]').forEach((b) => {
+    b.onclick = () => showFriendProfile(b.dataset.profile);
+    b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showFriendProfile(b.dataset.profile); } };
+  });
   el.querySelectorAll('[data-remove]').forEach((b) => {
     b.onclick = () => {
       const f = getFriends().find((x) => x.code === b.dataset.remove);
@@ -283,6 +297,67 @@ function patchFriendsList() {
       patchFriendsList();
     };
   });
+}
+
+// ------------------------------------------------------ profil přítele ---
+
+// Karta jedné nasazené věci (rámeček / barva jména) — náhled, název, vzácnost.
+function friendSkinCardHtml(sectionId, itemId, friendName) {
+  const section = SHOP_SECTIONS.find((s) => s.id === sectionId);
+  const item = findShopItem(sectionId, itemId);
+  const title = sectionId === 'frame' ? 'Photo frame' : 'Name color';
+  let preview;
+  if (item && sectionId === 'frame') preview = shopItemPreview(section, item);
+  else if (item) preview = `<div class="name-preview"><span style="${nameStyleFor(item)}">${escapeHtml(friendName)}</span></div>`;
+  else if (sectionId === 'frame') preview = `<div class="frame-preview" style="background:rgba(255,255,255,0.12)"><div class="frame-inner">${icon('camera')}</div></div>`;
+  else preview = `<div class="name-preview"><span style="color:#fff">${escapeHtml(friendName)}</span></div>`;
+  const rar = item ? RARITIES[item.rarity] : null;
+  return `
+    <div class="fp-card ${item ? 'has-rarity' : ''}" style="${rar ? `--rc:${rar.color}` : ''}">
+      <div class="fp-card-title">${title}</div>
+      ${preview}
+      <div class="shop-item-name">${item ? item.name : 'Default'}</div>
+      ${rar ? `<div class="fp-rarity">${rar.label}</div>` : ''}
+    </div>`;
+}
+
+function friendProfileBodyHtml(f) {
+  const st = friendStatuses[f.code];
+  const label = friendStatusLabel(st);
+  const name = f.name || f.code;
+  const total = SHOP_SECTIONS.reduce((n, s) => n + s.items.length, 0);
+  const owned = Number.isInteger(f.ownedCount) ? f.ownedCount : null;
+  return `
+    <div class="fp-hero">
+      <div class="friend-avatar">${avatarHtml(name, f.looks, 128)}</div>
+      <div class="fp-name">${playerNameHtml(name, f.looks)}</div>
+      <div class="fp-status ${label.cls}"><span class="fp-dot ${label.cls}"></span>${label.text}</div>
+    </div>
+    ${owned !== null ? `<div class="fp-collection">${icon('hanger')}<span class="num">${owned} / ${total}</span><span>skins</span></div>` : ''}
+    <div class="section-eyebrow">SKINS</div>
+    <div class="fp-cards">
+      ${friendSkinCardHtml('frame', f.looks && f.looks.frame, name)}
+      ${friendSkinCardHtml('name', f.looks && f.looks.name, name)}
+    </div>`;
+}
+
+function showFriendProfile(code) {
+  const f = getFriends().find((x) => x.code === code);
+  if (!f) return;
+  const modal = openModal(`
+    <div class="x-close-row"><button class="x-close" id="fp-close" aria-label="Close">${icon('close')}</button></div>
+    <div id="fp-body" data-code="${code}">${friendProfileBodyHtml(f)}</div>
+  `);
+  modal.querySelector('#fp-close').onclick = closeModal;
+  requestFriendStatuses();
+}
+
+// Stav přítele se obnovuje každé 4 s — otevřené okno profilu se překreslí.
+function patchFriendProfile() {
+  const body = document.getElementById('fp-body');
+  if (!body) return;
+  const f = getFriends().find((x) => x.code === body.dataset.code);
+  if (f) body.innerHTML = friendProfileBodyHtml(f);
 }
 
 // ----------------------------------------------------------- pozvánky ---

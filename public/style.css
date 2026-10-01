@@ -913,6 +913,13 @@ body.no-scroll{ overflow:hidden; }
 .impostor-missed{ width:120px; height:120px; border-radius:18px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; color:var(--ink-dim); }
 .impostor-missed .ico{ width:44px; height:44px; }
 
+.impostor-banner{
+  display:flex; flex-direction:column; gap:10px; padding:16px; border-radius:20px;
+  background:linear-gradient(135deg, rgba(239,68,68,0.35), rgba(124,58,237,0.4)); border:1px solid rgba(239,68,68,0.6);
+}
+.impostor-banner-title{ display:flex; align-items:center; justify-content:center; gap:8px; text-align:center; font-family:'Unbounded',sans-serif; font-weight:800; font-size:1.1rem; color:#fff; }
+.impostor-banner-title .ico{ width:22px; height:22px; flex:none; }
+.impostor-reveal-pts{ color:#FDE68A; font-weight:800; font-size:1.1rem; }
 .impostor-prompts{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .impostor-prompts > div{
   padding:12px; border-radius:16px; background:var(--surface); border:1px solid var(--line);
@@ -1058,22 +1065,29 @@ body.no-scroll{ overflow:hidden; }
 /* truhly levitují: truhla se zvedne a lehce naklopí, stín pod ní se
    zmenší a zeslábne — jako by se opravdu vznášela */
 @keyframes chest-float{
-  0%,100%{ transform:translateY(0) rotate(0deg); }
-  25%{ transform:translateY(-5px) rotate(-1.5deg); }
-  50%{ transform:translateY(-8px) rotate(0deg); }
-  75%{ transform:translateY(-5px) rotate(1.5deg); }
+  0%,100%{ transform:translateY(0) scale(1.03,0.96); }
+  50%{ transform:translateY(-6px) scale(0.98,1.04); }
 }
 @keyframes chest-shadow{
   0%,100%{ transform:scale(1); opacity:1; }
-  50%{ transform:scale(0.72); opacity:0.55; }
+  50%{ transform:scale(0.78); opacity:0.6; }
 }
+/* ťuknutí: bouncy — nakrčení, vyskočení a dosednutí s dozvukem */
 @keyframes chest-shake{
-  0%,100%{ transform:rotate(0deg); }
-  20%{ transform:rotate(-6deg) translateY(-2px); }
-  40%{ transform:rotate(5deg) translateY(-3px); }
-  60%{ transform:rotate(-4deg) translateY(-2px); }
-  80%{ transform:rotate(2deg); }
+  0%,100%{ transform:none; }
+  14%{ transform:scale(1.12,0.84); }
+  30%{ transform:translateY(-9px) rotate(-6deg) scale(0.92,1.14); }
+  48%{ transform:translateY(-3px) rotate(6deg) scale(1.05,0.96); }
+  64%{ transform:rotate(-4deg) scale(0.98,1.03); }
+  80%{ transform:rotate(2deg) scale(1.02,0.99); }
 }
+@keyframes chest-lid-rattle{
+  0%,100%{ transform:none; }
+  30%{ transform:translateY(-5px) rotate(-5deg); }
+  50%{ transform:translateY(-2px) rotate(3deg); }
+  70%{ transform:translateY(-3px) rotate(-2deg); }
+}
+.case-art .chest-lid, .chest-stage .chest-lid, .chest-stage .chest-base{ transform-box:fill-box; transform-origin:50% 100%; }
 .case-art .case-chest, .case-art .case-shadow{ transform-box:fill-box; transform-origin:50% 100%; }
 .case-art .case-shadow{ transform-origin:50% 50%; }
 .case-art .case-chest{ animation:chest-float 3.6s ease-in-out infinite; }
@@ -1082,7 +1096,8 @@ body.no-scroll{ overflow:hidden; }
 .case-grid .case-card:nth-child(3) .case-chest, .case-grid .case-card:nth-child(3) .case-shadow{ animation-delay:-1.8s; }
 .case-grid .case-card:nth-child(4) .case-chest, .case-grid .case-card:nth-child(4) .case-shadow{ animation-delay:-2.7s; }
 /* ťuknutí na truhlu = zatřese se, jako by v ní něco bylo */
-.case-card.shake .case-chest{ animation:chest-shake .5s ease-in-out; }
+.case-card.shake .case-chest{ animation:chest-shake .6s cubic-bezier(.3,1.3,.5,1); }
+.case-card.shake .chest-lid{ animation:chest-lid-rattle .6s ease-out; }
 .case-card:active{ transform:scale(0.98); }
 .case-card{ transition:transform .12s ease, border-color .15s ease; }
 .case-card:hover{ border-color:var(--line-strong); }
@@ -1482,9 +1497,6 @@ body.no-scroll{ overflow:hidden; }
 /* dlaždice se nesmí roztáhnout přes mřížku; trojmístné časy (120s) menším písmem */
 .option-chip{ min-width:0; padding:0; }
 #picker-hunt-seconds .option-chip{ font-size:0.88rem; }
-/* Copycat má jen 4 časy — přes celou šířku, stejná výška jako řady s 5 dlaždicemi */
-#picker-copy-seconds{ grid-template-columns:repeat(4, 1fr); }
-#picker-copy-seconds .option-chip{ aspect-ratio:5/4; }
 
 /* ------------------------------------------------------ MENU MÓDŮ --- */
 /* módy ve skupinách: face games jako mřížka 2×2, snap anything přes celou šířku */
@@ -1650,14 +1662,38 @@ body.no-scroll{ overflow:hidden; }
 
 .wheel-wrap{ position:relative; width:min(86vw, 330px); aspect-ratio:1; }
 .wheel-wrap .wheel-svg{ width:100%; height:100%; display:block; filter:drop-shadow(0 12px 30px rgba(0,0,0,0.5)); }
+/* chunky kreslená šipka nahoře — odskakuje při každém cvaknutí (wheel.js) */
 .wheel-pointer{
-  position:absolute; z-index:2; top:-10px; left:50%; transform:translateX(-50%);
-  width:0; height:0; border-left:16px solid transparent; border-right:16px solid transparent; border-top:30px solid #FBBF24;
-  filter:drop-shadow(0 3px 4px rgba(0,0,0,0.5));
+  position:absolute; z-index:2; top:-12px; left:50%; width:13%; aspect-ratio:44/56; transform:translateX(-50%);
+  transform-origin:50% 22%; filter:drop-shadow(0 3px 3px rgba(0,0,0,0.45));
 }
-.wheel-bulb{ fill:#FFF7D6; animation:wheel-bulb 0.9s steps(1) infinite; }
-.wheel-bulb.b2{ animation-delay:-0.45s; }
-@keyframes wheel-bulb{ 0%{ fill:#FFF7D6; } 50%{ fill:#B45309; } }
+.wheel-pointer svg{ width:100%; height:100%; display:block; }
+/* žárovky: teplé barvy, pomalé honění dokola (bez bílé) */
+.wheel-bulb{ fill:#FDE047; stroke:#7C2D12; stroke-width:1.6; animation:wheel-bulb 1.6s ease-in-out infinite; }
+@keyframes wheel-bulb{ 0%,100%{ fill:#FB923C; } 40%{ fill:#FDE047; } }
+.wheel-svg{ transform-origin:50% 50%; }
+/* výhra: ikona vyskočí se squash & stretch */
+.wheel-pop{ animation:wheel-pop .8s cubic-bezier(.3,1.4,.5,1) both .1s; transform-origin:50% 100%; }
+@keyframes wheel-pop{
+  0%{ transform:scale(0.2,0.2); opacity:0; }
+  35%{ transform:scale(0.85,1.3); opacity:1; }
+  55%{ transform:scale(1.2,0.82); }
+  75%{ transform:scale(0.94,1.08); }
+  100%{ transform:scale(1,1); opacity:1; }
+}
+/* barevné konfety a mince */
+.reveal-card > .wheel-confetti, .wheel-confetti{ position:absolute; left:50%; top:45%; width:0; height:0; z-index:3; pointer-events:none; }
+.wheel-confetti i{ position:absolute; left:-4px; top:-4px; width:8px; height:11px; border-radius:2px; background:var(--c); opacity:0; animation:wheel-conf 1.5s cubic-bezier(.2,.8,.4,1) forwards; }
+.wheel-confetti i.wc-coin{ width:12px; height:12px; border-radius:50%; background:#FBBF24; border:2px solid #92400E; box-sizing:border-box; }
+@keyframes wheel-conf{
+  0%{ opacity:1; transform:translate(0,0) rotate(0) scale(0.4); }
+  60%{ opacity:1; }
+  100%{ opacity:0; transform:translate(var(--dx), calc(var(--dy) + 60px)) rotate(var(--rot)) scale(1); }
+}
+@media (prefers-reduced-motion: reduce){
+  .wheel-bulb, .wheel-pop, .daily-card.ready .daily-wheel-art{ animation:none !important; }
+  .wheel-confetti{ display:none; }
+}
 .wheel-overlay .wheel-wrap.done{ width:min(50vw, 180px); transition:width .4s ease; }
 .wheel-reveal-art{ width:110px; height:96px; }
 .wheel-reveal-ticket{
@@ -1688,7 +1724,6 @@ body.no-scroll{ overflow:hidden; }
 .wheel-odds-chance{ font-family:'Unbounded',sans-serif; font-weight:800; color:#fff; }
 /* větší kolo při točení — skoro přes celou šířku (a nikdy vyšší než 70 % obrazovky) */
 .wheel-overlay .wheel-wrap{ width:min(96vw, 480px, 70vh); }
-.wheel-overlay .wheel-pointer{ top:-14px; border-left-width:20px; border-right-width:20px; border-top-width:38px; }
 .wheel-overlay .case-stage{ gap:16px; }
 .wheel-overlay .case-title{ font-size:1.5rem; }
 
@@ -1904,7 +1939,7 @@ body.no-scroll{ overflow:hidden; }
 /* ---- Legendary: průlety předmětů přes rámeček (scheduler v decor.js) ---- */
 .frame-flyby{ position:absolute; inset:-15%; z-index:4; overflow:hidden; pointer-events:none; border-radius:inherit; }
 /* průlet: předmět je vycentrovaný, dráhu (libovolný úhel) a natočení posílá JS přes proměnné */
-.fb-obj{ position:absolute; left:50%; top:50%; will-change:transform; animation:fb-fly 1.3s ease-in-out 1 forwards; }
+.fb-obj{ position:absolute; left:50%; top:50%; will-change:transform; animation:fb-fly 3.4s ease-in-out 1 forwards; }
 .fb-obj > svg{ width:100%; height:100%; display:block; overflow:visible; transform:var(--rot, none); }
 @keyframes fb-fly{
   from{ transform:translate(-50%,-50%) translate(var(--x0),var(--y0)); }
@@ -2242,4 +2277,604 @@ body.no-scroll{ overflow:hidden; }
 /* statické při omezení pohybu */
 @media (prefers-reduced-motion: reduce){
   .frame-decor .ph-wl, .frame-decor .ph-wr, .frame-decor .ph-sway, .frame-decor .rb-squash, .frame-decor .rb-pop{ animation:none !important; }
+}
+
+/* ======================= Space Cat / Dino — kreslený styl hry =======================
+   Okraj = ploché pruhy s tmavším obrysem stejného odstínu (.bv-<id>), pomalu se otáčí; bez záře a bez bílých záblesků.
+   Ozdoby poskakují (rb-squash / rb-pop z výše), vajíčka se kroutí (dn-wobble). */
+.frame-aura.aura-frame-spacecat{
+  background:conic-gradient(from var(--fa), #7C3AED 0 22%, #5B21B6 0 44%, #F472B6 0 49%, #7C3AED 0 72%, #5B21B6 0 94%, #FDE047 0 100%);
+  animation:lg-spin 18s linear infinite;
+}
+.frame-aura.aura-frame-spacecat::before{
+  background:
+    radial-gradient(ellipse 2.4% 2.4% at 14% 28%, #67E8F9 45%, transparent 100%),
+    radial-gradient(ellipse 2% 2% at 58% 7%, #FDE047 45%, transparent 100%),
+    radial-gradient(ellipse 2.2% 2.2% at 90% 60%, #F9A8D4 45%, transparent 100%),
+    radial-gradient(ellipse 1.8% 1.8% at 36% 93%, #FDE047 45%, transparent 100%);
+  animation:lg-twinkle 2.4s ease-in-out infinite;
+}
+.bv-frame-spacecat{ --bv-hi:transparent; --bv-lo:transparent; --bv-out:rgba(46,16,101,0.95); --bv-in:rgba(46,16,101,0.85); }
+
+.frame-aura.aura-frame-dino{
+  background:conic-gradient(from var(--fa), #4ADE80 0 12.5%, #22C55E 0 25%, #4ADE80 0 37.5%, #22C55E 0 50%, #4ADE80 0 62.5%, #22C55E 0 75%, #4ADE80 0 87.5%, #16A34A 0 100%);
+  animation:lg-spin 26s linear infinite;
+}
+.frame-aura.aura-frame-dino::before{
+  background:
+    radial-gradient(ellipse 3% 3% at 16% 24%, #FB923C 50%, transparent 100%),
+    radial-gradient(ellipse 2.4% 2.4% at 64% 6%, #FDBA74 50%, transparent 100%),
+    radial-gradient(ellipse 3% 3% at 92% 54%, #FB923C 50%, transparent 100%),
+    radial-gradient(ellipse 2.4% 2.4% at 40% 94%, #FDBA74 50%, transparent 100%);
+  animation:lg-pulse 2.8s ease-in-out infinite;
+}
+.bv-frame-dino{ --bv-hi:transparent; --bv-lo:transparent; --bv-out:rgba(20,83,45,0.95); --bv-in:rgba(20,83,45,0.85); }
+
+.frame-decor .dn-wobble{ transform-box:fill-box; transform-origin:50% 100%; animation:dn-wobble 2.4s cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes dn-wobble{ 0%,100%{ transform:rotate(-7deg); } 50%{ transform:rotate(7deg) translateY(-1px); } }
+@media (prefers-reduced-motion: reduce){
+  .frame-decor .dn-wobble{ animation:none !important; }
+}
+
+/* ------------------------------------------------------- PROFIL PŘÍTELE --- */
+.friend-open{ flex:1; min-width:0; display:flex; align-items:center; gap:12px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.friend-open:active{ opacity:0.8; }
+.fp-hero{ display:flex; flex-direction:column; align-items:center; gap:10px; padding:6px 0 14px; }
+.fp-name{ max-width:100%; font-size:1.3rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fp-name .player-name{ font-size:1.3rem; }
+.fp-status{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:0.9rem; color:var(--ink-dim); }
+.fp-status.on, .fp-status.lobby{ color:#86EFAC; }
+.fp-status.playing{ color:#FCD34D; }
+.fp-dot{ width:10px; height:10px; border-radius:50%; background:#6B7280; }
+.fp-dot.on, .fp-dot.lobby{ background:#22C55E; }
+.fp-dot.playing{ background:#F59E0B; }
+.fp-collection{
+  display:flex; align-items:center; justify-content:center; gap:8px; margin:0 auto 14px; padding:10px 16px;
+  border-radius:999px; background:var(--surface); border:1px solid var(--line); font-weight:800; width:fit-content; max-width:100%;
+}
+.fp-collection .ico{ width:20px; height:20px; color:var(--accent); }
+.fp-cards{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.fp-card{
+  position:relative; overflow:hidden; min-width:0; display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:12px 8px 14px; border-radius:18px; background:var(--surface); border:1px solid var(--line); text-align:center;
+}
+.fp-card.has-rarity::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:4px; background:var(--rc); }
+.fp-card-title{ font-weight:800; font-size:0.85rem; }
+.fp-card .frame-preview{ width:74px; }
+.fp-card .shop-item-name{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fp-rarity{ font-weight:800; font-size:0.8rem; color:var(--rc); }
+
+/* ------------------------------------------ TRUHLY: cartoon otevírání --- */
+/* Vše scopnuté na .chest-overlay, ať se nezmění kolo štěstí (sdílí overlay). */
+.chest-overlay{ overflow-y:auto; overflow-x:hidden; background:radial-gradient(circle at 50% 40%, #4A1D7E, #170A2E 75%); }
+.chest-overlay .case-stage{ position:relative; z-index:1; margin:auto 0; padding:12px 0; }
+.chest-overlay .case-title{ text-shadow:0 3px 0 rgba(14,6,32,0.7); }
+
+/* --- truhla (úvod) --- */
+.chest-stage{ position:relative; width:min(62vw, 240px); aspect-ratio:120/124; cursor:pointer; margin:8px 0; }
+.chest-stage[hidden]{ display:none; }
+.chest-stage svg{ position:relative; z-index:1; width:100%; height:100%; display:block; overflow:visible; }
+.chest-stage .case-chest, .chest-stage .case-shadow{ transform-box:fill-box; transform-origin:50% 100%; }
+.chest-stage .case-shadow{ transform-origin:50% 50%; }
+.chest-stage .case-chest{ animation:chest-float 3.6s ease-in-out infinite; }
+.chest-stage .case-shadow{ animation:chest-shadow 3.6s ease-in-out infinite; }
+.chest-glow, .chest-beam{ opacity:0; pointer-events:none; transform-box:fill-box; transform-origin:50% 100%; }
+.chest-rays{
+  position:absolute; z-index:0; inset:-70%; opacity:0; pointer-events:none;
+  background:repeating-conic-gradient(rgba(251,191,36,0.32) 0 9deg, transparent 9deg 27deg);
+  -webkit-mask:radial-gradient(circle, #000 0, transparent 62%); mask:radial-gradient(circle, #000 0, transparent 62%);
+}
+/* nakrčení + vrtění, čím dál silnější */
+.chest-stage.windup .case-chest{ animation:chest-windup 1.3s ease-in-out forwards; }
+.chest-stage.windup .chest-lid{ animation:chest-lid-grow 1.3s ease-in forwards; }
+@keyframes chest-windup{
+  0%{ transform:scale(1); }
+  12%{ transform:scale(1.1,0.86); }
+  28%{ transform:rotate(-3deg) scale(1.03,1); }
+  44%{ transform:rotate(4deg) scale(1.06,0.97); }
+  58%{ transform:rotate(-6deg) scale(1.08,0.95); }
+  72%{ transform:rotate(8deg) scale(1.1,0.93); }
+  86%{ transform:rotate(-10deg) scale(1.12,0.9); }
+  100%{ transform:rotate(0) scale(1.16,0.84); }
+}
+@keyframes chest-lid-grow{
+  0%,40%{ transform:none; }
+  65%{ transform:translateY(-2px) rotate(-2deg); }
+  85%{ transform:translateY(-4px) rotate(3deg); }
+  100%{ transform:translateY(-5px) rotate(0); }
+}
+/* víko vyskočí (squash & stretch), z truhly vyšlehne barevné světlo */
+.chest-stage.pop .case-chest{ animation:chest-pop-body .7s cubic-bezier(.3,1.4,.5,1) forwards; }
+.chest-stage.pop .case-shadow{ animation:none; }
+.chest-stage.pop .chest-lid{ animation:chest-lid-pop .8s cubic-bezier(.3,1.3,.5,1) forwards; }
+.chest-stage.pop .chest-glow{ animation:chest-glow-pop .6s ease-out forwards; }
+.chest-stage.pop .chest-beam{ animation:chest-beam-pop .9s ease-out forwards; }
+.chest-stage.pop .chest-rays{ animation:chest-rays-pop 1.4s ease-out forwards, rays-spin 14s linear infinite; }
+@keyframes chest-pop-body{
+  0%{ transform:scale(1.16,0.84); }
+  25%{ transform:translateY(-6px) scale(0.88,1.18); }
+  55%{ transform:scale(1.08,0.94); }
+  80%{ transform:scale(0.98,1.02); }
+  100%{ transform:none; }
+}
+@keyframes chest-lid-pop{
+  0%{ transform:translateY(-5px); }
+  20%{ transform:translateY(3px) scale(1.06,0.85); }
+  50%{ transform:translateY(-48px) rotate(-18deg) scale(0.9,1.18); }
+  75%{ transform:translateY(-34px) rotate(-11deg) scale(1.05,0.95); }
+  100%{ transform:translateY(-38px) rotate(-13deg); }
+}
+@keyframes chest-glow-pop{ 0%{ opacity:0; transform:scale(0.3); } 100%{ opacity:0.85; transform:scale(1.1,1.2); } }
+@keyframes chest-beam-pop{ 0%{ opacity:0; transform:scaleY(0.15); } 40%{ opacity:0.5; } 100%{ opacity:0.32; transform:scaleY(1); } }
+@keyframes chest-rays-pop{ 0%{ opacity:0; } 40%{ opacity:1; } 100%{ opacity:0.7; } }
+.chest-stage.leave{ animation:chest-leave .35s ease-in forwards; }
+@keyframes chest-leave{ to{ opacity:0; transform:translateY(-14px) scale(0.6); } }
+
+/* --- pás s věcmi --- */
+.chest-overlay .strip-window{
+  height:176px; background:#1D0F36;
+  border-top:4px solid #0E0620; border-bottom:4px solid #0E0620;
+}
+.chest-overlay .strip-window[hidden]{ display:none; }
+.chest-overlay .strip-window.enter{ animation:strip-in .5s cubic-bezier(.3,1.4,.5,1); }
+@keyframes strip-in{ from{ opacity:0; transform:scale(0.85,0.5); } to{ opacity:1; transform:none; } }
+.chest-overlay .strip{ padding:20px 0; }
+.chest-overlay .strip-card{
+  height:136px; justify-content:flex-start; gap:6px; padding-top:18px; border-radius:18px;
+  border:4px solid var(--rc);
+  background:color-mix(in srgb, var(--rc) 20%, #2A1654);
+  box-shadow:0 5px 0 color-mix(in srgb, var(--rc) 45%, #0E0620);
+}
+/* barevný pruh vzácnosti nahoře */
+.chest-overlay .strip-card::after{ top:0; bottom:auto; height:9px; background:var(--rc); box-shadow:inset 0 -3px 0 rgba(14,6,32,0.28); }
+.chest-overlay .strip-card-name{ font-size:0.78rem; text-shadow:0 2px 0 rgba(14,6,32,0.6); }
+.chest-overlay .strip-card.highlight{
+  z-index:3; animation:strip-win .7s cubic-bezier(.3,1.4,.5,1) forwards;
+  box-shadow:0 6px 0 color-mix(in srgb, var(--rc) 45%, #0E0620), 0 0 14px 2px color-mix(in srgb, var(--rc) 55%, transparent);
+}
+@keyframes strip-win{ 30%{ transform:scale(1.14,0.92); } 55%{ transform:scale(0.96,1.08); } 100%{ transform:scale(1.06); } }
+
+/* ukazatel uprostřed (jako šipka u kola), při cvaknutí poskočí (case.js) */
+.chest-overlay .strip-marker{ width:8px; background:none; box-shadow:none; }
+.chest-overlay .strip-marker::before, .chest-overlay .strip-marker::after{ display:none; }
+.strip-line{
+  position:absolute; inset:0; opacity:0.85;
+  background:linear-gradient(90deg, #7C2D12 0 2px, #F0B429 2px 6px, #7C2D12 6px 8px);
+}
+.strip-pointer{ position:absolute; z-index:1; left:50%; width:30px; aspect-ratio:44/56; transform:translateX(-50%); filter:drop-shadow(0 3px 2px rgba(14,6,32,0.5)); }
+.strip-pointer svg{ width:100%; height:100%; display:block; }
+.strip-pointer.top{ top:-3px; transform-origin:50% 20%; }
+.strip-pointer.bottom{ bottom:-3px; transform-origin:50% 80%; }
+.strip-pointer.bottom svg{ transform:scaleY(-1); }
+
+/* --- odhalení výhry --- */
+.chest-overlay .case-reveal.show{ animation:none; }
+.chest-overlay .reveal-card{
+  border:5px solid var(--rc); border-radius:28px;
+  background:color-mix(in srgb, var(--rc) 22%, #2A1654);
+  box-shadow:0 8px 0 color-mix(in srgb, var(--rc) 40%, #0E0620);
+  transform-origin:50% 100%; animation:case-card-pop .75s cubic-bezier(.3,1.4,.5,1) both;
+}
+@keyframes case-card-pop{
+  0%{ opacity:0; transform:scale(0.6) translateY(30px); }
+  40%{ opacity:1; transform:scale(1.08,0.92); }
+  65%{ transform:scale(0.97,1.04); }
+  100%{ opacity:1; transform:none; }
+}
+.chest-overlay .reveal-card .reveal-rays{ display:none; }
+.chest-overlay .reveal-card.rar-epic .reveal-rays, .chest-overlay .reveal-card.rar-legendary .reveal-rays{ display:block; opacity:0.3; }
+.chest-overlay .reveal-rarity{
+  border:3px solid color-mix(in srgb, var(--rc) 35%, #0E0620);
+  box-shadow:0 3px 0 color-mix(in srgb, var(--rc) 40%, #0E0620);
+}
+.chest-overlay .reveal-preview{ transform-origin:50% 100%; animation:reveal-item-pop .85s cubic-bezier(.3,1.4,.5,1) .12s both; }
+@keyframes reveal-item-pop{
+  0%{ transform:scale(0.2); opacity:0; }
+  35%{ transform:scale(0.85,1.3); opacity:1; }
+  55%{ transform:scale(1.2,0.82); }
+  75%{ transform:scale(0.94,1.08); }
+  100%{ transform:scale(1); opacity:1; }
+}
+.chest-overlay .reveal-name{ text-shadow:0 3px 0 rgba(14,6,32,0.55); }
+.chest-overlay .reveal-new{ animation:reveal-item-pop .6s cubic-bezier(.3,1.4,.5,1) .5s both; }
+
+/* velké barevné paprsky za kartou (epic+) a zlatý déšť (legendary+) */
+.case-bigrays{
+  position:fixed; z-index:0; left:50%; top:45%; width:130vmax; height:130vmax; margin:-65vmax 0 0 -65vmax; pointer-events:none; opacity:0;
+  background:repeating-conic-gradient(rgba(236,72,153,0.34) 0 9deg, transparent 9deg 24deg);
+  -webkit-mask:radial-gradient(circle, #000 5%, transparent 55%); mask:radial-gradient(circle, #000 5%, transparent 55%);
+  animation:bigrays-in .6s ease-out forwards, rays-spin 26s linear infinite;
+}
+.case-bigrays.rays-legendary{ background:repeating-conic-gradient(rgba(240,180,41,0.4) 0 9deg, transparent 9deg 24deg); }
+.case-bigrays.rays-mythic{ background:repeating-conic-gradient(rgba(255,61,127,0.4) 0 8deg, transparent 8deg 18deg, rgba(253,224,71,0.4) 18deg 26deg, transparent 26deg 36deg, rgba(34,211,238,0.4) 36deg 44deg, transparent 44deg 54deg); }
+@keyframes bigrays-in{ to{ opacity:1; } }
+.case-rain{ position:fixed; inset:0; z-index:4; pointer-events:none; overflow:hidden; }
+.case-rain i{
+  position:absolute; top:-24px; width:16px; height:16px; border-radius:50%; box-sizing:border-box; opacity:0;
+  background:#FBBF24; border:3px solid #92400E; box-shadow:inset -3px -3px 0 #F59E0B;
+  animation:coin-rain 1.8s ease-in forwards;
+}
+@keyframes coin-rain{
+  0%{ opacity:1; transform:translateY(0) rotate(0); }
+  100%{ opacity:1; transform:translateY(110vh) rotate(var(--rot)) scaleX(0.5); }
+}
+.case-fx{ z-index:4; }
+
+@media (prefers-reduced-motion: reduce){
+  .chest-overlay *, .chest-overlay *::before{ animation:none !important; }
+  .chest-rays, .case-bigrays, .case-rain, .case-fx{ display:none !important; }
+}
+
+/* ------------------------------------------- KOLO ŠTĚSTÍ: políčko Fortune --- */
+/* mythic rámeček — duhový podklad dýchá, kroužek se točí, ikona pulzuje, hvězdičky blikají (barevně) */
+.wheel-svg .wf-glow{ opacity:0.35; animation:wf-glow 2.4s ease-in-out infinite; }
+@keyframes wf-glow{ 0%,100%{ opacity:0.4; } 50%{ opacity:0.75; } }
+.wheel-svg .wf-ring{ transform-box:fill-box; transform-origin:center; animation:wf-spin 6s linear infinite; }
+@keyframes wf-spin{ to{ transform:rotate(360deg); } }
+.wheel-svg .wf-icon{ transform-box:fill-box; transform-origin:center; animation:wf-pulse 1.6s cubic-bezier(.3,1.6,.5,1) infinite; }
+@keyframes wf-pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.12) rotate(-4deg); } }
+.wheel-svg .wf-tw{ transform-box:fill-box; transform-origin:center; animation:wf-tw 1.8s ease-in-out infinite; }
+@keyframes wf-tw{ 0%,100%{ transform:scale(0.4); opacity:0.3; } 50%{ transform:scale(1.15) rotate(20deg); opacity:1; } }
+@media (prefers-reduced-motion: reduce){ .wheel-svg .wf-glow, .wheel-svg .wf-ring, .wheel-svg .wf-icon, .wheel-svg .wf-tw{ animation:none; } }
+
+/* ======================================================================
+   CARTOON PASS — celé UI v kreslené podobě kola štěstí a otevírání truhel
+   Pravidla: tlustší tmavší OBRYS ve stejném odstínu, plochá barva s jedním
+   cel-stínem (tmavší spodní hrana) a jedním tónovaným odleskem, "3D" spodní
+   lem (--lip), který se při stisku zmáčkne. Žádné bílé záblesky.
+   ====================================================================== */
+:root{
+  --ol:#0E0620;            /* nejtmavší obrys */
+  --ol-2:#170A30;          /* obrys panelů a dlaždic */
+  --lip-c:#0A0416;         /* barva spodního lemu panelů */
+  --pop:cubic-bezier(.3,1.6,.5,1);   /* pružný přestřel */
+  --purple-hi:rgba(139,92,246,0.16); /* tónovaný odlesk na tmavém fialovém podkladu */
+}
+
+/* ---------- společný stisk: lem se zmáčkne a prvek sjede dolů ---------- */
+.btn, .back-btn, .icon-btn, .text-btn, .chip-btn, .option-chip, .pack-chip, .rules-tab, .shop-tab,
+.friend-join, .daily-btn, .single-game-buy, .case-open-btn, .pack-buy, .exit-game-btn, .shutter,
+.x-close, .kick-btn, .req-btn, .add-friend-mini, .case-info-btn, .avatar-btn,
+.shop-item, .coin-pack, .no-ads-card, .inventory-btn, .profile-card, .case-card, .mode-card,
+.vote-card, .caption-card, .ivote-card, .result-card, .code-box{
+  --lipy:4px; --lip:var(--lip-c);
+  transition:transform .16s var(--pop), box-shadow .16s var(--pop), background-color .15s ease, border-color .15s ease, color .15s ease, opacity .15s ease;
+}
+.btn:active, .back-btn:active, .icon-btn:active, .text-btn:active, .chip-btn:active, .option-chip:active, .pack-chip:active,
+.rules-tab:active, .shop-tab:active, .friend-join:active, .daily-btn:active, .single-game-buy:active, .case-open-btn:active,
+.pack-buy:active, .exit-game-btn:active, .shutter:active, .x-close:active, .kick-btn:active, .req-btn:active,
+.add-friend-mini:active, .case-info-btn:active, .avatar-btn:active,
+.shop-item:active, .coin-pack:active, .no-ads-card:active, .inventory-btn:active, .profile-card:active, .case-card:active,
+.mode-card:active, .vote-card:not(.disabled):not(.own):active, .caption-card:not(.readonly):active, .ivote-card:not(.own):active{
+  --lipy:1px; transform:translateY(3px);
+}
+.btn:disabled:active, .option-chip:disabled:active{ transform:none; --lipy:4px; }
+
+/* ---------- kreslené panely (karty, řádky, dlaždice) ---------- */
+.card, .join-card, .reconnect-box, .prompt-box, .my-code-card, .looks-card, .profile-hero, .profile-stat, .reward-card,
+.daily-card, .daily-ticket, .friend-row, .shop-item, .coin-pack, .no-ads-card, .inventory-btn, .profile-card, .case-card,
+.fp-card, .single-game-card, .volume-card, .impostor-reveal, .impostor-prompts > div, .player-row, .scoreboard .row,
+.caption-card, .vote-card, .result-card, .ivote-card, .drop-item, .odds-chip, .edit-profile-preview, .pack-card{
+  border:2px solid var(--ol-2);
+  box-shadow:0 var(--lipy, 4px) 0 var(--lip, var(--lip-c)), inset 0 -4px 0 rgba(0,0,0,0.16), inset 0 2px 0 var(--purple-hi);
+}
+.card, .join-card, .prompt-box, .my-code-card, .looks-card, .profile-hero, .daily-card, .reward-card, .case-card, .pack-card{ border-radius:24px; }
+.reconnect-box{ border-width:3px; }
+/* menší prvky mají jen 3px lem */
+.player-row, .scoreboard .row, .odds-chip, .impostor-prompts > div{ --lipy:3px; }
+.player-row{ border-radius:16px; }
+.scoreboard .row{ border-radius:14px; }
+.vote-card, .result-card, .ivote-card{ border-width:3px; border-radius:18px; }
+.caption-card{ border-width:3px; border-radius:18px; }
+.vote-card.selected{ border-color:var(--accent); --lip:#4C1D95; box-shadow:0 var(--lipy,4px) 0 #4C1D95, inset 0 -4px 0 rgba(0,0,0,0.16); }
+.vote-card.own, .caption-card.picked, .caption-card.winner, .result-card.winner{ border-color:var(--gold); --lip:#7A5410; box-shadow:0 var(--lipy,4px) 0 #7A5410, inset 0 -4px 0 rgba(0,0,0,0.16); }
+.ivote-card.selected{ border-color:#EF4444; --lip:#7F1D1D; box-shadow:0 var(--lipy,4px) 0 #7F1D1D, inset 0 -4px 0 rgba(0,0,0,0.16); }
+.scoreboard .row.you{ outline:none; border-color:var(--accent); box-shadow:0 3px 0 #4C1D95, inset 0 -4px 0 rgba(0,0,0,0.16); }
+.shop-item{ border-color:color-mix(in srgb, var(--rc, #2A1552) 55%, var(--ol)); --lip:color-mix(in srgb, var(--rc, #1C1231) 40%, var(--ol)); }
+.shop-item.is-equipped{ border-color:#1F7A47; --lip:#145232; box-shadow:0 var(--lipy,4px) 0 #145232, inset 0 -4px 0 rgba(0,0,0,0.16); }
+.drop-item{ border-color:color-mix(in srgb, var(--rc) 55%, var(--ol)); --lip:color-mix(in srgb, var(--rc) 40%, var(--ol)); --lipy:3px; }
+.daily-card.ready, .daily-ticket.ready{ border-color:#0F766E; --lip:#0B4F4A; box-shadow:0 4px 0 #0B4F4A, inset 0 -4px 0 rgba(0,0,0,0.16); }
+.case-grid .case-card.is-new{ border-color:#9A3412; --lip:#6A2208; box-shadow:0 var(--lipy,5px) 0 #6A2208, inset 0 -4px 0 rgba(0,0,0,0.16); }
+.join-requests{ border-color:#0F6B4C; --lip:#0A4A35; }
+.impostor-reveal{ border-color:#7F1D1D; --lip:#5B1313; }
+.impostor-prompts > div.imp{ border-color:#7F1D1D; --lip:#5B1313; }
+.impostor-outcome{ border-width:3px; border-style:solid; box-shadow:0 4px 0 rgba(0,0,0,0.4), inset 0 -4px 0 rgba(0,0,0,0.16); }
+.impostor-outcome.caught{ border-color:#1F7A47; }
+.impostor-outcome.escaped{ border-color:#991B1B; }
+.impostor-banner{ border:3px solid #991B1B; box-shadow:0 4px 0 #5B1313, inset 0 -4px 0 rgba(0,0,0,0.16); }
+.pack-card{ border-color:#2A0B63; --lip:#1A0640; border-width:3px; }
+.qp-card{ border-color:#5B1D08; --lip:#3A1105; }
+
+/* ---------- tlačítka ---------- */
+.btn{
+  border:3px solid transparent; border-radius:18px; padding:12px 20px;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -5px 0 rgba(0,0,0,0.2);
+}
+.btn-primary{
+  background:var(--accent); border-color:#5B34B8; --lip:#4C1D95;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -5px 0 rgba(46,16,101,0.35), inset 0 3px 0 rgba(196,181,253,0.28);
+}
+.btn-ghost{
+  background:var(--surface-2); border-color:var(--ol-2); --lip:var(--lip-c); color:var(--ink);
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(0,0,0,0.18), inset 0 2px 0 var(--purple-hi);
+}
+.btn-danger{
+  background:#DC2626; border-color:#991B1B; --lip:#7F1D1D; color:#fff;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -5px 0 rgba(127,29,29,0.4), inset 0 3px 0 rgba(252,165,165,0.3);
+}
+.btn-primary:disabled, .btn:disabled{ opacity:0.4; cursor:not-allowed; --lipy:2px; transform:none; }
+.error-banner{ border:2px solid #991B1B; border-radius:14px; box-shadow:0 3px 0 #5B1313; }
+
+/* zlatá tlačítka (cena, otevřít, koupit) — místo bílé */
+.case-open-btn, .pack-buy, .coin-pack-price, .no-ads-price{
+  background:var(--gold); color:#3b2400; border:3px solid #8A5A0B; --lip:#8A5A0B;
+  box-shadow:0 var(--lipy, 4px) 0 var(--lip), inset 0 -4px 0 rgba(138,90,11,0.35), inset 0 3px 0 rgba(255,236,170,0.4);
+}
+.coin-pack-price, .no-ads-price{ --lipy:3px; border-width:2px; padding:5px 10px; }
+.no-ads-price{ padding:7px 14px; }
+.case-open-btn{ padding:10px 22px; }
+.case-grid .case-open-btn{ padding:8px 18px; }
+.pack-buy{ padding:12px 18px; }
+.single-game-buy{
+  background:var(--gold); border:3px solid #8A5A0B; --lip:#8A5A0B; --lipy:3px;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(138,90,11,0.35), inset 0 3px 0 rgba(255,236,170,0.4);
+}
+.daily-btn{
+  background:#14B8A6; border:3px solid #0B6B61; --lip:#0B6B61; --lipy:3px; color:#042F2E;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(11,107,97,0.4), inset 0 3px 0 rgba(153,246,228,0.35);
+}
+.friend-join{
+  background:var(--accent); border:3px solid #5B34B8; --lip:#4C1D95; --lipy:3px;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(46,16,101,0.35), inset 0 3px 0 rgba(196,181,253,0.28);
+}
+.friend-join:disabled{ background:var(--surface-2); border-color:var(--ol-2); box-shadow:0 3px 0 var(--lip-c); }
+.pack-owned{ border:3px solid #1F7A47; box-shadow:0 3px 0 #145232; }
+.shutter{
+  border:5px solid var(--surface-2); outline:3px solid #5B34B8; --lip:#4C1D95; --lipy:5px; background:var(--accent);
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -6px 0 rgba(46,16,101,0.35), inset 0 3px 0 rgba(196,181,253,0.3);
+}
+.shutter:active{ --lipy:1px; transform:translateY(4px); }
+/* blesk foťáku: místo bílé jemný fialový záblesk */
+.camera-wrap .flash{ background:#A78BFA; }
+.camera-wrap .flash.on{ animation:flash-soft .35s ease-out; }
+@keyframes flash-soft{ from{ opacity:0.4; } to{ opacity:0; } }
+
+/* ---------- malá kulatá/čtvercová tlačítka a čipy ---------- */
+.back-btn, .icon-btn, .exit-game-btn, .text-btn, .chip-btn, .avatar-btn, .add-friend-mini{
+  border:2px solid var(--ol-2); background:var(--surface-2); --lipy:3px;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 2px 0 var(--purple-hi);
+}
+.back-btn, .icon-btn{ border-radius:16px; }
+.exit-game-btn{ border-radius:14px; }
+.exit-game-btn:active{ border-color:#7F1D1D; }
+.add-friend-mini{ width:32px; height:32px; }
+.chip-btn.chip-icon{ border-radius:50%; }
+
+/* grafické ikonky s oblejšími tahy */
+svg.ico[stroke="currentColor"]{ stroke-width:2.4; }
+
+/* ---------- vstupy ---------- */
+.field input, .field textarea.caption-textarea, .modal-sheet .field input, .add-friend input{
+  border:2px solid var(--ol-2); border-radius:14px; background:#221538;
+  box-shadow:inset 0 3px 0 rgba(0,0,0,0.28);
+  transition:border-color .15s ease, box-shadow .2s var(--pop);
+}
+.field input:focus, .field textarea.caption-textarea:focus, .add-friend input:focus{
+  outline:none; border-color:var(--accent); box-shadow:inset 0 3px 0 rgba(0,0,0,0.28), 0 0 0 3px rgba(139,92,246,0.25);
+}
+
+/* ---------- kód: lobby box a políčka ---------- */
+.code-display{
+  font-family:'Unbounded',sans-serif; font-size:1.9rem; font-weight:800; color:#fff; border-radius:20px;
+  border:3px solid #4C2A8C; background:var(--surface-2);
+  text-shadow:0 3px 0 rgba(14,6,32,0.7);
+  box-shadow:0 5px 0 #2A1456, inset 0 -5px 0 rgba(0,0,0,0.2), inset 0 3px 0 var(--purple-hi);
+  margin-bottom:8px;
+}
+.code-box{
+  border:3px solid var(--ol-2); border-radius:16px; background:var(--surface-2);
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(0,0,0,0.2), inset 0 2px 0 var(--purple-hi);
+  text-shadow:0 2px 0 rgba(14,6,32,0.6);
+}
+.code-box.filled{ border-color:#5B34B8; --lip:#3B1F78; }
+.code-box.active{ border-color:var(--accent); --lip:#4C1D95; animation:code-bob .5s var(--pop); }
+@keyframes code-bob{ 0%{ transform:scale(0.9,1.08); } 100%{ transform:none; } }
+.my-code{ text-shadow:0 3px 0 rgba(14,6,32,0.7); }
+
+/* ---------- výběr nastavení, záložky, balíčky otázek ---------- */
+.option-chip, .pack-chip, .shop-tab, .rules-tab{
+  border:3px solid var(--ol-2); background:#2A1552; --lip:var(--ol);
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(0,0,0,0.25), inset 0 2px 0 var(--purple-hi);
+}
+.rules-tab{ border-radius:18px; --lipy:3px; }
+.option-chip.active, .shop-tab.active, .pack-chip-classic.active{
+  background:#C13CF5; border-color:#7E1FA8; --lip:#5E1580;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(94,21,128,0.45), inset 0 3px 0 rgba(240,171,252,0.35);
+}
+.pack-chip-spicy.active{ background:linear-gradient(135deg,#F97316,#DC2626); border-color:#8F2410; --lip:#6A1A0A;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(106,26,10,0.4), inset 0 3px 0 rgba(254,215,170,0.3); }
+.pack-chip-family.active{ background:linear-gradient(135deg,#34D399,#0EA5E9); border-color:#0B6A7A; --lip:#074A56;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(7,74,86,0.4), inset 0 3px 0 rgba(167,243,208,0.3); }
+.pack-chip-school.active{ background:linear-gradient(135deg,#FACC15,#3B82F6); border-color:#1E3A8A; --lip:#152A66;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(21,42,102,0.4), inset 0 3px 0 rgba(254,240,138,0.3); }
+.rules-tab.active{
+  background:color-mix(in srgb, var(--c1) 28%, #2A1552); border-color:color-mix(in srgb, var(--c1) 50%, var(--ol));
+  --lip:color-mix(in srgb, var(--c1) 40%, var(--ol));
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(0,0,0,0.2), inset 0 2px 0 color-mix(in srgb, var(--c1) 30%, transparent);
+}
+.shop-tab-dot{ border:2px solid #0F6B4C; width:11px; height:11px; box-shadow:none; }
+.shop-tab.active .shop-tab-dot{ box-shadow:none; }
+.shop-tabs{ padding:8px 2px 10px; }
+.shop-tab-body{ animation:rise-pop .4s var(--pop) backwards; }
+.setting-title{ font-family:'Unbounded',sans-serif; font-weight:700; font-size:0.85rem; }
+
+/* ---------- spodní lišta ---------- */
+.bottom-nav{
+  background:#1C1231; backdrop-filter:none; -webkit-backdrop-filter:none;
+  border:3px solid var(--ol); border-radius:26px;
+  box-shadow:0 5px 0 var(--lip-c), inset 0 -4px 0 rgba(0,0,0,0.18), inset 0 2px 0 var(--purple-hi);
+}
+.nav-indicator{
+  background:var(--accent); border:3px solid #5B34B8; border-radius:18px; top:6px; bottom:8px;
+  box-shadow:0 3px 0 #4C1D95, inset 0 -4px 0 rgba(46,16,101,0.35), inset 0 3px 0 rgba(196,181,253,0.28);
+  transition:transform .42s var(--pop);
+}
+.bottom-nav-btn{ border-radius:18px; min-height:50px; }
+.bottom-nav-btn:active{ transform:scale(0.94); }
+.nav-badge{ border:2px solid #7F1D1D; box-shadow:0 0 0 2px var(--bg); }
+.nav-dot{ border:2px solid #0F766E; box-shadow:0 0 0 2px var(--bg); }
+#app.screen-enter > *:not(.bottom-nav){ animation:screen-in .4s var(--pop) both; }
+
+/* ---------- dlaždice módů ---------- */
+.mode-card{
+  --lip:color-mix(in srgb, var(--c1) 30%, var(--ol)); --lipy:5px;
+  border:3px solid color-mix(in srgb, var(--c1) 45%, var(--ol)); border-radius:24px;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -6px 0 rgba(0,0,0,0.2);
+  animation:rise-pop .5s var(--pop) backwards;
+}
+.mode-card.compact{ border-radius:22px; }
+.mode-card:hover, .mode-card:active{ border-color:color-mix(in srgb, var(--c1) 55%, var(--ol)); }
+@keyframes rise-pop{ 0%{ opacity:0; transform:translateY(16px) scale(0.94,0.9); } 60%{ opacity:1; transform:translateY(-3px) scale(1.01,1.02); } 100%{ opacity:1; transform:none; } }
+.mode-tile{
+  position:relative; overflow:hidden; border:2px solid color-mix(in srgb, var(--c1) 50%, var(--ol)); border-radius:16px;
+  background:linear-gradient(135deg, var(--c1), var(--c2));
+  box-shadow:0 3px 0 color-mix(in srgb, var(--c1) 40%, var(--ol)), inset 0 -5px 0 rgba(0,0,0,0.2);
+}
+.mode-tile::before{
+  content:''; position:absolute; z-index:0; top:3px; left:4px; width:55%; height:34%; border-radius:50%; pointer-events:none;
+  background:color-mix(in srgb, var(--c2) 60%, #FDE68A); opacity:0.35; transform:rotate(-18deg);
+}
+.mode-tile svg{ position:relative; z-index:1; filter:drop-shadow(0 2px 0 rgba(14,6,32,0.35)); }
+.mode-card h3{ text-shadow:0 2px 0 rgba(14,6,32,0.5); }
+.rules-tab .mode-tile, .pack-mode .mode-tile, .single-game-card .mode-tile, .invite-mode .mode-tile{ border-radius:14px; }
+.mode-card .ribbon{ background:#1B4A33; box-shadow:0 0 0 2px #1F7A47, 0 3px 0 2px #145232; top:18px; right:18px; }
+.mode-card .ribbon.ribbon-party{ background:#3B2270; box-shadow:0 0 0 2px #5B34B8, 0 3px 0 2px #3B1F78; }
+.mode-card .ribbon.ribbon-locked, .mode-card .ribbon.ribbon-ticket{ background:var(--gold); box-shadow:0 0 0 2px #8A5A0B, 0 3px 0 2px #8A5A0B; }
+.mode-card.compact .ribbon{ top:14px; right:14px; }
+.mode-players{ background:rgba(14,6,32,0.35); box-shadow:0 0 0 2px rgba(14,6,32,0.55); }
+
+/* ---------- štítky, odznaky, pilulky (obrys + lem bez změny rozměrů) ---------- */
+.badge{ box-shadow:0 0 0 2px #5B34B8, 0 3px 0 2px #4C1D95; margin-bottom:2px; }
+.mode-new-tag{ box-shadow:0 0 0 2px #3730A3, 0 3px 0 2px #28207A; }
+.spicy-badge{ box-shadow:0 0 0 2px #8F2410, 0 3px 0 2px #6A1A0A; }
+.pack-badge-family, .pack-badge-school{ box-shadow:0 0 0 2px #0B4F6A, 0 3px 0 2px #08384C; }
+.dev-badge{ box-shadow:0 0 0 2px #8F2410, 0 3px 0 2px #6A1A0A; }
+.coin-pack-tag{ box-shadow:0 0 0 2px #8A5A0B, 0 3px 0 2px #8A5A0B; }
+.coin-pack-bonus{ box-shadow:0 0 0 2px #1F7A47, 0 3px 0 2px #145232; }
+.pack-discount{ box-shadow:0 0 0 2px #991B1B, 0 3px 0 2px #7F1D1D; }
+.case-new-tag{ box-shadow:0 0 0 2px #9A3412, 0 3px 0 2px #6A2208; }
+.case-timer{ box-shadow:0 0 0 2px #9A3412, 0 3px 0 2px #6A2208; }
+.role-badge{ border:2px solid #0F766E; box-shadow:0 3px 0 #0B4F4A; }
+.shop-state{ box-shadow:0 0 0 2px var(--ol-2), 0 3px 0 2px var(--ol-2); }
+.shop-state.equipped{ box-shadow:0 0 0 2px #1F7A47, 0 3px 0 2px #145232; }
+.impostor-reveal-label{ box-shadow:0 0 0 2px #7F1D1D, 0 3px 0 2px #5B1313; }
+.impostor-gain, .pack-coins{ box-shadow:0 0 0 2px rgba(14,6,32,0.6); }
+.daily-wait{ border:2px solid var(--ol-2); box-shadow:0 3px 0 var(--lip-c); }
+.rules-list .num{ border:2px solid #5B34B8; box-shadow:0 2px 0 #4C1D95; }
+
+/* ---------- odznak mincí ---------- */
+.coin-badge{
+  background:color-mix(in srgb, var(--gold) 14%, var(--surface)); border:2px solid #7A5410;
+  box-shadow:0 3px 0 #4A3208, inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(240,180,41,0.14);
+  text-shadow:0 2px 0 rgba(14,6,32,0.6);
+}
+
+/* ---------- časovač a zadání ---------- */
+.timer{
+  align-self:center; width:fit-content; margin-left:auto; margin-right:auto; padding:6px 18px; border-radius:999px;
+  background:color-mix(in srgb, var(--gold) 16%, var(--surface)); border:3px solid #7A5410;
+  box-shadow:0 4px 0 #4A3208, inset 0 -3px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(240,180,41,0.14);
+  text-shadow:0 2px 0 rgba(14,6,32,0.6);
+}
+.timer.low{
+  background:color-mix(in srgb, var(--danger) 18%, var(--surface)); border-color:#991B1B; box-shadow:0 4px 0 #5B1313, inset 0 -3px 0 rgba(0,0,0,0.2);
+  animation:timer-tick 1s var(--pop) infinite;
+}
+@keyframes timer-tick{ 0%,100%{ transform:none; } 12%{ transform:scale(1.08,0.94); } 30%{ transform:scale(0.97,1.04); } }
+.prompt-box{ border-width:3px; border-color:#4C2A8C; background:linear-gradient(180deg, var(--surface) 0 85%, #181029 85%); box-shadow:0 5px 0 #2A1456, inset 0 3px 0 var(--purple-hi); }
+.prompt-box .prompt-text{ text-shadow:0 3px 0 rgba(14,6,32,0.6); }
+.camera-wrap{ border:3px solid var(--ol-2); border-radius:22px; box-shadow:0 4px 0 var(--lip-c); }
+.sent-photo img{ border:3px solid var(--ol-2); box-shadow:0 4px 0 var(--lip-c); }
+.sent-check{ border:3px solid #145232; box-shadow:0 0 0 4px var(--bg); animation:sent-pop .5s var(--pop) both; }
+.big-icon{ border-width:3px; box-shadow:0 4px 0 color-mix(in srgb, var(--tone) 30%, var(--ol)); }
+.vote-card .tag{ background:linear-gradient(transparent, rgba(14,6,32,0.78)); }
+.vote-card .check{ border:2px solid #4C1D95; box-shadow:0 2px 0 #4C1D95; animation:sent-pop .35s var(--pop) both; }
+.swatch{ border:3px solid var(--ol-2); box-shadow:0 3px 0 var(--lip-c); transition:transform .16s var(--pop); }
+.swatch.active{ border-color:#C4B5FD; box-shadow:0 3px 0 #4C1D95; transform:translateY(-2px) scale(1.1); }
+
+/* ---------- řádky: bouncy vyjetí ---------- */
+.player-row, .friend-row, .scoreboard .row{ animation:row-pop .36s var(--pop) backwards; }
+@keyframes row-pop{ from{ opacity:0; transform:translateY(8px) scale(0.97,0.92); } to{ opacity:1; transform:none; } }
+.friend-row{ border-radius:20px; --lipy:3px; }
+.presence-dot{ border:2px solid #0A0416; box-shadow:0 0 0 2px var(--surface); }
+.presence-dot.lobby{ box-shadow:0 0 0 2px var(--surface); }
+
+/* ---------- pódium a medaile ---------- */
+.podium-bar{ border:3px solid; border-bottom:none; border-radius:18px 18px 0 0; transform-origin:50% 100%; animation:podium-up .6s var(--pop) backwards; }
+.place-1 .podium-bar{ background:linear-gradient(180deg, #E0A526 0 80%, #B97F10 80%); border-color:#7A5410; box-shadow:inset 0 6px 0 rgba(255,225,140,0.35); }
+.place-2 .podium-bar{ background:linear-gradient(180deg, #A5A5B3 0 80%, #82828F 80%); border-color:#55555F; box-shadow:inset 0 6px 0 rgba(224,224,240,0.3); animation-delay:.12s; }
+.place-3 .podium-bar{ background:linear-gradient(180deg, #C27A45 0 80%, #9C5C2E 80%); border-color:#6E3E1C; box-shadow:inset 0 6px 0 rgba(255,200,150,0.3); animation-delay:.24s; }
+.podium-bar-label{ color:#1C1231; font-family:'Unbounded',sans-serif; }
+@keyframes podium-up{ from{ transform:scaleY(0.05); opacity:0; } 60%{ transform:scaleY(1.06); opacity:1; } to{ transform:none; } }
+.podium-medal .medal{ filter:drop-shadow(0 3px 0 rgba(14,6,32,0.6)); animation:medal-pop .7s var(--pop) .3s backwards; }
+@keyframes medal-pop{ 0%{ transform:scale(0) rotate(-20deg); } 60%{ transform:scale(1.2,0.9); } 100%{ transform:none; } }
+.podium-score, .podium-names{ text-shadow:0 2px 0 rgba(14,6,32,0.6); }
+
+/* ---------- okno (modal) ---------- */
+.modal-backdrop{ background:rgba(10,6,20,0.72); backdrop-filter:none; -webkit-backdrop-filter:none; animation:fade-in .2s ease; }
+.modal-sheet{
+  border:3px solid #3B2270; border-bottom-width:0; border-radius:26px 26px 0 0;
+  box-shadow:inset 0 3px 0 var(--purple-hi);
+  animation:sheet-pop .5s var(--pop) both; transform-origin:50% 100%;
+}
+@media (min-width:560px){ .modal-sheet{ border-width:3px; border-radius:26px; box-shadow:0 6px 0 var(--lip-c), inset 0 3px 0 var(--purple-hi); } }
+@keyframes sheet-pop{
+  0%{ opacity:0; transform:translateY(70px) scale(0.96,1.05); }
+  55%{ opacity:1; transform:translateY(-8px) scale(1.01,0.98); }
+  100%{ opacity:1; transform:none; }
+}
+.modal-sheet h2{ text-shadow:0 3px 0 rgba(14,6,32,0.6); }
+.modal-close{ font-weight:700; transition:transform .16s var(--pop); }
+.modal-close:active{ transform:scale(0.92); }
+/* × zavírátko: šedý kruh, červený křížek — kreslený obrys a lem */
+.x-close, .kick-btn, .req-no{
+  background:#5A5470; border:3px solid #2A2540; color:#EF4444; backdrop-filter:none; -webkit-backdrop-filter:none; --lipy:3px;
+  box-shadow:0 var(--lipy) 0 #1E1A30, inset 0 -3px 0 rgba(30,26,48,0.45), inset 0 2px 0 rgba(200,190,230,0.25);
+}
+.kick-btn, .req-no{ border-width:2px; }
+.x-close .ico, .kick-btn .ico, .req-no .ico{ stroke-width:3.6; filter:drop-shadow(0 1px 0 rgba(60,10,10,0.6)); }
+.x-close:active, .kick-btn:active, .req-no:active{ background:#5A5470; }
+.req-yes{ border:2px solid #046C4E; box-shadow:0 3px 0 #064E3B, inset 0 -3px 0 rgba(4,108,78,0.4); }
+.friend-remove{ transition:transform .16s var(--pop); }
+.friend-remove:active{ transform:scale(0.85); }
+
+/* ---------- toast ---------- */
+.toast{
+  background:#3B2270; color:#fff; border:3px solid var(--ol); border-radius:20px;
+  box-shadow:0 5px 0 var(--lip-c), inset 0 -4px 0 rgba(0,0,0,0.2), inset 0 2px 0 rgba(196,181,253,0.25);
+  text-shadow:0 2px 0 rgba(14,6,32,0.5);
+  transform:translate(-50%, 24px) scale(0.85,0.7);
+  transition:opacity .2s ease, transform .4s var(--pop);
+}
+.toast.show{ transform:translate(-50%, 0) scale(1); }
+
+/* ---------- profil, inventář, sdílené drobnosti ---------- */
+.profile-progress{ height:12px; border:2px solid var(--ol-2); background:#120826; box-shadow:inset 0 2px 0 rgba(0,0,0,0.4); }
+.profile-progress > div{ box-shadow:inset 0 -3px 0 rgba(0,0,0,0.2); }
+.frame-inner, .name-preview, .looks-photo{ box-shadow:inset 0 3px 0 rgba(0,0,0,0.3); }
+.no-ads-icon, .inventory-btn-icon, .daily-ticket-icon, .qp-tile{ border:2px solid var(--ol); box-shadow:0 3px 0 var(--ol), inset 0 -4px 0 rgba(0,0,0,0.2); }
+.volume-slider{ height:14px; border:2px solid var(--ol-2); box-shadow:inset 0 2px 0 rgba(0,0,0,0.35); }
+.volume-slider::-webkit-slider-thumb{ background:#C4B5FD; border:3px solid #5B34B8; box-shadow:0 3px 0 #3B1F78; }
+.volume-slider::-moz-range-thumb{ background:#C4B5FD; border:3px solid #5B34B8; box-shadow:0 3px 0 #3B1F78; }
+.spinner{ border-width:4px; }
+.odds-chip i{ box-shadow:none; border:2px solid color-mix(in srgb, var(--rc) 40%, var(--ol)); }
+.case-info-btn{ border:2px solid var(--ol-2); box-shadow:0 3px 0 var(--lip-c); --lipy:3px; }
+
+/* ---------- úklid: žádný bílý lesk (Party balíček) ---------- */
+.pack-card::after{ display:none; }
+
+@media (prefers-reduced-motion: reduce){
+  .mode-card, .player-row, .friend-row, .scoreboard .row, .podium-bar, .podium-medal .medal, .modal-sheet, .modal-backdrop,
+  .shop-tab-body, .timer.low, .code-box.active, .vote-card .check, .sent-check{ animation:none !important; }
+  .btn, .option-chip, .toast, .x-close, .nav-indicator{ transition:none !important; }
 }

@@ -7,7 +7,7 @@
 
 function myLooks() {
   const d = shopLoad();
-  return { frame: d.equipped.frame || null, name: d.equipped.name || null, avatar: getAvatar() };
+  return { frame: d.equipped.frame || null, name: d.equipped.name || null, avatar: getAvatar(), ownedCount: d.owned.length };
 }
 
 // ------------------------------------------------------- profilovka ---
@@ -317,6 +317,7 @@ function showEditProfileModal() {
         if (btn.dataset.id) d.equipped[btn.dataset.section] = btn.dataset.id;
         else delete d.equipped[btn.dataset.section];
         shopSave(d);
+        sendHello(); // přátelé mají vidět nový vzhled hned
         render();
       };
     });

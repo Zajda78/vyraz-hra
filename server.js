@@ -32,8 +32,8 @@ const CAPTION_SECONDS_MIN = 10;
 const CAPTION_SECONDS_MAX = 180;
 const CAPTION_WIN_POINTS = 100;
 const COPY_SECONDS_DEFAULT = 20; // Copycat — čas na napodobení obličeje
-const COPY_SECONDS_OPTIONS = [10, 15, 20, 30];
-const COPY_PEEK_SECONDS = 3; // Copycat — tolik vteřin je vidět originál
+const PEEK_SECONDS_DEFAULT = 3; // Copycat — tolik vteřin je vidět originál (nastavuje hostitel)
+const PEEK_SECONDS_OPTIONS = [2, 3, 5, 8, 10];
 const COPY_WIN_POINTS = 100;
 // --- Snap Hunt --- čas na hledání a vyfocení (hostitel vybírá v lobby)
 const HUNT_SECONDS_DEFAULT = 60;
@@ -44,7 +44,7 @@ const HUNT_SECONDS_MAX = 180;
 const MIN_PLAYERS = 3; // všechny módy se hrají od 3 hráčů
 const IMPOSTOR_VOTE_SECONDS = 30;
 const IMPOSTOR_CIV_WIN_POINTS = 100; // každý z ostatních, když impostora odhalí
-const IMPOSTOR_WIN_POINTS = 250; // impostor, když ho neodhalí
+const IMPOSTOR_WIN_POINTS = 250; // maximum pro impostora (nikdo ho neuhodl); s každým hlasem klesá
 
 // --- Mince za hru ---
 // Záměrně skromné, ať se pořád vyplatí kupovat balíčky mincí:
@@ -151,6 +151,18 @@ function sanitizeAvatar(raw) {
   const v = raw && raw.avatar;
   if (typeof v !== 'string' || v.length > AVATAR_MAX_CHARS) return null;
   return /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v) ? v : null;
+}
+
+// Počet vlastněných skinů (sbírka) — jen nezáporné celé číslo, jinak 0.
+function sanitizeOwnedCount(raw) {
+  const n = raw && raw.ownedCount;
+  return Number.isInteger(n) && n >= 0 && n <= 1000 ? n : 0;
+}
+
+// Kódy přátel, které si telefon drží — jen platné kódy, max 200.
+function sanitizeFriendCodes(raw) {
+  if (!Array.isArray(raw)) return new Set();
+  return new Set(raw.slice(0, 200).map((c) => String(c).toUpperCase()).filter((c) => /^[A-Z2-9]{6}$/.test(c)));
 }
 
 // Vzhled, jak ho vidí ostatní: rámeček + barva jména + profilovka.
@@ -897,15 +909,28 @@ function sendToUser(code, msg, { queue = false } = {}) {
   return sent;
 }
 
-function friendStatus(code) {
+// Přátelé jsou vzájemní, když si každý z nich drží kód toho druhého
+// (telefony kódy posílají v "hello" a "friends_status"). Jen vzájemní
+// přátelé dostanou profilovku a sbírku — ostatní vidí jen rámeček a jméno.
+function areMutualFriends(a, b) {
+  return !!(a && b && users.get(a)?.friends?.has(b) && users.get(b)?.friends?.has(a));
+}
+
+function friendStatus(code, requester) {
   const u = users.get(code);
-  if (!u || u.sockets.size === 0) return { code, online: false };
+  const mutual = !!u && areMutualFriends(code, requester);
+  // profil přítele: poslední známý vzhled + profilovka + sbírka (i když je offline)
+  const profile = mutual ? { looks: publicLooks(u), ownedCount: u.ownedCount || 0 } : null;
+  if (!u || u.sockets.size === 0) return profile ? { code, online: false, profile } : { code, online: false };
   const lobby = u.lobbyCode ? lobbies.get(u.lobbyCode) : null;
+  const looks = publicLooks(u);
+  if (!mutual) looks.avatar = null;
   return {
     code,
     online: true,
     name: u.name,
-    looks: publicLooks(u),
+    looks,
+    ...(profile ? { profile } : {}),
     lobby: lobby
       ? { code: lobby.code, mode: lobby.mode, phase: lobby.phase, count: lobby.players.size, joinable: lobby.phase === 'lobby' && lobby.players.size < 10 }
       : null,
@@ -935,7 +960,8 @@ function newLobby(hostId) {
     lang: 'en', // jazyk otázek = jazyk hostitele (en | cs | es)
     huntPack: 'anywhere', // Snap Hunt — žánr (anywhere | home | school | outdoors | party | food)
     // --- Main character (mode: 'caption') ---
-    copySeconds: COPY_SECONDS_DEFAULT, // Copycat — čas na kopírování obličeje
+    copySeconds: COPY_SECONDS_DEFAULT, // Copycat — čas na kopírování obličeje (pevný)
+    peekSeconds: PEEK_SECONDS_DEFAULT, // Copycat — jak dlouho je vidět fotka originálu
     captionSeconds: CAPTION_SECONDS_DEFAULT, // jediná fáze s časovým limitem — psaní popisků
     subjectOrder: [], // pořadí hráčů, kdo bude objekt fotky, zamíchané při startu hry
     subjectIndex: -1,
@@ -1082,14 +1108,20 @@ function finishImpostorVoting(lobby) {
   const maxOther = Math.max(0, ...[...tally.entries()].filter(([pid]) => pid !== lobby.impostorId).map(([, v]) => v));
   // Odhalený = má víc hlasů než kdokoli jiný. Remíza nebo nula hlasů = impostor unikl.
   const caught = impostorVotes > 0 && impostorVotes > maxOther;
+  // Body impostora: čím víc hráčů ho uhodlo, tím míň. Hlasy impostora samotného se nepočítají.
+  const correctVotes = [...lobby.votes.entries()].filter(([voter, target]) => voter !== lobby.impostorId && target === lobby.impostorId).length;
+  const eligibleVoters = Math.max(correctVotes, connectedPlayers(lobby).filter((p) => p.id !== lobby.impostorId).length);
+  const impostorPoints = eligibleVoters > 0
+    ? Math.round(IMPOSTOR_WIN_POINTS * (1 - correctVotes / eligibleVoters))
+    : IMPOSTOR_WIN_POINTS;
 
   for (const p of lobby.players.values()) {
     if (caught && p.id !== lobby.impostorId) {
       p.score += IMPOSTOR_CIV_WIN_POINTS;
       p.coinsEarned = (p.coinsEarned || 0) + COINS_IMPOSTOR_CIV_WIN;
     }
+    if (p.id === lobby.impostorId) p.score += impostorPoints;
     if (!caught && p.id === lobby.impostorId) {
-      p.score += IMPOSTOR_WIN_POINTS;
       p.coinsEarned = (p.coinsEarned || 0) + COINS_IMPOSTOR_WIN;
     }
   }
@@ -1104,7 +1136,9 @@ function finishImpostorVoting(lobby) {
     impostorPrompt: lobby.impostorPrompt,
     caught,
     civPoints: IMPOSTOR_CIV_WIN_POINTS,
-    impostorPoints: IMPOSTOR_WIN_POINTS,
+    impostorPoints,
+    correctVotes,
+    eligibleVoters,
     civCoins: COINS_IMPOSTOR_CIV_WIN,
     impostorCoins: COINS_IMPOSTOR_WIN,
     cards: lobby.cardOrder
@@ -1263,8 +1297,8 @@ function afterCopyOriginal(lobby) {
   if (lobby.phase !== 'copy_original' || !lobby.subjectPhoto) return;
   clearTimer(lobby);
   lobby.phase = 'copy_peek';
-  lobby.deadlineAt = Date.now() + COPY_PEEK_SECONDS * 1000;
-  lobby.timer = setTimeout(() => beginCopying(lobby), COPY_PEEK_SECONDS * 1000);
+  lobby.deadlineAt = Date.now() + lobby.peekSeconds * 1000;
+  lobby.timer = setTimeout(() => beginCopying(lobby), lobby.peekSeconds * 1000);
   broadcast(lobby);
 }
 
@@ -1590,12 +1624,13 @@ function publicState(lobby, viewerId) {
     drawSeconds: lobby.drawSeconds,
     captionSeconds: lobby.captionSeconds,
     copySeconds: lobby.copySeconds,
+    peekSeconds: lobby.peekSeconds,
     huntSeconds: lobby.huntSeconds,
     huntPack: lobby.huntPack,
     promptPack: lobby.promptPack,
     prompt: promptFor(lobby, viewerId),
-    // impostor o své roli neví — dozví se ji až ve výsledcích kola
-    isImpostor: lobby.mode === 'impostor' && lobby.phase === 'results' && viewerId === lobby.impostorId,
+    // impostor o své roli neví při focení — dozví se ji při hlasování (jen on sám) a ve výsledcích
+    isImpostor: lobby.mode === 'impostor' && (lobby.phase === 'results' || lobby.phase === 'impostor_voting') && viewerId === lobby.impostorId,
     players,
     youId: viewerId,
     isHost: viewerId === lobby.hostId,
@@ -1654,6 +1689,11 @@ function publicState(lobby, viewerId) {
     base.activeCount = connectedPlayers(lobby).length;
     base.youVoted = lobby.votes.has(viewerId);
     base.yourVote = lobby.votes.get(viewerId) || null;
+    // zadání obou stran vidí jen impostor
+    if (viewerId === lobby.impostorId) {
+      base.civilPrompt = lobby.civilPrompt;
+      base.impostorPrompt = lobby.impostorPrompt;
+    }
   }
 
   if (lobby.phase === 'subject_photo') {
@@ -1917,6 +1957,9 @@ wss.on('connection', (ws) => {
       u.name = String(msg.name || 'Player').slice(0, 20);
       u.looks = sanitizeLooks(msg.looks);
       u.avatar = sanitizeAvatar(msg.looks);
+      u.ownedCount = sanitizeOwnedCount(msg.looks);
+      if (Array.isArray(msg.friends)) u.friends = sanitizeFriendCodes(msg.friends);
+      else if (!u.friends) u.friends = new Set();
       u.sockets.add(ws);
       users.set(code, u);
       if (lobby) u.lobbyCode = lobby.code;
@@ -1931,7 +1974,9 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'friends_status') {
       const codes = Array.isArray(msg.codes) ? msg.codes.slice(0, 200) : [];
-      ws.send(JSON.stringify({ type: 'friends_status', friends: codes.map((c) => friendStatus(String(c).toUpperCase())) }));
+      const mine = me && users.get(me);
+      if (mine) mine.friends = sanitizeFriendCodes(codes); // dotaz zároveň říká, koho mám v přátelích
+      ws.send(JSON.stringify({ type: 'friends_status', friends: codes.map((c) => friendStatus(String(c).toUpperCase(), me)) }));
       return;
     }
 
@@ -2110,7 +2155,7 @@ wss.on('connection', (ws) => {
 
     if (msg.type === 'set_copy_settings' && playerId === lobby.hostId && lobby.phase === 'lobby' && lobby.mode === 'copycat') {
       const sec = Number(msg.seconds);
-      if (COPY_SECONDS_OPTIONS.includes(sec)) lobby.copySeconds = sec;
+      if (PEEK_SECONDS_OPTIONS.includes(sec)) lobby.peekSeconds = sec; // hostitel volí, jak dlouho je vidět originál
       broadcast(lobby);
       return;
     }
