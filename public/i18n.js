@@ -37,6 +37,11 @@ const DICT_ROWS = [
   // obecné
   ['Connecting to the server…', 'Připojuji se k serveru…', 'Conectando con el servidor…'],
   ['Games', 'Hry', 'Juegos'],
+  // dárkový odkaz (gift.js)
+  ['Frame', 'Rámeček', 'Marco'],
+  ['You got a gift!', 'Máš dárek!', '¡Tienes un regalo!'],
+  ['You already claimed this gift.', 'Tento dárek už jsi vyzvedl.', 'Ya reclamaste este regalo.'],
+  ["Gift links don't work in dev mode.", 'Dárkové odkazy ve vývojářském režimu nefungují.', 'Los enlaces de regalo no funcionan en modo desarrollador.'],
   ['Shop', 'Obchod', 'Tienda'],
   ['Friends', 'Přátelé', 'Amigos'],
   ['Settings', 'Nastavení', 'Ajustes'],
@@ -395,6 +400,7 @@ const PATTERNS = [
   [/^Duplicate — you get$/, (m, lang) => (lang === 'cs' ? 'Duplikát — dostáváš' : 'Repetido: recibes')],
   [/^Already yours — you get$/, (m, lang) => (lang === 'cs' ? 'Už to máš — dostáváš' : 'Ya lo tienes: recibes')],
   [/^You own the Party Pack — you get$/, (m, lang) => (lang === 'cs' ? 'Máš Party Pack — dostáváš' : 'Tienes el Party Pack: recibes')],
+  [/^\+(\d+) coins$/, (m, lang) => (lang === 'cs' ? `+${m[1]} mincí` : `+${m[1]} monedas`)],
   [/^Equipped: (.+)$/, (m, lang) => (lang === 'cs' ? `Nasazeno: ${m[1]}` : `Equipado: ${m[1]}`)],
   [/^Unlocked! \+(\d+) coins \(prototype — nothing was charged\)$/, (m, lang) => (lang === 'cs' ? `Odemčeno! +${m[1]} mincí (prototyp — nic se nezaplatilo)` : `¡Desbloqueado! +${m[1]} monedas (prototipo: no se cobró nada)`)],
   [/^(.+) is in the (Party Pack|Question Packs)$/, (m, lang) => (lang === 'cs' ? `${tr(m[1], lang)} je v nabídce ${tr(m[2], lang)}` : `${tr(m[1], lang)} está en ${tr(m[2], lang)}`)],

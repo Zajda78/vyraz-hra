@@ -2878,3 +2878,34 @@ svg.ico[stroke="currentColor"]{ stroke-width:2.4; }
   .shop-tab-body, .timer.low, .code-box.active, .vote-card .check, .sent-check{ animation:none !important; }
   .btn, .option-chip, .toast, .x-close, .nav-indicator{ transition:none !important; }
 }
+
+/* ======================= Obžerství — jídlo a fast food (kreslený styl) =======================
+   Okraj = ploché pruhy kečupu, hořčice a housky s tmavším obrysem (.bv-<id>), pomalu se otáčí; bez záře a bílých záblesků.
+   Vrstvy burgeru odskakují (ob-layer), hranolky se vrtí (ob-fry); ostatní ozdoby používají rb-squash / rb-pop / dn-wobble. */
+.frame-aura.aura-frame-obzerstvi{
+  background:conic-gradient(from var(--fa), #EF4444 0 11%, #FDE047 0 22%, #F59E0B 0 33%, #EF4444 0 44%, #FDE047 0 55%, #F59E0B 0 66%, #EF4444 0 77%, #FDE047 0 88%, #B45309 0 100%);
+  animation:lg-spin 22s linear infinite;
+}
+.frame-aura.aura-frame-obzerstvi::before{
+  background:
+    radial-gradient(ellipse 2.6% 2.6% at 15% 26%, #FEF3C7 50%, transparent 100%),
+    radial-gradient(ellipse 2.2% 2.2% at 60% 6%, #FED7AA 50%, transparent 100%),
+    radial-gradient(ellipse 2.6% 2.6% at 91% 58%, #FEF3C7 50%, transparent 100%),
+    radial-gradient(ellipse 2.2% 2.2% at 38% 94%, #FED7AA 50%, transparent 100%);
+  animation:lg-pulse 2.6s ease-in-out infinite;
+}
+.bv-frame-obzerstvi{ --bv-hi:transparent; --bv-lo:transparent; --bv-out:rgba(127,29,29,0.95); --bv-in:rgba(127,29,29,0.85); }
+
+.frame-decor .ob-layer{ animation:ob-layer 1.8s cubic-bezier(.34,1.56,.64,1) infinite; }
+.frame-decor .ob-fry{ transform-box:fill-box; transform-origin:50% 100%; animation:ob-fry 1.4s ease-in-out infinite; }
+@keyframes ob-layer{ 0%,100%{ transform:translateY(0); } 40%{ transform:translateY(-2.2px); } 65%{ transform:translateY(0.6px); } }
+@keyframes ob-fry{ 0%,100%{ transform:rotate(-6deg); } 50%{ transform:rotate(6deg) translateY(-1px); } }
+@media (prefers-reduced-motion: reduce){
+  .frame-decor .ob-layer, .frame-decor .ob-fry{ animation:none !important; }
+}
+
+/* dárkové okno: nadpis a mince nad rámečkem */
+.gift-title{ margin:0 0 4px; text-align:center; }
+.gift-coins{ display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Unbounded',sans-serif; font-weight:800; font-size:1.25rem; color:#FDE68A; text-shadow:0 3px 0 rgba(14,6,32,0.55); }
+.gift-coins .wheel-reveal-art{ width:46px; height:40px; animation:rb-pop 2.2s cubic-bezier(.34,1.56,.64,1) infinite; }
+@media (prefers-reduced-motion: reduce){ .gift-coins .wheel-reveal-art{ animation:none; } }

@@ -92,6 +92,66 @@ function note(cx, cy, s, fill, delay = 0) {
   </g>`;
 }
 
+// Obžerství (legendary): kreslené jídlo — burger s odskakujícími vrstvami, hranolky, pizza, kelímek, donut a kapky kečupu
+function obBurgerShapes() {
+  const o = 1.8;
+  return `<g class="ob-layer" style="animation-delay:-0.9s"><path d="M-13 4 H13 Q13 10.5 7 10.5 H-7 Q-13 10.5 -13 4Z" fill="#F59E0B" stroke="#92400E" stroke-width="${o}" stroke-linejoin="round"/>
+      <path d="M-11.5 7 H11.5 Q10.6 9.6 7 9.6 H-7 Q-10.6 9.6 -11.5 7Z" fill="#D97706"/></g>
+    <g class="ob-layer" style="animation-delay:-0.6s"><rect x="-14" y="-2" width="28" height="7" rx="3.5" fill="#92400E" stroke="#431407" stroke-width="${o}"/>
+      <rect x="-12" y="1.6" width="24" height="2.2" rx="1.1" fill="#7C2D12"/><ellipse cx="-7" cy="0" rx="3" ry="0.9" fill="#C2410C"/></g>
+    <g class="ob-layer" style="animation-delay:-0.3s"><path d="M-13 -2 H13 L10 3.4 L6.5 -0.4 L2 4.6 L-2 -0.4 L-9 3 Z" fill="#FDE047" stroke="#CA8A04" stroke-width="1.5" stroke-linejoin="round"/></g>
+    <g class="ob-layer" style="animation-delay:-0.15s"><path d="M-14 -3.5 Q-11 -7.5 -8 -4.5 Q-5 -7.8 -2 -4.5 Q1 -7.8 4 -4.5 Q7 -7.8 10 -4.5 Q12 -6.6 14 -3.5 Q12 -1 9 -2 L-9 -2 Q-12 -1 -14 -3.5Z" fill="#4ADE80" stroke="#166534" stroke-width="1.6" stroke-linejoin="round"/></g>
+    <g class="ob-layer"><path d="M-13.5 -5 Q-14 -18 0 -18 Q14 -18 13.5 -5Z" fill="#FBBF24" stroke="#B45309" stroke-width="${o}" stroke-linejoin="round"/>
+      <path d="M-13 -7.4 Q0 -4.4 13 -7.4 L13.5 -5 H-13.5Z" fill="#F59E0B"/>
+      <ellipse cx="-6" cy="-13.4" rx="3.6" ry="1.5" fill="#FEF3C7" transform="rotate(-30 -6 -13.4)"/>
+      <ellipse cx="1" cy="-11" rx="1.3" ry="0.7" fill="#FEF3C7" transform="rotate(-20 1 -11)"/><ellipse cx="7" cy="-12.5" rx="1.3" ry="0.7" fill="#FEF3C7" transform="rotate(25 7 -12.5)"/><ellipse cx="4" cy="-15.5" rx="1.2" ry="0.65" fill="#FEF3C7"/></g>`;
+}
+function obBurger(cx, cy, k, delay = 0) {
+  return `<g style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">${obBurgerShapes()}</g></g>`;
+}
+// krabička hranolků — tyčinky se vrtí
+function obFries(cx, cy, k, delay = 0) {
+  const l = '#B45309';
+  const stick = (x, h, r, d) => `<g class="ob-fry" style="animation-delay:${d}s"><rect x="${x}" y="${-h}" width="3.2" height="${h + 2}" rx="1.5" fill="#FDE047" stroke="${l}" stroke-width="1.2" transform="rotate(${r} ${x + 1.6} 0)"/></g>`;
+  return `<g class="rb-squash" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">
+    ${stick(-7, 12, -12, 0)}${stick(-3.4, 15, -3, -0.5)}${stick(0.4, 13.5, 4, -1)}${stick(3.8, 12, 12, -1.5)}
+    <path d="M-9 -2 H9 L7 12 H-7Z" fill="#EF4444" stroke="#991B1B" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M4.5 -2 H9 L7 12 H3.4Z" fill="#DC2626" stroke="none"/>
+    <ellipse cx="0" cy="5" rx="3.6" ry="3" fill="#FDE047" stroke="#CA8A04" stroke-width="1.1"/></g></g>`;
+}
+// kousek pizzy — špička dolů
+function obPizza(cx, cy, k, delay = 0) {
+  return `<g class="rb-pop" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})" stroke-linejoin="round">
+    <path d="M-11 -7 Q0 -12 11 -7 L1.4 12 Q0 13.6 -1.4 12Z" fill="#FDE047" stroke="#B45309" stroke-width="1.8"/>
+    <path d="M-3 4 L-1.4 12 Q0 13.6 1.4 12 L5 5 Q1 7 -3 4Z" fill="#FACC15" stroke="none"/>
+    <path d="M-12 -6 Q0 -13.5 12 -6 Q12.4 -3 10.4 -2.6 Q0 -8 -10.4 -2.6 Q-12.4 -3 -12 -6Z" fill="#FDBA74" stroke="#9A3412" stroke-width="1.7"/>
+    <circle cx="-3.4" cy="-0.4" r="2.5" fill="#EF4444" stroke="#991B1B" stroke-width="1.3"/><circle cx="3.6" cy="1.6" r="2.2" fill="#EF4444" stroke="#991B1B" stroke-width="1.3"/><circle cx="0" cy="7" r="1.5" fill="#EF4444" stroke="#991B1B" stroke-width="1"/></g></g>`;
+}
+// kelímek s brčkem
+function obCup(cx, cy, k, delay = 0) {
+  return `<g class="rb-squash" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M1 -8 L4 -16 H9" fill="none" stroke="#1D4ED8" stroke-width="4.4"/><path d="M1 -8 L4 -16 H9" fill="none" stroke="#60A5FA" stroke-width="2"/>
+    <path d="M-6.4 -7 H6.4 L4.8 11 Q0 12.4 -4.8 11Z" fill="#EF4444" stroke="#991B1B" stroke-width="1.8"/>
+    <path d="M2.6 -7 H6.4 L4.8 11 Q3.6 11.6 2.2 11.8Z" fill="#DC2626" stroke="none"/>
+    <rect x="-7.4" y="-10" width="14.8" height="3.6" rx="1.8" fill="#FDE047" stroke="#CA8A04" stroke-width="1.5"/>
+    <ellipse cx="0" cy="2.4" rx="3.2" ry="3" fill="#FDE047" stroke="#CA8A04" stroke-width="1.1"/></g></g>`;
+}
+// donut s růžovou polevou a posypem
+function obDonut(cx, cy, k, delay = 0) {
+  return `<g class="dn-wobble" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">
+    <circle r="9" fill="#FBBF24" stroke="#B45309" stroke-width="1.9"/>
+    <path d="M-6.5 -5.4 Q-1 -9.6 5.6 -6.6 Q9 -2.4 6.8 3 Q4.6 6 0.4 6.6 Q-6.6 6.8 -7.6 1 Q-8.6 -2.4 -6.5 -5.4Z" fill="#F472B6" stroke="#9D174D" stroke-width="1.3" stroke-linejoin="round"/>
+    <circle r="2.7" fill="#7C2D12" stroke="#431407" stroke-width="1.1"/>
+    <ellipse cx="-4.2" cy="-4.6" rx="2.2" ry="1" fill="#FBCFE8" transform="rotate(-35 -4.2 -4.6)"/>
+    <rect x="3.6" y="-4.4" width="2.6" height="1.1" rx="0.5" fill="#FDE047" transform="rotate(35 4.9 -3.8)"/><rect x="-6.2" y="1.4" width="2.6" height="1.1" rx="0.5" fill="#22D3EE" transform="rotate(-30 -4.9 2)"/><rect x="2.6" y="3.4" width="2.6" height="1.1" rx="0.5" fill="#4ADE80" transform="rotate(10 3.9 4)"/></g></g>`;
+}
+// kapka kečupu
+function obDrop(cx, cy, k, delay = 0) {
+  return `<g class="rb-pop" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">
+    <path d="M0 -6 Q5.4 1 4 4.6 Q2.4 7.6 0 7.6 Q-2.4 7.6 -4 4.6 Q-5.4 1 0 -6Z" fill="#EF4444" stroke="#991B1B" stroke-width="1.6" stroke-linejoin="round"/>
+    <ellipse cx="-1.6" cy="2" rx="1" ry="1.8" fill="#FCA5A5" transform="rotate(12 -1.6 2)"/></g></g>`;
+}
+
 Object.assign(FRAME_DECOR, {
   // Mráz (epická) — sněhové vločky, co se pomalu točí
   'frame-frost': () => `
@@ -144,7 +204,7 @@ function lavaDrip(x, delay, s, side = false) {
 // rámečky s vlastní barevnou září za sebou (CSS .halo-<id>)
 const FRAME_HALO_IDS = new Set(['frame-sweets']);
 
-const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire', 'frame-spacecat', 'frame-dino']);
+const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire', 'frame-spacecat', 'frame-dino', 'frame-obzerstvi']);
 const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava' };
 
 // Fortune — vrstvy navíc (vše barevné, bez bílé): paprsky, oběžná dráha mincí a čtyřlístků, plocha pro výbuchy
@@ -846,6 +906,16 @@ Object.assign(FRAME_DECOR, {
     ${dnPrint(106, 40, 0.8, -0.9)}
     ${rbStar(-4, 22, 4.6, '#FDE047', '#CA8A04', -0.5)}
     ${rbStar(84, -6, 3.8, '#FB923C', '#9A3412', -1.5)}`,
+
+  // Obžerství (legendary, jen z dárkového odkazu) — burger nahoře, hranolky, pizza, kelímek, donut a kapky kečupu
+  'frame-obzerstvi': () => `
+    ${obBurger(50, -2, 0.9, 0)}
+    ${obFries(96, 90, 0.95, -0.4)}
+    ${obPizza(4, 90, 0.9, -1.2)}
+    ${obCup(107, 38, 0.8, -0.8)}
+    ${obDonut(-3, 34, 0.8, -1.5)}
+    ${obDrop(24, 106, 0.6, -0.6)}
+    ${obDrop(80, -5, 0.5, -1.7)}`,
 });
 
 // ------------------------------------------ Legendary: průlety předmětů ---
@@ -874,6 +944,9 @@ const FLYBY_ART = {
 
   // Dino — kreslený pterodaktyl, mává křídly
   'frame-dino': { w: 56, h: 32, dir: true, flap: true, svg: `<svg viewBox="0 0 56 32"><g stroke="#166534" stroke-width="1.6" stroke-linejoin="round"><path d="M20 18 L3 22 L19 22.5Z" fill="#22C55E"/><path class="fb-wing" d="M33 14 Q30 3 13 1 Q20 7 19 13 Q25 8 27 15Z" fill="#22C55E"/><ellipse cx="29" cy="18" rx="11" ry="6.3" fill="#4ADE80"/><path class="fb-wing fb-wing2" d="M29 21 Q29 29 16 31 Q23 26 21 21Z" fill="#16A34A"/><circle cx="40" cy="14" r="5.5" fill="#4ADE80"/></g><path d="M44 12.2 L54.5 15 L44 16.8Z" fill="#FDBA74" stroke="#9A3412" stroke-width="1.4" stroke-linejoin="round"/><path d="M37 9.5 L31.5 5.5 L38.5 8Z" fill="#FB923C" stroke="#9A3412" stroke-width="1.2" stroke-linejoin="round"/><path d="M24 15 Q29 13 34 15 Q29 18.6 24 15Z" fill="#86EFAC"/><circle cx="41.6" cy="12.8" r="1.2" fill="#14532D"/></svg>` },
+
+  // Obžerství — letící burger se stopou kečupu, hořčice a housky
+  'frame-obzerstvi': { w: 56, h: 28, dir: true, svg: `<svg viewBox="0 0 56 28"><rect x="0" y="8" width="30" height="3" rx="1.5" fill="#EF4444"/><rect x="5" y="12.5" width="26" height="3" rx="1.5" fill="#FDE047"/><rect x="2" y="17" width="28" height="3" rx="1.5" fill="#F59E0B"/><g stroke-linejoin="round"><path d="M32 20 H52 Q52 25.5 47 25.5 H37 Q32 25.5 32 20Z" fill="#F59E0B" stroke="#92400E" stroke-width="1.5"/><rect x="31" y="15.4" width="22" height="5.4" rx="2.7" fill="#92400E" stroke="#431407" stroke-width="1.4"/><path d="M31 15.4 Q33 12 35.5 14.4 Q38 11.8 41 14.4 Q44 11.8 47 14.4 Q50 11.8 53 15.4Z" fill="#4ADE80" stroke="#166534" stroke-width="1.3"/><path d="M31.5 13.4 Q31 2.5 42 2.5 Q53 2.5 52.5 13.4Z" fill="#FBBF24" stroke="#B45309" stroke-width="1.5"/></g><path d="M32 11 Q42 13.6 52.2 11 L52.5 13.4 H31.5Z" fill="#F59E0B"/><ellipse cx="37" cy="6.6" rx="3" ry="1.2" fill="#FEF3C7" transform="rotate(-25 37 6.6)"/><ellipse cx="44" cy="8.2" rx="1.2" ry="0.7" fill="#FEF3C7"/><ellipse cx="48" cy="6.4" rx="1.2" ry="0.7" fill="#FEF3C7"/></svg>` },
 
 };
 

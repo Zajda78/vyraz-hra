@@ -108,7 +108,7 @@ function caseTimeLeft(caseDef) {
 }
 
 function casePool(caseDef) {
-  if (!caseDef.items) return ALL_ITEMS.filter((item) => !EXCLUSIVE_ITEMS.has(item.id));
+  if (!caseDef.items) return ALL_ITEMS.filter((item) => !EXCLUSIVE_ITEMS.has(item.id) && !item.promoOnly);
   return ALL_ITEMS.filter((item) => caseDef.items.includes(item.id));
 }
 
@@ -118,13 +118,15 @@ function casePool(caseDef) {
 (() => {
   const counts = {};
   for (const c of CASES) for (const id of c.items || []) counts[id] = (counts[id] || 0) + 1;
-  const missing = ALL_ITEMS.filter((i) => !counts[i.id] && !i.wheelOnly).map((i) => i.id);
+  const missing = ALL_ITEMS.filter((i) => !counts[i.id] && !i.wheelOnly && !i.promoOnly).map((i) => i.id);
   const unknown = Object.keys(counts).filter((id) => !ALL_ITEMS.some((i) => i.id === id));
   const noRarity = CASES.filter((c) => c.items).flatMap((c) => RARITY_ORDER
     .filter((r) => !casePool(c).some((i) => i.rarity === r)).map((r) => `${c.id}:${r}`));
   const leaked = [...EXCLUSIVE_ITEMS].filter((id) => counts[id] > 1);
-  if (missing.length || unknown.length || noRarity.length || leaked.length) {
-    console.warn('Chests: missing', missing, 'unknown', unknown, 'rarity missing', noRarity, 'exclusive elsewhere', leaked);
+  // promoOnly skiny (dárkový odkaz) nesmí být v žádné truhle
+  const promoInChest = ALL_ITEMS.filter((i) => i.promoOnly && counts[i.id]).map((i) => i.id);
+  if (missing.length || unknown.length || noRarity.length || leaked.length || promoInChest.length) {
+    console.warn('Chests: missing', missing, 'unknown', unknown, 'rarity missing', noRarity, 'exclusive elsewhere', leaked, 'promo in chest', promoInChest);
   }
 })();
 

@@ -90,6 +90,8 @@ const SHOP_SECTIONS = [
       { id: 'frame-robot', name: 'Robot', rarity: 'epic', style: 'linear-gradient(135deg,#CBD5E1,#38BDF8 45%,#475569)' },
       { id: 'frame-spacecat', name: 'Space Cat', rarity: 'legendary', style: 'linear-gradient(160deg,#A78BFA,#7C3AED 50%,#5B21B6 50%,#4C1D95)' },
       { id: 'frame-dino', name: 'Dino', rarity: 'legendary', style: 'linear-gradient(160deg,#4ADE80,#22C55E 50%,#16A34A 50%,#166534)' },
+      // jen z dárkového odkazu (gift.js) — v žádné truhle ani na kole
+      { id: 'frame-obzerstvi', name: 'Obžerství', rarity: 'legendary', promoOnly: true, style: 'linear-gradient(160deg,#FBBF24,#EF4444 50%,#B91C1C 50%,#7F1D1D)' },
       // jen z kola štěstí (wheel.js)
       { id: 'frame-fortune', name: 'Fortune', rarity: 'mythic', wheelOnly: true, style: 'conic-gradient(from 20deg,#FDE047,#22C55E,#FDE047,#A855F7,#FDE047)' },
     ],
