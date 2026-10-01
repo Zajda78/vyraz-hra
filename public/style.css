@@ -2605,10 +2605,10 @@ body.no-scroll{ overflow:hidden; }
 .btn-primary:disabled, .btn:disabled{ opacity:0.4; cursor:not-allowed; --lipy:2px; transform:none; }
 .error-banner{ border:2px solid #991B1B; border-radius:14px; box-shadow:0 3px 0 #5B1313; }
 
-/* zlatá tlačítka (cena, otevřít, koupit) — místo bílé */
+/* bílá tlačítka s cenou (otevřít, koupit) — kreslený obrys a spodní hrana, ale bílá výplň (přání uživatele) */
 .case-open-btn, .pack-buy, .coin-pack-price, .no-ads-price{
-  background:var(--gold); color:#3b2400; border:3px solid #8A5A0B; --lip:#8A5A0B;
-  box-shadow:0 var(--lipy, 4px) 0 var(--lip), inset 0 -4px 0 rgba(138,90,11,0.35), inset 0 3px 0 rgba(255,236,170,0.4);
+  background:#FFFFFF; color:#1C1231; border:3px solid #B9AED6; --lip:#8E82B0;
+  box-shadow:0 var(--lipy, 4px) 0 var(--lip), inset 0 -4px 0 rgba(142,130,176,0.22);
 }
 .coin-pack-price, .no-ads-price{ --lipy:3px; border-width:2px; padding:5px 10px; }
 .no-ads-price{ padding:7px 14px; }
@@ -2616,8 +2616,8 @@ body.no-scroll{ overflow:hidden; }
 .case-grid .case-open-btn{ padding:8px 18px; }
 .pack-buy{ padding:12px 18px; }
 .single-game-buy{
-  background:var(--gold); border:3px solid #8A5A0B; --lip:#8A5A0B; --lipy:3px;
-  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(138,90,11,0.35), inset 0 3px 0 rgba(255,236,170,0.4);
+  background:#FFFFFF; color:#1C1231; border:3px solid #B9AED6; --lip:#8E82B0; --lipy:3px;
+  box-shadow:0 var(--lipy) 0 var(--lip), inset 0 -4px 0 rgba(142,130,176,0.22);
 }
 .daily-btn{
   background:#14B8A6; border:3px solid #0B6B61; --lip:#0B6B61; --lipy:3px; color:#042F2E;
@@ -2909,3 +2909,5 @@ svg.ico[stroke="currentColor"]{ stroke-width:2.4; }
 .gift-coins{ display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Unbounded',sans-serif; font-weight:800; font-size:1.25rem; color:#FDE68A; text-shadow:0 3px 0 rgba(14,6,32,0.55); }
 .gift-coins .wheel-reveal-art{ width:46px; height:40px; animation:rb-pop 2.2s cubic-bezier(.34,1.56,.64,1) infinite; }
 @media (prefers-reduced-motion: reduce){ .gift-coins .wheel-reveal-art{ animation:none; } }
+/* Sady otázek: bez tmavého stínu / spodní hrany pod kartou (přání uživatele) */
+.pack-card.qp-card{ box-shadow:none; }
