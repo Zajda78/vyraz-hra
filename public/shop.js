@@ -194,6 +194,12 @@ function shopLoad() {
     }
   }
   if (isDevMode() && data.coins < DEV_COINS / 2) data.coins = DEV_COINS;
+  // v dev režimu má vývojář vždycky všechny skiny (i nově přidané)
+  if (isDevMode()) {
+    const owned = new Set(data.owned || []);
+    for (const s of SHOP_SECTIONS) for (const i of s.items) owned.add(i.id);
+    data.owned = [...owned];
+  }
   return data;
 }
 
