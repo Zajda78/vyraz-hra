@@ -206,6 +206,11 @@ function renderFriendsScreen() {
         <button class="chip-btn" id="copy-code">${icon('copy')} Copy</button>
       </div>
 
+      <div class="qr-btn-row">
+        <button class="btn btn-ghost" id="my-qr-btn">My QR code</button>
+        <button class="btn btn-ghost" id="scan-qr-btn">Scan QR</button>
+      </div>
+
       <div class="add-friend">
         <input id="add-friend-input" maxlength="6" placeholder="Friend code" autocomplete="off" autocapitalize="characters">
         <button class="btn btn-primary" id="add-friend-btn">${icon('plus')} Add</button>
@@ -246,6 +251,9 @@ function renderFriendsScreen() {
   const add = () => { sendFriendRequest(input.value); renderFriendsScreen(); };
   document.getElementById('add-friend-btn').onclick = add;
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
+
+  document.getElementById('my-qr-btn').onclick = showMyQrModal;
+  document.getElementById('scan-qr-btn').onclick = showScanQrModal;
 
   document.getElementById('copy-code').onclick = async () => {
     try {

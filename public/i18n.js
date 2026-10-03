@@ -34,6 +34,16 @@ const esPlural = (n, one, many) => (Math.abs(Number(n)) === 1 ? one : many);
 // ------------------------------------------------------------ slovník ---
 // [angličtina, čeština, španělština]
 const DICT_ROWS = [
+  // QR přidání přátel (friendqr.js)
+  ['My QR code', 'Můj QR kód', 'Mi código QR'],
+  ['Scan QR', 'Skenovat QR', 'Escanear QR'],
+  ['Share', 'Sdílet', 'Compartir'],
+  ['Link copied', 'Odkaz zkopírován', 'Enlace copiado'],
+  ['Add friend?', 'Přidat přítele?', '¿Añadir amigo?'],
+  ['Send friend request', 'Poslat žádost o přátelství', 'Enviar solicitud de amistad'],
+  ['Friend request sent!', 'Žádost o přátelství odeslána!', '¡Solicitud de amistad enviada!'],
+  ['That\'s your own QR code.', 'To je tvůj vlastní QR kód.', 'Ese es tu propio código QR.'],
+  ['Couldn\'t access the camera.', 'Nepodařilo se získat přístup ke kameře.', 'No se pudo acceder a la cámara.'],
   // obecné
   ['Connecting to the server…', 'Připojuji se k serveru…', 'Conectando con el servidor…'],
   ['Games', 'Hry', 'Juegos'],
@@ -96,7 +106,7 @@ const DICT_ROWS = [
   ['The main character reads the captions anonymously and picks the best one.', 'Hlavní postava si popisky anonymně přečte a vybere nejlepší.', 'El protagonista lee los pies de foto de forma anónima y elige el mejor.'],
   ['The author of the winning caption gets 100 pts.', 'Autor vítězného popisku dostane 100 bodů.', 'El autor del pie ganador recibe 100 puntos.'],
   ['The host creates a lobby, shares the code — you need at least 3 players — and picks the question pack: Classic, Spicy, Family or School.', 'Hostitel založí lobby, pošle kód — potřebujete aspoň 3 hráče — a vybere sadu otázek: Klasika, Pikantní, Rodina nebo Škola.', 'El anfitrión crea una sala, comparte el código (hacen falta al menos 3 jugadores) y elige el paquete: Clásico, Picante, Familia o Escuela.'],
-  ['Each round everyone gets the same photo prompt, except one random player — the impostor — who gets a different one: sometimes very similar, sometimes completely different.', 'Každé kolo dostanou všichni stejné zadání, kromě jednoho náhodného hráče — impostora — který dostane jiné: někdy hodně podobné, někdy úplně odlišné.', 'Cada ronda todos reciben la misma frase, excepto un jugador al azar — el impostor — que recibe otra: a veces muy parecida, a veces totalmente distinta.'],
+  ['Each round everyone gets the same photo prompt, except one random player — the impostor — who gets a completely different random one.', 'Každé kolo dostanou všichni stejné zadání, kromě jednoho náhodného hráče — impostora — který dostane úplně jiné, náhodné.', 'Cada ronda todos reciben la misma frase, excepto un jugador al azar — el impostor — que recibe otra totalmente distinta y al azar.'],
   ['Everyone has 30 seconds to snap a photo.', 'Všichni mají 30 vteřin na vyfocení.', 'Todos tienen 30 segundos para hacer la foto.'],
   ['Each round a task drops — like "something blue" or "the weirdest thing in your bag". The host picks what to hunt: Anywhere, Home, School, Outdoors, Party or Food.', 'Každé kolo padne úkol — třeba „něco modrého“ nebo „nejdivnější věc v tašce“. Hostitel vybere, co se hledá: Kdekoli, Doma, Škola, Venku, Párty nebo Jídlo.', 'Cada ronda aparece una misión, como «algo azul» o «lo más raro de tu bolso». El anfitrión elige qué buscar: Donde sea, Casa, Escuela, Al aire libre, Fiesta o Comida.'],
   ['Everyone hunts it down and snaps a photo before time runs out (the host sets how long). The back camera is on — tap the flip button for a selfie.', 'Všichni to najdou a vyfotí, než vyprší čas (jak dlouho, určí hostitel). Zapne se zadní foťák — pro selfie klepni na tlačítko otočení.', 'Todos lo buscan y le hacen una foto antes de que acabe el tiempo (el anfitrión decide cuánto). Se usa la cámara trasera; toca el botón de girar para un selfie.'],

@@ -579,7 +579,7 @@ const RULES_BY_MODE = {
   ],
   impostor: [
     'The host creates a lobby, shares the code — you need at least 3 players — and picks the question pack: Classic, Spicy, Family or School.',
-    'Each round everyone gets the same photo prompt, except one random player — the impostor — who gets a different one: sometimes very similar, sometimes completely different.',
+    'Each round everyone gets the same photo prompt, except one random player — the impostor — who gets a completely different random one.',
     'While taking the photo, nobody knows who the impostor is — not even the impostor!',
     'Everyone has 30 seconds to snap a photo.',
     'When the photos appear, the impostor finds out and sees both prompts. Then you have 30 seconds to vote for who you think the impostor is.',

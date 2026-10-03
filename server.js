@@ -1049,16 +1049,13 @@ function startImpostorRound(lobby) {
   const pairIndex = pool[crypto.randomInt(pool.length)];
   lobby.usedPairs.add(key(pairIndex));
   if (pairs.every((_, i) => lobby.usedPairs.has(key(i)))) lobby.usedPairs.clear();
-  // Náhodně buď „dvojče“ (skoro stejná otázka), nebo úplně jiná otázka z jiné dvojice —
-  // ať nikdo dopředu neví, jak moc se impostorovo zadání liší (uživatelovo přání).
-  const civilHalf = crypto.randomInt(2);
-  lobby.civilPrompt = pairs[pairIndex][civilHalf];
-  if (pairs.length > 1 && crypto.randomInt(2) === 0) {
-    const otherIndex = (pairIndex + 1 + crypto.randomInt(pairs.length - 1)) % pairs.length;
-    lobby.impostorPrompt = pairs[otherIndex][crypto.randomInt(2)];
-  } else {
-    lobby.impostorPrompt = pairs[pairIndex][1 - civilHalf];
-  }
+  // Impostor dostane VŽDY úplně jinou, náhodnou otázku z jiné dvojice — nikdy „dvojče“
+  // skoro stejné otázky (uživatel chce zadání opravdu náhodná a zamotaná).
+  lobby.civilPrompt = pairs[pairIndex][crypto.randomInt(2)];
+  const otherIndex = pairs.length > 1
+    ? (pairIndex + 1 + crypto.randomInt(pairs.length - 1)) % pairs.length
+    : pairIndex;
+  lobby.impostorPrompt = pairs[otherIndex][crypto.randomInt(2)];
   lobby.prompt = null;
 
   // impostor = náhodný připojený hráč, pokud to jde, ne stejný jako minule
