@@ -205,7 +205,7 @@ function lavaDrip(x, delay, s, side = false) {
 const FRAME_HALO_IDS = new Set(['frame-sweets']);
 
 const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire', 'frame-spacecat', 'frame-dino', 'frame-obzerstvi']);
-const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava' };
+const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava', 'frame-jezevcik': 'jezevcik' };
 
 // Fortune — vrstvy navíc (vše barevné, bez bílé): paprsky, oběžná dráha mincí a čtyřlístků, plocha pro výbuchy
 const CLOVER_SVG = '<svg viewBox="0 0 24 24"><g fill="#22C55E" stroke="#14532D" stroke-width="1">'
@@ -918,6 +918,100 @@ Object.assign(FRAME_DECOR, {
     ${obDrop(80, -5, 0.5, -1.7)}`,
 });
 
+// ------------------------------------------ Jezevčík (mythic, dárkový odkaz) ---
+// Superdlouhý černý dlouhosrstý jezevčík (black-and-tan), jehož tělo tvoří okraj rámečku (kreslený styl: tlustý tmavší obrys, plná barva,
+// jeden cel-shade pruh a obarvený odlesk). Hlava s ouškem a ocas se potkají nahoře vlevo — honí si vlastní ocas.
+const JZ = { body: '#34323F', shade: '#4A4858', line: '#0F0A1A', hi: '#8C9BC0', ear: '#262430', belly: '#E0A862', tan: '#D9983F' };
+// dráha středu těla v rámci 0–100: odstup i od okraje, rohy soustředné (poloměr 10 - i); začíná ocasem (x=16), končí krkem (x=endX)
+function jzPath(i, endX = 40) {
+  const r = 10 - i;
+  return `M16 ${i} H10 A${r} ${r} 0 0 0 ${i} 10 V90 A${r} ${r} 0 0 0 10 ${100 - i} H90 A${r} ${r} 0 0 0 ${100 - i} 90 V10 A${r} ${r} 0 0 0 90 ${i} H${endX}`;
+}
+// nožička směřuje ven z hrany: (x,y) = místo na okraji, rot = 0 dolů / 180 nahoru / 90 doleva / -90 doprava
+function jzLeg(x, y, rot, delay) {
+  return `<g transform="translate(${x} ${y}) rotate(${rot})"><g class="jz-leg" style="animation-delay:${delay}s">
+    <rect x="-2.3" y="0" width="4.6" height="6" rx="2.3" fill="${JZ.body}" stroke="${JZ.line}" stroke-width="1.5"/>
+    <ellipse cx="0" cy="5.2" rx="2.6" ry="1.7" fill="${JZ.shade}" stroke="${JZ.line}" stroke-width="1.2"/></g></g>`;
+}
+// kost (cel-shade + odlesk)
+function jzBone(cx, cy, k, rot, delay = 0) {
+  return `<g class="rb-pop" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${k})" stroke-linejoin="round">
+    <path d="M-8 -2.2 Q-11.4 -2.6 -11 -5.2 Q-8.6 -7.4 -6.4 -4.6 L6.4 -4.6 Q8.6 -7.4 11 -5.2 Q11.4 -2.6 8 -2.2 L8 2.2 Q11.4 2.6 11 5.2 Q8.6 7.4 6.4 4.6 L-6.4 4.6 Q-8.6 7.4 -11 5.2 Q-11.4 2.6 -8 2.2Z" fill="#FDE68A" stroke="#B45309" stroke-width="1.6"/>
+    <path d="M-6 2 H6 V3.6 H-6Z" fill="#F5C45E" stroke="none"/><ellipse cx="-5" cy="-3.2" rx="2.6" ry="0.9" fill="#FEF3C7" stroke="none"/></g></g>`;
+}
+// tlapka (otisk)
+function jzPaw(cx, cy, k, delay = 0) {
+  return `<g class="rb-pop" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})" fill="${JZ.belly}" stroke="${JZ.line}" stroke-width="1.4" stroke-linejoin="round">
+    <ellipse cx="-4.6" cy="-3.4" rx="1.9" ry="2.5" transform="rotate(-22 -4.6 -3.4)"/><ellipse cx="-1.6" cy="-6" rx="1.9" ry="2.6"/><ellipse cx="1.6" cy="-6" rx="1.9" ry="2.6"/><ellipse cx="4.6" cy="-3.4" rx="1.9" ry="2.5" transform="rotate(22 4.6 -3.4)"/>
+    <path d="M-4.6 3 Q-4.8 -1 0 -1.6 Q4.8 -1 4.6 3 Q4 6 0 6 Q-4 6 -4.6 3Z"/></g></g>`;
+}
+// Velká hlava jezevčíka zepředu: dlouhý čumák, černý nos, velké lesklé oči, dlouhé plandavé uši přes okraj rámečku, korunka.
+// Uši se občas klopýtnou (jz-ear l/r), hlava jemně poskakuje.
+function jzHead() {
+  const L = JZ.line;
+  const ear = (side) => `<g class="jz-ear ${side < 0 ? 'l' : 'r'}"><path d="M${side * 11} -7 Q${side * 22} -6 ${side * 21} 8 Q${side * 21} 16 ${side * 20} 19 Q${side * 17} 17 ${side * 16} 22 Q${side * 13} 18 ${side * 11} 22 Q${side * 9} 18 ${side * 8} 20 Q${side * 8} 14 ${side * 9} 8 Q${side * 9} -2 ${side * 11} -7Z" fill="${JZ.ear}" stroke="${L}" stroke-width="2.2" stroke-linejoin="round"/>
+      <ellipse cx="${side * 16}" cy="2" rx="1.8" ry="4.2" fill="${JZ.hi}" opacity="0.55" transform="rotate(${side * -8} ${side * 16} 2)"/></g>`;
+  return `<g class="jz-head"><g transform="translate(40 -1)" stroke-linejoin="round">
+      ${ear(-1)}${ear(1)}
+      <ellipse cx="0" cy="0" rx="15" ry="11.5" fill="${JZ.body}" stroke="${L}" stroke-width="2.2"/>
+      <path d="M-13 4 Q0 17 13 4 Q11 11 0 11.5 Q-11 11 -13 4Z" fill="${JZ.shade}" stroke="none"/>
+      <ellipse cx="0" cy="5.5" rx="8" ry="8" fill="${JZ.belly}" stroke="${L}" stroke-width="2"/>
+      <path d="M-3.4 12 Q0 20 3.4 12Z" fill="#F472B6" stroke="${L}" stroke-width="1.6"/>
+      <path d="M-4.6 9.4 Q0 12.6 4.6 9.4" fill="none" stroke="${L}" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="0" cy="1.4" rx="4.6" ry="3.2" fill="#2A1005" stroke="${L}" stroke-width="1.2"/>
+      <ellipse cx="-1.4" cy="0.4" rx="1.5" ry="0.8" fill="#F9A8D4"/>
+      <ellipse cx="-7" cy="-3.6" rx="3.6" ry="4.2" fill="#2A1005"/><ellipse cx="7" cy="-3.6" rx="3.6" ry="4.2" fill="#2A1005"/>
+      <circle cx="-8" cy="-5.2" r="1.4" fill="#FBCFE8"/><circle cx="6" cy="-5.2" r="1.4" fill="#FBCFE8"/>
+      <circle cx="-5.8" cy="-2.2" r="0.7" fill="#FBCFE8"/><circle cx="8.2" cy="-2.2" r="0.7" fill="#FBCFE8"/>
+      <circle cx="-7" cy="-8.6" r="1.5" fill="${JZ.tan}"/><circle cx="7" cy="-8.6" r="1.5" fill="${JZ.tan}"/>
+      <ellipse cx="-8" cy="-12.4" rx="4.4" ry="1.3" fill="${JZ.hi}" transform="rotate(-14 -8 -9.6)"/>
+      <path d="M-6.4 -10.4 L-7.6 -17.4 L-3 -14 L0 -18.6 L3 -14 L7.6 -17.4 L6.4 -10.4Z" fill="#FBBF24" stroke="#B45309" stroke-width="1.6"/>
+      <circle cx="0" cy="-13.4" r="1.4" fill="#F472B6"/></g></g>`;
+}
+// kreslený tlustý pařát (rohy rámečku): přední drží horní rohy, zadní jsou dole
+function jzPawCorner(x, y, delay = 0) {
+  return `<g class="rb-squash" style="animation-delay:${delay}s"><g transform="translate(${x} ${y})" stroke-linejoin="round">
+    <ellipse cx="0" cy="0" rx="7.4" ry="6.4" fill="${JZ.belly}" stroke="${JZ.line}" stroke-width="2"/>
+    <path d="M-5 3 Q0 6.6 5 3 Q4 6 0 6.2 Q-4 6 -5 3Z" fill="${JZ.tan}" stroke="none"/>
+    <path d="M-2.6 -1 V3.2 M2.6 -1 V3.2" fill="none" stroke="${JZ.line}" stroke-width="1.4" stroke-linecap="round"/>
+    <ellipse cx="-3.2" cy="-3.2" rx="2.2" ry="1" fill="${JZ.hi}" transform="rotate(-25 -3.2 -3.2)"/></g></g>`;
+}
+// štěně: sedí v rohu, velká hlava s ušima, tělíčko a ocásek
+function jzPuppy(cx, cy, k, delay = 0) {
+  const L = JZ.line;
+  return `<g class="rb-squash" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})" stroke-linejoin="round">
+    <ellipse cx="0" cy="9" rx="8" ry="7" fill="${JZ.body}" stroke="${L}" stroke-width="2.2"/>
+    <ellipse cx="0" cy="11" rx="4.4" ry="4.6" fill="${JZ.belly}" stroke="none"/>
+    <path d="M-10 -1 Q-17 -1 -15.5 9 Q-13.5 11 -9.5 5Z" fill="${JZ.ear}" stroke="${L}" stroke-width="1.8"/>
+    <path d="M10 -1 Q17 -1 15.5 9 Q13.5 11 9.5 5Z" fill="${JZ.ear}" stroke="${L}" stroke-width="1.8"/>
+    <circle cx="0" cy="-1" r="9.4" fill="${JZ.body}" stroke="${L}" stroke-width="2.2"/>
+    <ellipse cx="0" cy="2.6" rx="4.8" ry="3.8" fill="${JZ.belly}" stroke="none"/>
+    <ellipse cx="0" cy="1" rx="2.6" ry="1.8" fill="#2A1005"/>
+    <circle cx="-4" cy="-3.4" r="2" fill="#2A1005"/><circle cx="4" cy="-3.4" r="2" fill="#2A1005"/>
+    <circle cx="-4.6" cy="-4.2" r="0.8" fill="#FBCFE8"/><circle cx="3.4" cy="-4.2" r="0.8" fill="#FBCFE8"/></g></g>`;
+}
+
+Object.assign(FRAME_DECOR, {
+  // Jezevčík (mythic, jen z dárkového odkazu) — velká hlava jezevčíka kouká přes horní okraj, rámeček je jeho dlouhé tělo
+  // (tmavší hřbet venku, světlé bříško uvnitř), tlapky v rozích, ocas vrtí vpravo dole, štěně vlevo dole
+  'frame-jezevcik': () => `
+    <g class="jz-tail"><path d="M95 97 Q104 100 107 92 Q110 84 106 75 Q104 81 101 79 Q102 85 98 87 Q101 89 97 92Z" fill="${JZ.body}" stroke="${JZ.line}" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M101 93 Q106 90 105 81" fill="none" stroke="${JZ.hi}" stroke-width="1.3" stroke-linecap="round"/></g>
+    <rect x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${JZ.line}" stroke-width="8.8"/>
+    <rect x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${JZ.body}" stroke-width="6.6"/>
+    <rect x="1.4" y="1.4" width="97.2" height="97.2" rx="8.6" fill="none" stroke="${JZ.shade}" stroke-width="2.2"/>
+    <rect x="5.6" y="5.6" width="88.8" height="88.8" rx="4.4" fill="none" stroke="${JZ.belly}" stroke-width="1.8"/>
+    <rect x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${JZ.hi}" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="14 9 3 60 20 200"/>
+    <rect x="6.6" y="6.6" width="86.8" height="86.8" rx="3.4" fill="none" stroke="${JZ.belly}" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="0.01 4.6"/>
+    ${jzPawCorner(5, 3, 0)}${jzPawCorner(95, 3, -0.5)}${jzPawCorner(6, 97, -1)}${jzPawCorner(92, 97, -1.5)}
+    ${jzPuppy(-9, 98, 0.8, -0.7)}
+    ${jzHead()}
+    ${jzBone(66, 108, 0.85, -12, -0.5)}
+    ${rbHeart(107, 38, 4.4, '#F472B6', '#9D174D', -0.8)}
+    ${rbHeart(-7, 28, 3.8, '#FB7185', '#9F1239', -1.6)}
+    ${jzPaw(107, 62, 0.8, -1.1)}`,
+});
+
 // ------------------------------------------ Legendary: průlety předmětů ---
 // Každý předmět je malé barevné SVG (bez bílých záblesků), míří doprava; doleva se jen zrcadlí.
 const FLYBY_ART = {
@@ -945,6 +1039,23 @@ const FLYBY_ART = {
   // Dino — kreslený pterodaktyl, mává křídly
   'frame-dino': { w: 56, h: 32, dir: true, flap: true, svg: `<svg viewBox="0 0 56 32"><g stroke="#166534" stroke-width="1.6" stroke-linejoin="round"><path d="M20 18 L3 22 L19 22.5Z" fill="#22C55E"/><path class="fb-wing" d="M33 14 Q30 3 13 1 Q20 7 19 13 Q25 8 27 15Z" fill="#22C55E"/><ellipse cx="29" cy="18" rx="11" ry="6.3" fill="#4ADE80"/><path class="fb-wing fb-wing2" d="M29 21 Q29 29 16 31 Q23 26 21 21Z" fill="#16A34A"/><circle cx="40" cy="14" r="5.5" fill="#4ADE80"/></g><path d="M44 12.2 L54.5 15 L44 16.8Z" fill="#FDBA74" stroke="#9A3412" stroke-width="1.4" stroke-linejoin="round"/><path d="M37 9.5 L31.5 5.5 L38.5 8Z" fill="#FB923C" stroke="#9A3412" stroke-width="1.2" stroke-linejoin="round"/><path d="M24 15 Q29 13 34 15 Q29 18.6 24 15Z" fill="#86EFAC"/><circle cx="41.6" cy="12.8" r="1.2" fill="#14532D"/></svg>` },
 
+  // Jezevčík — malý jezevčík v běhu, mává ušima a poskakuje (dlouhé tělo, krátké nožky)
+  'frame-jezevcik': { w: 58, h: 28, cls: 'fb-dach', flap: true, svg: `<svg viewBox="0 0 58 28"><g class="jz-bob"><g stroke-linejoin="round" stroke-linecap="round">
+    <path d="M9 13 Q2 12 1 5 Q4 7 4.6 4 Q6.4 7 8 5 Q8 9 11 10Z" fill="#34323F" stroke="#0F0A1A" stroke-width="1.5"/>
+    <g class="jz-leg" style="animation-delay:-0.1s"><rect x="10" y="17" width="4.6" height="8" rx="2.3" fill="#E0A862" stroke="#0F0A1A" stroke-width="1.5"/></g>
+    <g class="jz-leg" style="animation-delay:-0.25s"><rect x="36" y="17" width="4.6" height="8" rx="2.3" fill="#E0A862" stroke="#0F0A1A" stroke-width="1.5"/></g>
+    <rect x="6" y="8.5" width="38" height="12" rx="6" fill="#34323F" stroke="#0F0A1A" stroke-width="1.6"/>
+    <path d="M9 17 Q25 21 42 17 Q40 20.4 35 20.6 H14 Q10 20.4 9 17Z" fill="#4A4858" stroke="none"/>
+    <ellipse cx="22" cy="11.2" rx="9" ry="1.5" fill="#8C9BC0" stroke="none"/>
+    <g class="jz-leg" style="animation-delay:-0.3s"><rect x="17" y="17" width="4.6" height="8" rx="2.3" fill="#E0A862" stroke="#0F0A1A" stroke-width="1.5"/></g>
+    <g class="jz-leg" style="animation-delay:-0.05s"><rect x="42" y="17" width="4.6" height="8" rx="2.3" fill="#E0A862" stroke="#0F0A1A" stroke-width="1.5"/></g>
+    <path d="M47 14 H55 Q57.6 14 57.4 16.4 Q57 18.6 54.4 18.6 H47Z" fill="#E0A862" stroke="#0F0A1A" stroke-width="1.5"/>
+    <ellipse cx="45" cy="12" rx="6.2" ry="5.4" fill="#34323F" stroke="#0F0A1A" stroke-width="1.6"/>
+    <path d="M50 17.4 Q52 21 54 18.4Z" fill="#F472B6" stroke="#0F0A1A" stroke-width="1"/>
+    <ellipse cx="56.2" cy="14.6" rx="1.8" ry="1.5" fill="#3B1708"/>
+    <circle cx="47.2" cy="10.2" r="1.4" fill="#2A1005"/><circle cx="46.8" cy="9.7" r="0.5" fill="#F9A8D4"/>
+    <path class="fb-wing fb-wing2" d="M43.6 8 Q36 4.6 34.6 13.4 Q37 17 38.6 15.2 Q40 16.6 41.4 14.6 Q42.6 13.4 43.4 11.6Z" fill="#262430" stroke="#0F0A1A" stroke-width="1.5"/></g></g></svg>` },
+
   // Obžerství — letící burger se stopou kečupu, hořčice a housky
   'frame-obzerstvi': { w: 56, h: 28, dir: true, svg: `<svg viewBox="0 0 56 28"><rect x="0" y="8" width="30" height="3" rx="1.5" fill="#EF4444"/><rect x="5" y="12.5" width="26" height="3" rx="1.5" fill="#FDE047"/><rect x="2" y="17" width="28" height="3" rx="1.5" fill="#F59E0B"/><g stroke-linejoin="round"><path d="M32 20 H52 Q52 25.5 47 25.5 H37 Q32 25.5 32 20Z" fill="#F59E0B" stroke="#92400E" stroke-width="1.5"/><rect x="31" y="15.4" width="22" height="5.4" rx="2.7" fill="#92400E" stroke="#431407" stroke-width="1.4"/><path d="M31 15.4 Q33 12 35.5 14.4 Q38 11.8 41 14.4 Q44 11.8 47 14.4 Q50 11.8 53 15.4Z" fill="#4ADE80" stroke="#166534" stroke-width="1.3"/><path d="M31.5 13.4 Q31 2.5 42 2.5 Q53 2.5 52.5 13.4Z" fill="#FBBF24" stroke="#B45309" stroke-width="1.5"/></g><path d="M32 11 Q42 13.6 52.2 11 L52.5 13.4 H31.5Z" fill="#F59E0B"/><ellipse cx="37" cy="6.6" rx="3" ry="1.2" fill="#FEF3C7" transform="rotate(-25 37 6.6)"/><ellipse cx="44" cy="8.2" rx="1.2" ry="0.7" fill="#FEF3C7"/><ellipse cx="48" cy="6.4" rx="1.2" ry="0.7" fill="#FEF3C7"/></svg>` },
 
@@ -962,7 +1073,7 @@ function flybySpawn(host) {
   const art = FLYBY_ART[host.dataset.flyby];
   if (!art) return;
   const obj = document.createElement('div');
-  obj.className = 'fb-obj' + (art.spin ? ' fb-spin' : '') + (art.coin ? ' fb-coin' : '') + (art.flap ? ' fb-flap' : '');
+  obj.className = 'fb-obj' + (art.spin ? ' fb-spin' : '') + (art.coin ? ' fb-coin' : '') + (art.flap ? ' fb-flap' : '') + (art.cls ? ' ' + art.cls : '');
   const wPct = art.w > art.h ? 34 : 24; // šířka v % kontejneru (kontejner je ~1.3× rámeček)
   // náhodný směr pod libovolným úhlem (zleva, shora, šikmo…), dráha nemusí jít přes střed
   const W = host.clientWidth || 100, H = host.clientHeight || 100;

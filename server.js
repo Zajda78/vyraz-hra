@@ -41,7 +41,10 @@ const HUNT_SECONDS_MIN = 15;
 const HUNT_SECONDS_MAX = 180;
 
 // --- Impostor ---
-const MIN_PLAYERS = 3; // všechny módy se hrají od 3 hráčů
+const MIN_PLAYERS = 3; // většina módů se hraje od 3 hráčů
+const MIN_PLAYERS_TWINS = 6; // Twins — od 6 hráčů (aspoň 3 dvojice), přání uživatele
+const TWINS_VOTE_SECONDS = 30;
+function minPlayersFor(mode) { return mode === 'twins' ? MIN_PLAYERS_TWINS : MIN_PLAYERS; }
 const IMPOSTOR_VOTE_SECONDS = 30;
 const IMPOSTOR_CIV_WIN_POINTS = 100; // každý z ostatních, když impostora odhalí
 const IMPOSTOR_WIN_POINTS = 250; // maximum pro impostora (nikdo ho neuhodl); s každým hlasem klesá
@@ -940,7 +943,7 @@ function friendStatus(code, requester) {
 function newLobby(hostId) {
   return {
     hostId,
-    mode: 'classic', // classic | draw | caption | impostor | hunt — nastaví se při create_lobby, dál se nemění
+    mode: 'classic', // classic | draw | caption | impostor | hunt | copycat | twins — nastaví se při create_lobby, dál se nemění
     phase: 'lobby', // lobby | submitting | drawing | voting | impostor_voting | subject_photo | captioning | judging | results | gameover
     totalRounds: 5,
     drawEnabled: false,
@@ -962,6 +965,8 @@ function newLobby(hostId) {
     // --- Main character (mode: 'caption') ---
     copySeconds: COPY_SECONDS_DEFAULT, // Copycat — čas na kopírování obličeje (pevný)
     peekSeconds: PEEK_SECONDS_DEFAULT, // Copycat — jak dlouho je vidět fotka originálu
+    groups: [], // Twins — [{ id: 'A', memberIds: [...] }] pro aktuální kolo
+    lastPairKeys: new Set(), // Twins — dvojice z minulého kola (snaha neopakovat)
     captionSeconds: CAPTION_SECONDS_DEFAULT, // jediná fáze s časovým limitem — psaní popisků
     subjectOrder: [], // pořadí hráčů, kdo bude objekt fotky, zamíchané při startu hry
     subjectIndex: -1,
@@ -1019,6 +1024,7 @@ function clearTimer(lobby) {
 function startRound(lobby) {
   if (lobby.mode === 'caption') return startCaptionRound(lobby);
   if (lobby.mode === 'copycat') return startCopyRound(lobby);
+  if (lobby.mode === 'twins') lobby.groups = makeTwinGroups(lobby);
   if (lobby.mode === 'impostor') return startImpostorRound(lobby);
   clearTimer(lobby);
   lobby.round += 1;
@@ -1266,6 +1272,113 @@ function finishCaptionRound(lobby, { winnerId = null, skipped = false, noCaption
   broadcast(lobby);
 }
 
+// ------------------------------------------------------------- Twins ---
+// Hráči se každé kolo náhodně rozdělí na dvojice (u lichého počtu jedna trojice).
+// Všichni fotí stejné zadání a snaží se vypadat jako spoluhráč ze skupiny; potom
+// se hlasuje pro nejsynchronnější SKUPINU (ne vlastní). Fotky jsou v lobby.submissions.
+
+function twinKey(ids) { return [...ids].sort().join('|'); }
+
+function makeTwinGroups(lobby) {
+  const ids = connectedPlayers(lobby).map((p) => p.id);
+  let best = null;
+  let bestRepeats = Infinity;
+  for (let attempt = 0; attempt < 40 && bestRepeats > 0; attempt++) {
+    const order = shuffle(ids);
+    const groups = [];
+    let i = 0;
+    while (i < order.length) {
+      const size = order.length - i === 3 ? 3 : 2; // zbyde-li 3, vznikne trojice
+      groups.push(order.slice(i, i + size));
+      i += size;
+    }
+    const repeats = groups.filter((g) => lobby.lastPairKeys.has(twinKey(g))).length;
+    if (repeats < bestRepeats) { best = groups; bestRepeats = repeats; }
+  }
+  lobby.lastPairKeys = new Set(best.map(twinKey));
+  return best.map((memberIds, idx) => ({ id: String.fromCharCode(65 + idx), memberIds }));
+}
+
+function twinGroupOf(lobby, pid) {
+  return lobby.groups.find((g) => g.memberIds.includes(pid)) || null;
+}
+
+function twinGroupPhoto(lobby, g) {
+  return g.memberIds.map((pid) => {
+    const sub = lobby.submissions.get(pid);
+    const player = lobby.players.get(pid);
+    return { id: pid, name: player ? player.name : '???', missed: !sub || !!sub.missed, photoDataUrl: !sub || sub.missed ? null : sub.photoDataUrl };
+  });
+}
+
+// skupina je volitelná, jen když aspoň jeden její člen poslal fotku
+function twinGroupVotable(lobby, g) {
+  return g.memberIds.some((pid) => lobby.submissions.get(pid) && !lobby.submissions.get(pid).missed);
+}
+
+function beginTwinsVoting(lobby) {
+  clearTimer(lobby);
+  lobby.votes.clear();
+  lobby.phase = 'twins_voting';
+  lobby.deadlineAt = Date.now() + TWINS_VOTE_SECONDS * 1000;
+  lobby.timer = setTimeout(() => finishTwinsVoting(lobby), TWINS_VOTE_SECONDS * 1000);
+  broadcast(lobby);
+  maybeAdvanceFromTwinsVoting(lobby);
+}
+
+function maybeAdvanceFromTwinsVoting(lobby) {
+  if (lobby.phase !== 'twins_voting') return;
+  const votable = lobby.groups.filter((g) => twinGroupVotable(lobby, g));
+  const eligible = connectedPlayers(lobby).filter((p) => {
+    const own = twinGroupOf(lobby, p.id);
+    return votable.some((g) => g !== own);
+  });
+  if (eligible.length === 0 || eligible.every((p) => lobby.votes.has(p.id))) finishTwinsVoting(lobby);
+}
+
+function finishTwinsVoting(lobby) {
+  if (lobby.phase !== 'twins_voting') return;
+  clearTimer(lobby);
+  const tally = new Map();
+  for (const gid of lobby.votes.values()) tally.set(gid, (tally.get(gid) || 0) + 1);
+
+  // husté pořadí skupin: shodné hlasy = shodné místo = shodné body
+  const votable = lobby.groups.filter((g) => twinGroupVotable(lobby, g));
+  const sorted = votable.map((g) => ({ g, votes: tally.get(g.id) || 0 })).sort((a, b) => b.votes - a.votes);
+  const rankById = new Map();
+  let rank = 0;
+  let lastVotes = null;
+  for (const e of sorted) {
+    if (e.votes !== lastVotes) { rank += 1; lastVotes = e.votes; }
+    rankById.set(e.g.id, rank);
+  }
+  for (const g of votable) {
+    const pts = pointsForRank(rankById.get(g.id));
+    for (const pid of g.memberIds) {
+      const player = lobby.players.get(pid);
+      if (player) player.score += pts;
+    }
+  }
+  const groups = lobby.groups.map((g, idx) => {
+    const rnk = rankById.has(g.id) ? rankById.get(g.id) : null;
+    return {
+      id: g.id,
+      index: idx,
+      members: twinGroupPhoto(lobby, g),
+      votes: tally.get(g.id) || 0,
+      rank: rnk,
+      points: rnk != null ? pointsForRank(rnk) : 0,
+      isWinner: rnk === 1,
+    };
+  }).sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
+
+  lobby.lastRoundResult = { kind: 'twins', round: lobby.round, prompt: lobby.prompt, groups };
+  lobby.phase = 'results';
+  lobby.deadlineAt = Date.now() + RESULTS_AUTO_ADVANCE_SECONDS * 1000;
+  lobby.timer = setTimeout(() => advanceAfterResults(lobby), RESULTS_AUTO_ADVANCE_SECONDS * 1000);
+  broadcast(lobby);
+}
+
 // ---------------------------------------------------------- Copycat ---
 // Originál (subjectId) vyfotí grimasu, ostatní ji 3 s vidí a pak ji zkopírují
 // bez pohledu na originál. Kopie se ukládají do lobby.submissions, zamíchané
@@ -1388,6 +1501,8 @@ function afterSubmitting(lobby) {
   }
   if (lobby.mode === 'impostor') {
     beginImpostorVoting(lobby);
+  } else if (lobby.mode === 'twins') {
+    beginTwinsVoting(lobby);
   } else if (lobby.drawEnabled) {
     beginDrawing(lobby);
   } else {
@@ -1518,6 +1633,7 @@ function advanceAfterResults(lobby) {
     lobby.submissions.clear();
     lobby.votes.clear();
     lobby.cardOrder = [];
+    lobby.groups = [];
     lobby.subjectPhoto = null;
     lobby.captions = new Map();
     lobby.captionOrder = [];
@@ -1573,6 +1689,8 @@ function resetLobbyToWaiting(lobby) {
   lobby.subjectPhoto = null;
   lobby.captions = new Map();
   lobby.captionOrder = [];
+  lobby.groups = [];
+  lobby.lastPairKeys = new Set();
   lobby.lastRoundResult = null;
   lobby.deadlineAt = null;
   lobby.impostorId = null;
@@ -1645,6 +1763,25 @@ function publicState(lobby, viewerId) {
     base.submittedCount = lobby.submissions.size;
     base.activeCount = connectedPlayers(lobby).length;
     base.youSubmitted = lobby.submissions.has(viewerId);
+  }
+
+  if (lobby.mode === 'twins' && (lobby.phase === 'submitting' || lobby.phase === 'twins_voting')) {
+    const mine = twinGroupOf(lobby, viewerId);
+    base.myGroup = mine ? { id: mine.id, index: lobby.groups.indexOf(mine) } : null;
+    base.twins = mine ? mine.memberIds.filter((pid) => pid !== viewerId).map((pid) => ({ id: pid, name: lobby.players.get(pid)?.name || '???' })) : [];
+    if (lobby.phase === 'twins_voting') {
+      base.twinGroups = lobby.groups.map((g, i) => ({
+        id: g.id,
+        index: i,
+        isOwn: g === mine,
+        votable: twinGroupVotable(lobby, g),
+        members: twinGroupPhoto(lobby, g),
+      }));
+      base.votedCount = lobby.votes.size;
+      base.activeCount = connectedPlayers(lobby).length;
+      base.youVoted = lobby.votes.has(viewerId);
+      base.yourVote = lobby.votes.get(viewerId) || null;
+    }
   }
 
   if (lobby.phase === 'drawing') {
@@ -1897,6 +2034,7 @@ wss.on('connection', (ws) => {
       if (current.phase === 'submitting') maybeAdvanceFromSubmitting(current);
       if (current.phase === 'drawing') maybeAdvanceFromDrawing(current);
       if (current.phase === 'voting') maybeAdvanceFromVoting(current);
+      if (current.phase === 'twins_voting') maybeAdvanceFromTwinsVoting(current);
       if (current.phase === 'captioning') maybeAdvanceFromCaptioning(current);
       if (current.phase === 'copy_copying') maybeAdvanceFromCopying(current);
       if (current.phase === 'impostor_voting') maybeAdvanceFromImpostorVoting(current);
@@ -2013,7 +2151,7 @@ wss.on('connection', (ws) => {
       const newCode = code();
       lobby = newLobby(null);
       lobby.code = newCode;
-      lobby.mode = ['draw', 'caption', 'impostor', 'hunt', 'copycat'].includes(msg.mode) ? msg.mode : 'classic';
+      lobby.mode = ['draw', 'caption', 'impostor', 'hunt', 'copycat', 'twins'].includes(msg.mode) ? msg.mode : 'classic';
       lobby.lang = LANGS.includes(msg.lang) ? msg.lang : 'en';
       lobby.drawEnabled = lobby.mode === 'draw';
       playerId = id();
@@ -2167,8 +2305,9 @@ wss.on('connection', (ws) => {
     }
 
     if (msg.type === 'start_game' && playerId === lobby.hostId && lobby.phase === 'lobby') {
-      if (connectedPlayers(lobby).length < MIN_PLAYERS) {
-        return sendError(ws, `You need at least ${MIN_PLAYERS} players.`);
+      const minPlayers = minPlayersFor(lobby.mode);
+      if (connectedPlayers(lobby).length < minPlayers) {
+        return sendError(ws, `You need at least ${minPlayers} players.`);
       }
       // kdo ještě čekal na schválení, už se nepřipojí
       for (const req of lobby.joinRequests.values()) req.reject('The game has already started.');
@@ -2261,6 +2400,18 @@ wss.on('connection', (ws) => {
       lobby.votes.set(playerId, targetId);
       broadcast(lobby);
       maybeAdvanceFromVoting(lobby);
+      return;
+    }
+
+    if (msg.type === 'cast_vote' && lobby.phase === 'twins_voting') {
+      const g = lobby.groups.find((x) => x.id === msg.targetId);
+      const mine = twinGroupOf(lobby, playerId);
+      if (!g || !mine) return;
+      if (g === mine) return sendError(ws, "You can't vote for your own group.");
+      if (!twinGroupVotable(lobby, g)) return sendError(ws, "You can't vote for that card.");
+      lobby.votes.set(playerId, g.id);
+      broadcast(lobby);
+      maybeAdvanceFromTwinsVoting(lobby);
       return;
     }
 
@@ -2391,6 +2542,10 @@ function spawnBot(code, takenNames) {
       later(`cpick-${r}`, () => out({ type: 'pick_copy', authorId: m.copyCards[crypto.randomInt(m.copyCards.length)].id }));
     }
     if (m.phase === 'drawing' && !m.youDone) later(`draw-${r}`, () => out({ type: 'finish_drawing' }));
+    if (m.phase === 'twins_voting' && !m.youVoted) {
+      const options = (m.twinGroups || []).filter((g) => !g.isOwn && g.votable);
+      if (options.length) later(`tvote-${r}`, () => out({ type: 'cast_vote', targetId: options[crypto.randomInt(options.length)].id }));
+    }
     if ((m.phase === 'voting' || m.phase === 'impostor_voting') && !m.youVoted) {
       const options = (m.cards || []).filter((c) => !c.isOwn && !c.missed);
       if (options.length) later(`vote-${m.phase}-${r}`, () => out({ type: 'cast_vote', targetId: options[crypto.randomInt(options.length)].id }));

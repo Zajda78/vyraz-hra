@@ -255,6 +255,13 @@ function goHome() {
   window.scrollTo(0, 0);
 }
 
+// Zavření / uložení úpravy profilu vrátí jen o krok zpět: z profilu zpátky na profil
+// (překreslený, ať je vidět nové jméno / profilovka), jinak na hlavní stránku.
+function stepBack() {
+  if (profileOpen) { renderProfileScreen(); window.scrollTo(0, 0); }
+  else goHome();
+}
+
 function showEditProfileModal() {
   let nameDraft = getSavedName();
   const modal = openModal('');
@@ -295,11 +302,11 @@ function showEditProfileModal() {
       if (!name) return showError('Please enter a name.');
       localStorage.setItem('vyraz_name', name);
       closeModal();
-      goHome();
+      stepBack();
     };
     sheet.querySelector('#edit-profile-close').onclick = () => {
       closeModal();
-      goHome();
+      stepBack();
     };
     const toShop = sheet.querySelector('#edit-profile-shop');
     if (toShop) {

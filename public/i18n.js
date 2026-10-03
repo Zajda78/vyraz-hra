@@ -358,6 +358,18 @@ const DICT_ROWS = [
   ['1st', '1.', '1.º'],
   ['2nd', '2.', '2.º'],
   ['3rd', '3.', '3.º'],
+  // Twins (twins.js)
+  ['Two of you, one face — sync up!', 'Vy dva, jedna tvář — sladěte se!', 'Dos de vosotros, una cara: ¡sincronizaos!'],
+  ['Your twin', 'Tvoje dvojče', 'Tu gemelo'],
+  ['Your twins', 'Tvoje dvojčata', 'Tus gemelos'],
+  ['Make the same face — no talking!', 'Udělejte stejný obličej — bez mluvení!', 'Poned la misma cara: ¡sin hablar!'],
+  ['Which team is most in sync?', 'Který tým je nejvíc sehraný?', '¿Qué equipo está más sincronizado?'],
+  ['Your team', 'Tvůj tým', 'Tu equipo'],
+  ['The host creates a lobby and shares the code with friends — you need at least 6 players — and picks the question pack: Classic, Spicy, Family or School.', 'Hostitel založí lobby a pošle kód kamarádům — potřebujete aspoň 6 hráčů — a vybere sadu otázek: Classic, Spicy, Family nebo School.', 'El anfitrión crea una sala y comparte el código con sus amigos (hacen falta al menos 6 jugadores) y elige el pack de preguntas: Classic, Spicy, Family o School.'],
+  ['Each round the players are randomly split into pairs (an odd number makes one trio). Every team gets a letter and a colour.', 'Každé kolo se hráči náhodně rozdělí do dvojic (při lichém počtu vznikne jedna trojice). Každý tým dostane písmeno a barvu.', 'En cada ronda los jugadores se dividen al azar en parejas (si sobra uno, se forma un trío). Cada equipo recibe una letra y un color.'],
+  ['Everyone sees the same prompt and who their twin is. Without talking, snap a selfie that matches your twin as closely as you can — you have 30 seconds.', 'Všichni vidí stejné zadání a kdo je jejich dvojče. Bez mluvení se vyfoť tak, aby tvoje selfie co nejvíc seděla k dvojčeti — máš 30 vteřin.', 'Todos ven la misma consigna y quién es su gemelo. Sin hablar, hazte un selfie lo más parecido posible al de tu gemelo: tienes 30 segundos.'],
+  ['All photos are revealed team by team, side by side. Vote for the team that is most in sync — never your own.', 'Fotky se odkryjí tým po týmu, vedle sebe. Hlasuj pro nejsehranější tým — nikdy ne pro vlastní.', 'Las fotos se muestran equipo por equipo, una junto a otra. Vota por el equipo más sincronizado, nunca por el tuyo.'],
+  ['Teams are ranked by votes and every member gets the same points — 1st place gets 100 pts, the rest a little less. Same votes = same points.', 'Týmy se řadí podle hlasů a každý člen dostane stejně bodů — 1. místo 100 b., ostatní o něco míň. Stejně hlasů = stejně bodů.', 'Los equipos se ordenan por votos y cada miembro recibe los mismos puntos: el 1.º gana 100 pts, el resto un poco menos. Mismos votos = mismos puntos.'],
 ];
 
 // Texty poskládané z více částí (čísla, jména) — regulární výraz na celý text.
@@ -373,10 +385,11 @@ const PATTERNS = [
   [/^— pick$/, (m, lang) => (lang === 'cs' ? '— výběr' : '— elección')],
   [/^— doodle time$/, (m, lang) => (lang === 'cs' ? '— kreslení' : '— a dibujar')],
   [/^— who's the impostor\?$/, (m, lang) => (lang === 'cs' ? '— kdo je impostor?' : '— ¿quién es el impostor?')],
+  [/^Team ([A-Z])$/, (m, lang) => `${lang === 'cs' ? 'Tým' : 'Equipo'} ${m[1]}`],
   [/^Players \((\d+)\)$/, (m, lang) => `${lang === 'cs' ? 'Hráči' : 'Jugadores'} (${m[1]})`],
   [/^Wants to join \((\d+)\)$/, (m, lang) => `${lang === 'cs' ? 'Chce se připojit' : 'Quiere unirse'} (${m[1]})`],
-  [/^Need at least (\d+) players$/, (m, lang) => (lang === 'cs' ? `Potřebujete aspoň ${m[1]} hráče` : `Hacen falta al menos ${m[1]} jugadores`)],
-  [/^You need at least (\d+) players\.$/, (m, lang) => (lang === 'cs' ? `Potřebujete aspoň ${m[1]} hráče.` : `Hacen falta al menos ${m[1]} jugadores.`)],
+  [/^Need at least (\d+) players$/, (m, lang) => (lang === 'cs' ? `Potřebujete aspoň ${m[1]} ${csPlural(m[1], 'hráče', 'hráče', 'hráčů')}` : `Hacen falta al menos ${m[1]} jugadores`)],
+  [/^You need at least (\d+) players\.$/, (m, lang) => (lang === 'cs' ? `Potřebujete aspoň ${m[1]} ${csPlural(m[1], 'hráče', 'hráče', 'hráčů')}.` : `Hacen falta al menos ${m[1]} jugadores.`)],
   [/^Waiting for the host \((.+)\) to start…$/, (m, lang) => (lang === 'cs' ? `Čeká se, až hostitel (${m[1]}) spustí hru…` : `Esperando a que el anfitrión (${m[1]}) empiece…`)],
   [/^(.+) has to let you in$/, (m, lang) => (lang === 'cs' ? `${m[1]} tě musí pustit dovnitř` : `${m[1]} tiene que dejarte entrar`)],
   [/^Remove (.+)\?$/, (m, lang) => (lang === 'cs' ? `Vyhodit hráče ${m[1]}?` : `¿Echar a ${m[1]}?`)],

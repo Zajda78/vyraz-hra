@@ -58,7 +58,7 @@ function wireSocketEvents(socket) {
       cancelPendingCreate = false;
       if (msg.phase !== 'submitting' && msg.phase !== 'copy_copying') submittedLocally = false;
       if (msg.phase !== 'drawing') drawDoneLocally = false;
-      if (msg.phase !== 'voting') votedLocallyFor = null;
+      if (msg.phase !== 'voting' && msg.phase !== 'twins_voting') votedLocallyFor = null;
       if (msg.code && msg.youId) saveSession(msg.code, msg.youId);
       renderApp(msg);
     } else if (msg.type === 'error') {
@@ -210,6 +210,18 @@ const MODE_ICON_PALETTE = `
     <circle cx="43" cy="65" r="8" stroke="currentColor" stroke-width="5"/>
   </svg>`;
 
+const MODE_ICON_TWINS = `
+  <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="36" cy="50" r="28" stroke="currentColor" stroke-width="6"/>
+    <circle cx="84" cy="50" r="28" stroke="currentColor" stroke-width="6"/>
+    <circle cx="27" cy="44" r="4.5" fill="currentColor"/>
+    <circle cx="45" cy="44" r="4.5" fill="currentColor"/>
+    <circle cx="75" cy="44" r="4.5" fill="currentColor"/>
+    <circle cx="93" cy="44" r="4.5" fill="currentColor"/>
+    <path d="M26 60 Q36 70 46 60" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    <path d="M74 60 Q84 70 94 60" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+  </svg>`;
+
 const MODE_ICON_COPY = `
   <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="74" cy="38" r="30" stroke="currentColor" stroke-width="6"/>
@@ -245,6 +257,7 @@ const MODE_MENU = [
       { id: 'impostor', name: 'Impostor', tagline: 'One player got a different prompt', players: 3, bg: () => MODE_ICON_SPY },
       { id: 'hunt', name: 'Snap Hunt', tagline: 'Find the thing, snap it, vote', players: 3, bg: () => MODE_ICON_LOUPE },
       { id: 'copycat', name: 'Copycat', tagline: 'Copy the face, best copy wins', players: 3, bg: () => MODE_ICON_COPY },
+      { id: 'twins', name: 'Twins', tagline: 'Two of you, one face — sync up!', players: 6, wide: true, bg: () => MODE_ICON_TWINS },
     ],
   },
 ];
@@ -283,6 +296,7 @@ function modeDisplayName(mode) {
   if (mode === 'impostor') return 'Impostor';
   if (mode === 'hunt') return 'Snap Hunt';
   if (mode === 'copycat') return 'Copycat';
+  if (mode === 'twins') return 'Twins';
   return 'Reaction';
 }
 
@@ -596,6 +610,14 @@ const RULES_BY_MODE = {
     'The original picks the best copy anonymously — its author gets 100 pts.',
     'After the last round, whoever has the most points wins.',
   ],
+  twins: [
+    'The host creates a lobby and shares the code with friends — you need at least 6 players — and picks the question pack: Classic, Spicy, Family or School.',
+    'Each round the players are randomly split into pairs (an odd number makes one trio). Every team gets a letter and a colour.',
+    'Everyone sees the same prompt and who their twin is. Without talking, snap a selfie that matches your twin as closely as you can — you have 30 seconds.',
+    'All photos are revealed team by team, side by side. Vote for the team that is most in sync — never your own.',
+    'Teams are ranked by votes and every member gets the same points — 1st place gets 100 pts, the rest a little less. Same votes = same points.',
+    'After the last round, whoever has the most points wins.',
+  ],
   hunt: [
     'The host creates a lobby and shares the code with friends — you need at least 3 players.',
     'Each round a task drops — like "something blue" or "the weirdest thing in your bag". The host picks what to hunt: Anywhere, Home, School, Outdoors, Party or Food.',
@@ -608,8 +630,9 @@ const RULES_BY_MODE = {
 };
 
 function showRulesModal(initialMode = 'classic') {
-  const modes = ['classic', 'draw', 'caption', 'impostor', 'hunt', 'copycat'];
+  const modes = ['classic', 'draw', 'caption', 'impostor', 'hunt', 'copycat', 'twins'];
   openModal(`
+    <div class="x-close-row"><button class="x-close" id="modal-rules-close" aria-label="Close">${icon('close')}</button></div>
     <h2>How to play</h2>
     <div class="rules-tabs">
       ${modes.map((m) => `
@@ -619,7 +642,6 @@ function showRulesModal(initialMode = 'classic') {
         </button>`).join('')}
     </div>
     <div class="rules-list" id="rules-list"></div>
-    <button class="modal-close" id="modal-rules-close">Close</button>
   `);
 
   function show(mode) {
@@ -934,6 +956,7 @@ async function buildCameraView(state) {
         ${roleBadgeHtml(state)}
         <div class="prompt-text">${escapeHtml(state.prompt)}</div>
       </div>
+      ${twinsBannerHtml(state)}
       <div class="timer" id="timer-el">--</div>
       <div class="camera-wrap">
         <video id="cam-video" autoplay playsinline muted></video>
@@ -1026,6 +1049,7 @@ function buildWaitingView(state) {
         ${roleBadgeHtml(state)}
         <div class="prompt-text">${escapeHtml(state.prompt)}</div>
       </div>
+      ${twinsBannerHtml(state, false)}
       ${lastSentPhoto && lastSentPhoto.round === state.round
         ? `<div class="sent-photo"><img src="${lastSentPhoto.url}" alt=""><span class="sent-check">${icon('check')}</span></div>`
         : bigIcon('checkCircle', 'good')}
@@ -1406,6 +1430,7 @@ function renderResultsScreen(state) {
 
   if (r.kind === 'caption') return renderCaptionResultsScreen(state, r);
   if (r.kind === 'copycat') return renderCopyResultsScreen(state, r);
+  if (r.kind === 'twins') return renderTwinResultsScreen(state, r);
   if (r.kind === 'impostor') return renderImpostorResults(state, r);
 
   const cardsHtml = r.cards.map((c) => `
@@ -1536,9 +1561,9 @@ function buildPodiumHtml(players) {
 }
 
 // Minimální počet hráčů pro start — Impostor ve dvou nedává smysl.
-// všechny módy se hrají od 3 hráčů (hlídá to i server)
-function minPlayersFor() {
-  return 3;
+// většina módů se hraje od 3 hráčů, Twins od 4 (hlídá to i server)
+function minPlayersFor(mode) {
+  return mode === 'twins' ? 6 : 3; // Twins od 6 hráčů (aspoň 3 dvojice)
 }
 
 // Mince za dohranou hru: server pošle kolik, připíšou se jen jednou
@@ -1662,6 +1687,7 @@ function renderApp(state) {
     return;
   }
 
+  if (renderTwinsPhase(state)) return;
   if (renderCopycatPhase(state)) return;
 
   if (state.phase === 'subject_photo') {

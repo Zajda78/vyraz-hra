@@ -2940,3 +2940,110 @@ svg.ico[stroke="currentColor"]{ stroke-width:2.4; }
 }
 .scan-error{ font-weight:800; font-size:1.1rem; color:#fff; padding:18px 8px; }
 .scan-error[hidden], .scan-box[hidden]{ display:none; }
+
+
+/* ------------------------------------------------------------- TWINS --- */
+
+.mode-card-twins{ --c1:#38BDF8; --c2:#F472B6; --base:#1c1c3f; }
+.rules-tab-twins{ --c1:#38BDF8; --c2:#F472B6; }
+.mode-color-twins{ --c1:#38BDF8; --c2:#F472B6; }
+.pack-mode:nth-child(5) .mode-tile{ --c1:#38BDF8; --c2:#F472B6; }
+.mode-grid .mode-card:nth-child(5){ animation-delay:.26s; }
+/* Party Pack má 5 módů + „More new modes" — dlaždice se zalomí do dvou řad po třech */
+.pack-card:not(.qp-card) .pack-modes{ flex-wrap:wrap; gap:12px 10px; }
+.pack-card:not(.qp-card) .pack-mode{ width:84px; }
+/* lichý počet záložek v pravidlech — poslední přes celou šířku */
+.rules-tab:last-child:nth-child(odd){ grid-column:1 / -1; }
+
+/* pruh „Tvoje dvojče" nad kamerou */
+.twin-banner{
+  border:3px solid color-mix(in srgb, var(--tc) 55%, var(--ol-2)); border-radius:20px; padding:12px 14px;
+  background:color-mix(in srgb, var(--tc) 16%, var(--surface));
+  box-shadow:0 4px 0 color-mix(in srgb, var(--tc) 35%, var(--ol)); text-align:center;
+}
+.twin-banner-head{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:8px; }
+.twin-label{ font-family:'Unbounded',sans-serif; font-weight:800; font-size:0.9rem; }
+.twin-people{ display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; font-weight:800; font-size:1.05rem; }
+.twin-person{ display:inline-flex; align-items:center; gap:8px; }
+.twin-amp{ font-family:'Unbounded',sans-serif; font-weight:800; opacity:0.8; }
+.twin-hint{ margin-top:10px; font-family:'Unbounded',sans-serif; font-weight:800; font-size:0.9rem; color:var(--tc); }
+.team-badge{
+  display:inline-block; padding:3px 11px; border-radius:999px; font-family:'Unbounded',sans-serif; font-weight:800; font-size:0.72rem;
+  background:var(--tc); color:#1F1235; border:2px solid color-mix(in srgb, var(--tc) 50%, #0E0620);
+  box-shadow:0 2px 0 color-mix(in srgb, var(--tc) 40%, #0E0620);
+}
+
+/* karta týmu s fotkami vedle sebe */
+.twin-question{ margin:0; text-align:center; font-family:'Unbounded',sans-serif; font-size:1rem; line-height:1.35; }
+.twin-list{ display:flex; flex-direction:column; gap:14px; }
+.twin-card{
+  position:relative; padding:10px; border-radius:20px; cursor:pointer;
+  border:3px solid color-mix(in srgb, var(--tc) 60%, var(--ol-2)); background:color-mix(in srgb, var(--tc) 12%, var(--surface));
+  box-shadow:0 4px 0 color-mix(in srgb, var(--tc) 35%, var(--ol));
+  transition:transform .16s var(--pop), opacity .15s ease;
+}
+.twin-card:not(.own):not(.disabled):not(.result):active{ transform:translateY(3px); }
+.twin-card.own, .twin-card.disabled{ cursor:default; }
+.twin-card.own{ opacity:0.75; }
+.twin-card.disabled:not(.own){ opacity:0.55; }
+.twin-card.selected{ border-color:var(--accent); box-shadow:0 4px 0 #4C1D95; }
+.twin-card.result{ cursor:default; }
+.twin-card.winner{ border-color:var(--gold); box-shadow:0 4px 0 #7A5410, 0 0 0 3px rgba(240,180,41,0.25); }
+.twin-card .crown{ position:absolute; top:-14px; right:12px; width:34px; height:34px; z-index:2; }
+.twin-card .crown svg{ width:100%; height:100%; }
+.twin-card-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; font-weight:800; }
+.twin-own{ font-weight:800; font-size:0.85rem; color:var(--gold); }
+.twin-pts{ font-weight:800; font-size:0.9rem; color:var(--gold); }
+.twin-photos{ display:grid; gap:8px; grid-template-columns:repeat(2, 1fr); }
+.twin-photos.n3{ grid-template-columns:repeat(3, 1fr); }
+.twin-photo{ position:relative; border-radius:14px; overflow:hidden; border:2px solid var(--ol-2); background:var(--surface-2); aspect-ratio:1/1; }
+.twin-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+.twin-photo .missed{ width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; font-weight:700; font-size:0.8rem; text-align:center; }
+.twin-photo .missed .emoji{ font-size:1.8rem; }
+.twin-name{
+  position:absolute; left:0; right:0; bottom:0; padding:14px 6px 4px; text-align:center; font-weight:800; font-size:0.78rem;
+  background:linear-gradient(transparent, rgba(14,6,32,0.85)); color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* Twins: menší banner a kamera, ať je spoušť vidět bez posouvání (telefon 375×812) */
+.twin-banner{ padding-top:8px; padding-bottom:8px; }
+.twin-banner-head{ margin-bottom:4px; }
+.twin-hint{ margin-top:4px; font-size:0.78rem; }
+.screen:has(.twin-banner) .camera-wrap{ width:min(100%, 260px); margin-left:auto; margin-right:auto; }
+
+/* ======================= Jezevčík (mythic, dárkový odkaz) — kreslení jezevčíci =======================
+   Tělo jezevčíka je okraj rámečku (SVG v decor.js); tady jen pohyb: nožky se vrtí, ucho plandá, ocas vrtí, hlava poskakuje,
+   skvrny na těle putují. Za rámečkem teplá duhově zabarvená záře (bez bílé), žádné bílé záblesky. Světlé pro telefony. */
+.frame-aura.aura-jezevcik{
+  background:conic-gradient(from var(--fa), #B4642E, #E0A066, #F9A8D4, #FBBF24, #B4642E, #E0A066, #D97706, #B4642E);
+  animation:lg-spin 24s linear infinite;
+}
+/* teplá záře místo duhové z Fortune (stejné dýchání a otáčení z .halo-mythic) */
+.halo-frame-jezevcik{ background:conic-gradient(from var(--fa), #FB923C, #F472B6, #FBBF24, #D97706, #F9A8D4, #FB923C); }
+
+.jz-leg{ transform-box:fill-box; transform-origin:50% 0; animation:jz-leg 0.9s cubic-bezier(.34,1.56,.64,1) infinite alternate; }
+@keyframes jz-leg{ from{ transform:rotate(-16deg) scale(1,0.9); } to{ transform:rotate(16deg) scale(1,1.08); } }
+.jz-ear{ transform-box:fill-box; transform-origin:50% 0; }
+.jz-ear.l{ animation:jz-earl 4.6s ease-in-out infinite; }
+.jz-ear.r{ animation:jz-earr 4.6s ease-in-out 0.3s infinite; }
+/* ucho se jen občas zaklepe (většinu času klid) */
+@keyframes jz-earl{ 0%,68%,100%{ transform:rotate(0); } 76%{ transform:rotate(9deg) scaleY(1.05); } 84%{ transform:rotate(-5deg); } 92%{ transform:rotate(3deg); } }
+@keyframes jz-earr{ 0%,68%,100%{ transform:rotate(0); } 76%{ transform:rotate(-9deg) scaleY(1.05); } 84%{ transform:rotate(5deg); } 92%{ transform:rotate(-3deg); } }
+.jz-tail{ transform-box:fill-box; transform-origin:30% 100%; animation:jz-wag 0.5s ease-in-out infinite alternate; }
+@keyframes jz-wag{ from{ transform:rotate(-16deg); } to{ transform:rotate(18deg); } }
+.jz-head{ transform-box:fill-box; transform-origin:50% 100%; animation:jz-head 2.6s ease-in-out infinite; }
+@keyframes jz-head{ 0%,100%{ transform:translateY(0) scale(1,1); } 40%{ transform:translateY(-1.4px) scale(0.98,1.04); } 70%{ transform:translateY(0.4px) scale(1.02,0.98); } }
+.frame-decor .jz-spots{ animation:jz-spots 6s linear infinite; }
+@keyframes jz-spots{ to{ stroke-dashoffset:-17.01; } }
+/* fly-by jezevčík: tělo poskakuje, ucho mává (fb-flap), nožky běží */
+.fb-dach .jz-bob{ transform-box:fill-box; transform-origin:50% 100%; animation:jz-bob 0.3s ease-in-out infinite alternate; }
+@keyframes jz-bob{ from{ transform:translateY(0) rotate(-2deg); } to{ transform:translateY(-1.6px) rotate(2deg); } }
+.fb-dach .fb-wing2{ transform-origin:100% 0; }
+/* dárkové okno se dvěma skiny: menší náhledy, ať se karta vejde na telefon */
+.gift-multi .reveal-preview{ margin:2px 0; }
+.gift-multi .reveal-preview .frame-preview{ width:96px; height:96px; }
+.gift-multi .reveal-preview .name-preview{ width:min(220px, 70vw); height:60px; }
+.gift-multi .reveal-name{ font-size:1.05rem; }
+.gift-multi .reveal-kind{ font-size:0.75rem; margin-bottom:4px; }
+@media (prefers-reduced-motion: reduce){
+  .jz-leg, .jz-ear, .jz-tail, .jz-head, .frame-decor .jz-spots, .fb-dach .jz-bob, .frame-aura.aura-jezevcik{ animation:none !important; }
+}

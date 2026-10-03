@@ -83,6 +83,11 @@ const MODE_GLYPHS = {
     <circle cx="9.4" cy="14.6" r="6.6" fill="#fff"/>
     <path d="M7.3 12.6h.01M11.5 12.6h.01" stroke="#0d3b3b" stroke-width="2" stroke-linecap="round"/>
     <path d="M6.8 16.2c1.4 1.6 3.8 1.6 5.2 0" stroke="#0d3b3b" stroke-width="1.5" stroke-linecap="round" fill="none"/>`,
+  twins: `
+    <circle cx="7.2" cy="12" r="5.4" fill="#fff"/>
+    <circle cx="16.8" cy="12" r="5.4" fill="#fff"/>
+    <path d="M5.4 10.6h.01M9 10.6h.01M15 10.6h.01M18.6 10.6h.01" stroke="#1e3a6b" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M5.4 13.8c1 1.1 2.6 1.1 3.6 0M15 13.8c1 1.1 2.6 1.1 3.6 0" stroke="#1e3a6b" stroke-width="1.3" stroke-linecap="round" fill="none"/>`,
   caption: `
     <path d="M12 3.5c5 0 9 3.2 9 7.2S17 18 12 18c-1 0-2-.1-3-.4L4 20l1.3-3.9C3.8 14.8 3 12.9 3 10.7 3 6.7 7 3.5 12 3.5z" fill="#fff"/>
     <circle cx="8.3" cy="10.8" r="1.3" fill="#7a2a3a"/><circle cx="12" cy="10.8" r="1.3" fill="#7a2a3a"/><circle cx="15.7" cy="10.8" r="1.3" fill="#7a2a3a"/>`,
@@ -160,16 +165,25 @@ const NO_ADS_SVG = `<svg class="no-ads-glyph" viewBox="0 0 24 24" aria-hidden="t
 </svg>`;
 
 // Mince pro obrázky balíčků (stejný styl jako COIN_SVG, jen na libovolné místo).
+// Kreslená mince „D“ — zlatá s korunkou a rubínem (návrh, který si vybral uživatel).
+// Kreslí se v souřadnicích mince o poloměru 52 a zmenší na r.
 function coinArt(cx, cy, r) {
-  const star = Array.from({ length: 10 }, (_, i) => {
-    const a = -Math.PI / 2 + (i * Math.PI) / 5;
-    const rr = i % 2 ? r * 0.2 : r * 0.46;
-    return `${(cx + Math.cos(a) * rr).toFixed(2)},${(cy - r * 0.07 + Math.sin(a) * rr).toFixed(2)}`;
-  }).join(' ');
-  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#F59E0B"/>
-    <circle cx="${cx}" cy="${cy - r * 0.08}" r="${r * 0.92}" fill="#FBBF24"/>
-    <circle cx="${cx}" cy="${cy - r * 0.08}" r="${r * 0.66}" fill="none" stroke="#B45309" stroke-opacity="0.45" stroke-width="${r * 0.12}"/>
-    <polygon points="${star}" fill="#B45309" fill-opacity="0.8"/>`;
+  const s = r / 52;
+  // víc kreslené: tlustý obrys, 3D spodní hrana, plochá plocha s jedním stínem, buclatá korunka
+  return `<g transform="translate(${cx} ${cy}) scale(${s.toFixed(4)})">
+    <circle r="52" fill="#6B3F05"/>
+    <circle r="45" cy="5" fill="#C97A0C"/>
+    <circle r="45" cy="-2" fill="#F2B320"/>
+    <circle r="40" cy="-6" fill="#FCCD3B"/>
+    <path d="M-25 15 L-28 -13 L-13 -1 L0 -21 L13 -1 L28 -13 L25 15 Z" fill="#F59E0B" stroke="#6B3F05" stroke-width="5.5" stroke-linejoin="round"/>
+    <path d="M-23 10 H23" stroke="#C97A0C" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="-28" cy="-15" r="5.5" fill="#FCCD3B" stroke="#6B3F05" stroke-width="4"/>
+    <circle cy="-23" r="5.5" fill="#FCCD3B" stroke="#6B3F05" stroke-width="4"/>
+    <circle cx="28" cy="-15" r="5.5" fill="#FCCD3B" stroke="#6B3F05" stroke-width="4"/>
+    <circle cy="3" r="6.5" fill="#F43F5E" stroke="#6B3F05" stroke-width="4"/>
+    <circle cx="-2" cy="1" r="2" fill="#FECDD3"/>
+    <ellipse cx="-22" cy="-27" rx="12" ry="6.5" fill="#FFF1B8" transform="rotate(-35 -22 -27)"/>
+  </g>`;
 }
 
 function sparkleArt(cx, cy, r, fill = '#FFF7D6') {
@@ -239,10 +253,5 @@ function medalSvg(place) {
   </svg>`;
 }
 
-// Herní mince — zlatá s hvězdou.
-const COIN_SVG = `<svg class="coin" viewBox="0 0 24 24" aria-hidden="true">
-  <circle cx="12" cy="12" r="10" fill="#F59E0B"/>
-  <circle cx="12" cy="11.2" r="9.2" fill="#FBBF24"/>
-  <circle cx="12" cy="11.2" r="6.6" fill="none" stroke="#B45309" stroke-opacity="0.45" stroke-width="1.2"/>
-  <path d="M12 7.2l1.2 2.5 2.7.3-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.3z" fill="#B45309" fill-opacity="0.8"/>
-</svg>`;
+// Herní mince — kreslená zlatá s korunkou (stejná jako coinArt).
+const COIN_SVG = `<svg class="coin" viewBox="0 0 24 24" aria-hidden="true">${coinArt(12, 12, 11.5)}</svg>`;

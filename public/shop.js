@@ -23,7 +23,7 @@ const RARITIES = {
   rare: { label: 'Rare', color: '#A855F7', refund: 35 },
   epic: { label: 'Epic', color: '#EC4899', refund: 75 },
   legendary: { label: 'Legendary', color: '#F0B429', refund: 200 },
-  // Mythic — nejvzácnější, zatím jen rámeček Fortune z kola štěstí (v truhlách není,
+  // Mythic — nejvzácnější, rámeček Fortune z kola štěstí a dárkový set Jezevčík (v truhlách není,
   // proto není v RARITY_ORDER, podle kterého se počítají šance truhel)
   mythic: { label: 'Mythic', color: '#FF3D7F', refund: 500 },
 };
@@ -92,6 +92,8 @@ const SHOP_SECTIONS = [
       { id: 'frame-dino', name: 'Dino', rarity: 'legendary', style: 'linear-gradient(160deg,#4ADE80,#22C55E 50%,#16A34A 50%,#166534)' },
       // jen z dárkového odkazu (gift.js) — v žádné truhle ani na kole
       { id: 'frame-obzerstvi', name: 'Obžerství', rarity: 'legendary', promoOnly: true, style: 'linear-gradient(160deg,#FBBF24,#EF4444 50%,#B91C1C 50%,#7F1D1D)' },
+      // jen z druhého dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
+      { id: 'frame-jezevcik', name: 'Jezevčík', rarity: 'mythic', promoOnly: true, style: 'linear-gradient(160deg,#E0A066,#B4642E 50%,#8A4620 50%,#5C2A0E)' },
       // jen z kola štěstí (wheel.js)
       { id: 'frame-fortune', name: 'Fortune', rarity: 'mythic', wheelOnly: true, style: 'conic-gradient(from 20deg,#FDE047,#22C55E,#FDE047,#A855F7,#FDE047)' },
     ],
@@ -146,6 +148,8 @@ const SHOP_SECTIONS = [
       { id: 'name-disco', name: 'Disco', rarity: 'epic', gradient: 'linear-gradient(90deg,#F472B6,#A78BFA,#22D3EE,#FDE047,#F472B6)' },
       { id: 'name-robot', name: 'Robot', rarity: 'epic', gradient: 'linear-gradient(90deg,#67E8F9,#818CF8,#67E8F9,#A3E635)' },
       { id: 'name-spacecat', name: 'Space Cat', rarity: 'legendary', gradient: 'linear-gradient(90deg,#C4B5FD,#F472B6,#FDE047,#4ADE80,#22D3EE,#C4B5FD)' },
+      // jen z druhého dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
+      { id: 'name-jezevcik', name: 'Jezevčík', rarity: 'mythic', promoOnly: true, gradient: 'linear-gradient(90deg,#B88552,#D9A066,#F0C27A,#FBBF24,#E8B068,#B88552)' },
       // jen z kola štěstí (wheel.js)
       { id: 'name-jackpot', name: 'Jackpot', rarity: 'epic', wheelOnly: true, gradient: 'linear-gradient(90deg,#FDE047,#4ADE80,#FDE047,#4ADE80)' },
     ],
@@ -405,6 +409,10 @@ function nameStyleFor(item) {
   if (!item) return 'color:#fff;';
   if (item.gradient) {
     const base = `background:${item.gradient}; -webkit-background-clip:text; background-clip:text; color:transparent;`;
+    // mythic: plynule proudící přechod (bez bílé), tenký tmavě hnědý obrys pro čitelnost, žádná velká záře
+    if (item.rarity === 'mythic') {
+      return `${base} background-size:300% 100%; animation:name-shimmer 4.5s linear infinite alternate; filter:drop-shadow(0 1px 0 rgba(60,24,6,0.85));`;
+    }
     // vzácné barvy jména se pomalu přelévají, epické a legendární rychleji a víc září
     if (item.rarity === 'epic' || item.rarity === 'legendary') {
       return `${base} background-size:220% 100%; animation:name-shimmer 3.5s ease-in-out infinite alternate; filter:drop-shadow(0 0 6px rgba(255,255,255,0.25));`;
