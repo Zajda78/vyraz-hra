@@ -1666,6 +1666,10 @@ function renderApp(state) {
 
   playMusic(state.phase === 'lobby' ? 'lobby' : 'main');
 
+  // GAMES VISUAL PASS 2026-10-05: třída módu na body (akcentní barva módu v CSS)
+  for (const c of [...document.body.classList]) if (c.startsWith('gm-')) document.body.classList.remove(c);
+  if (state.mode) document.body.classList.add('gm-' + state.mode);
+
   if (state.phase === 'lobby') return renderLobbyScreen(state);
 
   if (state.phase === 'submitting') {

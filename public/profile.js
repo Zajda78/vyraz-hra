@@ -14,7 +14,7 @@ function myLooks() {
 // Uložená jako malý čtvercový JPEG (data URL) v tomhle telefonu; posílá se
 // serveru spolu se vzhledem, takže ji vidí i ostatní hráči.
 
-const AVATAR_SIZE = 112;
+const AVATAR_SIZE = 168; // dřív 112 (rozmazané); víc by zbytečně zatěžovalo posílání stavu všem hráčům
 
 function getAvatar() {
   try { return localStorage.getItem('vyraz_avatar') || null; } catch { return null; }
@@ -44,9 +44,12 @@ function fileToAvatar(file) {
         0, 0, AVATAR_SIZE, AVATAR_SIZE,
       );
       URL.revokeObjectURL(url);
-      // server bere profilovky do ~24 000 znaků — detailní fotku uložit v nižší kvalitě
-      let dataUrl = canvas.toDataURL('image/jpeg', 0.78);
-      if (dataUrl.length > 22000) dataUrl = canvas.toDataURL('image/jpeg', 0.55);
+      // profilovka se posílá všem hráčům — drž ji do ~13 000 znaků (server bere max 24 000)
+      let dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      for (const q of [0.7, 0.58, 0.46]) {
+        if (dataUrl.length <= 13000) break;
+        dataUrl = canvas.toDataURL('image/jpeg', q);
+      }
       resolve(dataUrl);
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')); };

@@ -3198,3 +3198,76 @@ svg.ico[stroke="currentColor"]{ stroke-width:2.4; }
   .frame-preview:has(.aura-miku), .framed-avatar:has(.aura-miku), .photo-frame:has(.aura-miku), .result-photo-frame:has(.aura-miku), .looks-frame:has(.aura-miku){ animation:none !important; }
   .mk-ride, .mk-kw, .mk-kaw .mk-tw, .mk-pt, .mk-ring, .mk-fl, .mk-bn{ opacity:0; visibility:hidden; }
 }
+
+/* ======================================================================
+   GAMES VISUAL PASS 2026-10-05 — jemná změna vzhledu herních obrazovek
+   Celý blok jde smazat (spolu s řádky "gm-" v renderApp v app.js) a vzhled je zpět.
+   Každý mód má akcentní barvu přes třídu body.gm-<mód> (jen mimo home-bg obrazovky).
+   ====================================================================== */
+body.gm-classic { --mc:#8B5CF6; --mc-bd:#5B34B8; --mc-lip:#4C1D95; }
+body.gm-caption { --mc:#EA580C; --mc-bd:#A63C05; --mc-lip:#7A2B04; }
+body.gm-draw    { --mc:#0891B2; --mc-bd:#0B5F75; --mc-lip:#084859; }
+body.gm-impostor{ --mc:#DC2626; --mc-bd:#991B1B; --mc-lip:#7F1D1D; }
+body.gm-hunt    { --mc:#3B82F6; --mc-bd:#1D4ED8; --mc-lip:#1E3A8A; }
+body.gm-copycat { --mc:#0D9488; --mc-bd:#0B6B61; --mc-lip:#084A44; }
+body.gm-twins   { --mc:#C026D3; --mc-bd:#86198F; --mc-lip:#640F6E; }
+
+/* plynulejší vstup obrazovek a karet (krátký, bez bílého záblesku) */
+@keyframes gm-in{ from{ opacity:0; transform:translateY(10px) scale(0.985); } to{ opacity:1; transform:none; } }
+@keyframes gm-pop{ 0%{ transform:scale(0.96); } 60%{ transform:scale(1.025); } 100%{ transform:scale(1); } }
+body:not(.home-bg) .screen > *{ animation:gm-in .32s cubic-bezier(.2,.8,.2,1) both; }
+body:not(.home-bg) .screen > *:nth-child(2){ animation-delay:.04s; }
+body:not(.home-bg) .screen > *:nth-child(3){ animation-delay:.08s; }
+body:not(.home-bg) .screen > *:nth-child(4){ animation-delay:.12s; }
+body:not(.home-bg) .screen > *:nth-child(n+5){ animation-delay:.16s; }
+
+/* hravější karty: jemný gradient, větší zaoblení, plastičtější stín */
+body:not(.home-bg) .card, body:not(.home-bg) .prompt-box, body:not(.home-bg) .join-card{
+  border-radius:28px;
+  background-image:linear-gradient(160deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0) 45%, rgba(0,0,0,0.12) 100%);
+  box-shadow:0 5px 0 var(--lip, var(--lip-c)), 0 14px 24px -12px rgba(0,0,0,0.55), inset 0 -4px 0 rgba(0,0,0,0.16), inset 0 2px 0 var(--purple-hi);
+}
+body:not(.home-bg) .player-row{ border-radius:18px; background-image:linear-gradient(160deg, rgba(255,255,255,0.04), rgba(0,0,0,0.1)); }
+body:not(.home-bg) .vote-card, body:not(.home-bg) .result-card, body:not(.home-bg) .ivote-card, body:not(.home-bg) .caption-card{ border-radius:22px; }
+body:not(.home-bg) .camera-wrap{ border-radius:26px; }
+
+/* akcent módu: nadpisy, tlačítka, kód lobby */
+body[class*="gm-"]:not(.home-bg) .section-eyebrow, body[class*="gm-"]:not(.home-bg) .prompt-box .eyebrow{ color:color-mix(in srgb, var(--mc) 55%, #fff); }
+body[class*="gm-"]:not(.home-bg) .prompt-box{ border-color:color-mix(in srgb, var(--mc) 45%, var(--ol-2)); box-shadow:0 5px 0 color-mix(in srgb, var(--mc-lip) 70%, #000), 0 14px 24px -12px rgba(0,0,0,0.55), inset 0 3px 0 color-mix(in srgb, var(--mc) 18%, transparent); }
+body[class*="gm-"]:not(.home-bg) .btn-primary{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--mc) 82%, #fff) 0%, var(--mc) 55%);
+  border-color:var(--mc-bd); --lip:var(--mc-lip); color:#fff;
+}
+body[class*="gm-"]:not(.home-bg) .btn-primary:disabled{ background:var(--mc); }
+body[class*="gm-"]:not(.home-bg) .code-box{ border-color:color-mix(in srgb, var(--mc) 50%, var(--ol-2)); }
+body[class*="gm-"]:not(.home-bg) .scoreboard .row.you{ border-color:var(--mc); }
+
+/* foťák: větší spoušť s barevným prstencem a jemným pulzem */
+body:not(.home-bg) .shutter{
+  width:82px; height:82px;
+  background:radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--mc, var(--accent)) 80%, #fff) 0%, var(--mc, var(--accent)) 60%);
+  outline:3px solid var(--mc-bd, #5B34B8); --lip:var(--mc-lip, #4C1D95);
+  animation:gm-shutter 2.2s ease-in-out infinite;
+}
+body:not(.home-bg) .shutter:disabled{ animation:none; }
+@keyframes gm-shutter{
+  0%,100%{ box-shadow:0 var(--lipy) 0 var(--lip), 0 0 0 0 color-mix(in srgb, var(--mc, var(--accent)) 45%, transparent), inset 0 -6px 0 rgba(0,0,0,0.25); }
+  50%{ box-shadow:0 var(--lipy) 0 var(--lip), 0 0 0 10px color-mix(in srgb, var(--mc, var(--accent)) 0%, transparent), inset 0 -6px 0 rgba(0,0,0,0.25); }
+}
+
+/* výraznější odpočet */
+body:not(.home-bg) .timer{ font-size:1.5rem; padding:8px 24px; letter-spacing:.02em; }
+body:not(.home-bg) .timer.low{ font-size:1.7rem; animation:timer-tick 1s var(--pop) infinite; }
+
+/* hlasovací karty: výběr barvou módu + pružný vstup */
+body[class*="gm-"]:not(.home-bg) .vote-card.selected{
+  border-color:var(--mc); --lip:var(--mc-lip);
+  box-shadow:0 var(--lipy,4px) 0 var(--mc-lip), 0 0 0 4px color-mix(in srgb, var(--mc) 35%, transparent), inset 0 -4px 0 rgba(0,0,0,0.16);
+  animation:gm-pop .28s var(--pop);
+}
+body[class*="gm-"]:not(.home-bg) .vote-card.selected .check{ background:var(--mc); }
+body[class*="gm-"]:not(.home-bg) .caption-card.picked{ animation:gm-pop .28s var(--pop); }
+
+@media (prefers-reduced-motion: reduce){
+  body:not(.home-bg) .screen > *, body:not(.home-bg) .shutter, .vote-card.selected{ animation:none !important; }
+}
