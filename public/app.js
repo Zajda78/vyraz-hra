@@ -1236,6 +1236,7 @@ function buildDrawingView(state) {
         <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds} — doodle time</div>
         <div class="prompt-text">${escapeHtml(state.prompt)}</div>
       </div>
+      ${state.photoOwnerName ? `<div class="draw-on-banner" style="text-align:center; font-size:22px; font-weight:800; margin:6px 0 10px; line-height:1.2;">Draw on ${escapeHtml(state.photoOwnerName)}'s photo</div>` : ''}
       <div class="timer" id="timer-el">--</div>
       <div class="camera-wrap draw-stage">
         <img id="draw-photo" src="${state.yourPhotoDataUrl}">
@@ -1389,26 +1390,38 @@ function buildVotingView(state) {
 
   document.querySelectorAll('.vote-card[data-id]').forEach((el) => {
     el.onclick = () => {
-      if (votedLocallyFor) return;
       const targetId = el.getAttribute('data-id');
+      if (votedLocallyFor === targetId) return; // už vybraný – nic
       votedLocallyFor = targetId;
       send({ type: 'cast_vote', targetId });
       playSfx('vote');
-      document.querySelectorAll('.vote-card[data-id]').forEach((c) => {
-        c.classList.toggle('selected', c === el);
-        if (c !== el) c.classList.add('disabled');
-      });
-      el.insertAdjacentHTML('beforeend', `<div class="check">${icon('check')}</div>`);
+      markVoteSelection('.vote-card[data-id]', targetId);
     };
   });
 
   patchVoteCount(state);
 }
 
+// Zvýrazní vybranou kartu (hlas jde měnit, dokud hlasování trvá); ostatní zůstávají klepnutelné.
+function markVoteSelection(selector, targetId) {
+  document.querySelectorAll(selector).forEach((c) => {
+    const on = c.getAttribute('data-id') === targetId;
+    c.classList.toggle('selected', on);
+    c.classList.remove('disabled');
+    const chk = c.querySelector('.check');
+    if (on && !chk && c.classList.contains('vote-card')) c.insertAdjacentHTML('beforeend', `<div class="check">${icon('check')}</div>`);
+    if (!on && chk) chk.remove();
+  });
+}
+
 function patchVoteCount(state) {
+  if (state.yourVote) {
+    votedLocallyFor = state.yourVote;
+    markVoteSelection(state.phase === 'twins_voting' ? '.twin-card[data-id]' : '.vote-card[data-id]', state.yourVote);
+  }
   const el = document.getElementById('vote-count-text');
   if (el) el.textContent = state.youVoted
-    ? `Vote sent. ${state.votedCount} / ${state.activeCount} voted…`
+    ? `Vote sent (you can change it). ${state.votedCount} / ${state.activeCount} voted…`
     : `${state.votedCount} / ${state.activeCount} voted…`;
 }
 
@@ -1441,6 +1454,7 @@ function renderResultsScreen(state) {
         : resultPhotoHtml(c.photoDataUrl, looksOf(state, c.id))}
       <div class="meta">
         <div class="name">${playerNameHtml(c.name, looksOf(state, c.id))}</div>
+        ${c.photoOwnerName ? `<div class="votes">On ${escapeHtml(c.photoOwnerName)}'s photo</div>` : ''}
         ${c.missed ? '' : `<div class="votes">${c.votes} ${c.votes === 1 ? 'vote' : 'votes'} · +${c.points} pts</div>`}
       </div>
     </div>

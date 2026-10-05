@@ -1032,6 +1032,7 @@ function startRound(lobby) {
   lobby.submissions.clear();
   lobby.votes.clear();
   lobby.drawDone = new Set();
+  lobby.drawAssign = new Map();
   lobby.cardOrder = [];
   lobby.lastRoundResult = null;
   lobby.phase = 'submitting';
@@ -1510,12 +1511,61 @@ function afterSubmitting(lobby) {
   }
 }
 
+// Doodle: přidělí každému (kdo má fotku) fotku NĚKOHO JINÉHO — permutace bez
+// pevných bodů (derangement). Preferuje dvojice, které spolu ještě nebyly
+// (lobby.drawHistory: kreslíř -> množina majitelů fotek z minulých kol);
+// když to nejde, aspoň nové losování bez sebe sama. Vrací Map kreslíř -> majitel.
+function assignDrawPhotos(lobby, ids) {
+  const result = new Map();
+  if (ids.length < 2) return result;
+  const history = (lobby.drawHistory ||= new Map());
+  const isDerangement = (perm) => perm.every((owner, i) => owner !== ids[i]);
+  const noRepeat = (perm) => perm.every((owner, i) => !history.get(ids[i])?.has(owner));
+  let perm = null;
+  // 1) bez sebe sama a bez opakování z minulých kol
+  for (let t = 0; t < 300 && !perm; t++) {
+    const c = shuffle(ids.slice());
+    if (isDerangement(c) && noRepeat(c)) perm = c;
+  }
+  // 2) aspoň bez sebe sama
+  for (let t = 0; t < 300 && !perm; t++) {
+    const c = shuffle(ids.slice());
+    if (isDerangement(c)) perm = c;
+  }
+  // 3) jistota: kruhový posun náhodně zamíchaného pořadí je vždy derangement
+  if (!perm) {
+    const order = shuffle(ids.slice());
+    const shift = 1 + Math.floor(Math.random() * (ids.length - 1));
+    const byId = new Map();
+    order.forEach((id, i) => byId.set(id, order[(i + shift) % order.length]));
+    perm = ids.map((id) => byId.get(id));
+  }
+  ids.forEach((id, i) => {
+    result.set(id, perm[i]);
+    if (!history.has(id)) history.set(id, new Set());
+    history.get(id).add(perm[i]);
+  });
+  return result;
+}
+
 function beginDrawing(lobby) {
   lobby.phase = 'drawing';
   lobby.drawDone = new Set();
-  // kdo nemá fotku, nemá co dokreslovat — rovnou ho označíme jako hotového
+  // Přidělení cizích fotek: dokreslují jen ti, kdo sami fotku mají a zároveň
+  // existuje aspoň jedna cizí fotka. Původní fotky si držíme stranou.
+  const withPhoto = connectedPlayers(lobby)
+    .map((p) => p.id)
+    .filter((id) => !lobby.submissions.get(id)?.missed);
+  const originals = new Map(withPhoto.map((id) => [id, lobby.submissions.get(id).photoDataUrl]));
+  const assign = assignDrawPhotos(lobby, withPhoto);
+  lobby.drawAssign = assign; // kreslíř -> majitel fotky
+  for (const [drawerId, ownerId] of assign) {
+    // do té doby, než kreslíř odevzdá, je jeho "výsledkem" nepokreslená cizí fotka
+    lobby.submissions.set(drawerId, { photoDataUrl: originals.get(ownerId), missed: false, photoOwnerId: ownerId });
+  }
+  // kdo nemá fotku nebo nemá co dokreslovat, je rovnou hotový
   for (const p of connectedPlayers(lobby)) {
-    if (lobby.submissions.get(p.id)?.missed) lobby.drawDone.add(p.id);
+    if (!assign.has(p.id)) lobby.drawDone.add(p.id);
   }
   lobby.deadlineAt = Date.now() + lobby.drawSeconds * 1000;
   lobby.timer = setTimeout(() => beginVoting(lobby), lobby.drawSeconds * 1000);
@@ -1599,6 +1649,8 @@ function finishVoting(lobby) {
       return {
         id: pid,
         name: player ? player.name : '???',
+        // Doodle: čí fotka to původně byla (kreslíř je autor a dostává body)
+        photoOwnerName: sub?.photoOwnerId ? lobby.players.get(sub.photoOwnerId)?.name || null : null,
         photoDataUrl: sub?.missed ? null : sub?.photoDataUrl || null,
         missed: !!sub?.missed,
         votes: tally.get(pid) || 0,
@@ -1682,6 +1734,8 @@ function resetLobbyToWaiting(lobby) {
   lobby.submissions.clear();
   lobby.votes.clear();
   lobby.drawDone = new Set();
+  lobby.drawAssign = new Map();
+  lobby.drawHistory = new Map(); // nová hra = čistá historie přidělení fotek v Doodle
   lobby.cardOrder = [];
   lobby.subjectOrder = [];
   lobby.subjectIndex = -1;
@@ -1786,7 +1840,9 @@ function publicState(lobby, viewerId) {
 
   if (lobby.phase === 'drawing') {
     const mySub = lobby.submissions.get(viewerId);
+    // fotka, do které hráč kreslí (přidělená cizí); prozrazujeme jen její vlastní data a jméno majitele
     base.yourPhotoDataUrl = mySub && !mySub.missed ? mySub.photoDataUrl : null;
+    base.photoOwnerName = mySub?.photoOwnerId ? lobby.players.get(mySub.photoOwnerId)?.name || '???' : null;
     base.youMissed = !!mySub?.missed;
     base.doneCount = lobby.drawDone.size;
     base.activeCount = connectedPlayers(lobby).length;
@@ -1806,6 +1862,7 @@ function publicState(lobby, viewerId) {
     base.votedCount = lobby.votes.size;
     base.activeCount = connectedPlayers(lobby).length;
     base.youVoted = lobby.votes.has(viewerId);
+    base.yourVote = lobby.votes.get(viewerId) || null;
   }
 
   if (lobby.phase === 'impostor_voting') {
@@ -2328,6 +2385,13 @@ wss.on('connection', (ws) => {
     if (msg.type === 'submit_photo' && (lobby.phase === 'submitting' || lobby.phase === 'drawing')) {
       if (typeof msg.photoDataUrl === 'string' && msg.photoDataUrl.startsWith('data:image/')) {
         if (lobby.phase === 'drawing' && lobby.submissions.get(playerId)?.missed) return;
+        if (lobby.phase === 'drawing') {
+          // odevzdání výsledku dokreslování — jen kdo má přidělenou fotku, a jen jednou
+          if (!lobby.drawAssign?.has(playerId) || lobby.drawDone.has(playerId)) return;
+          lobby.submissions.set(playerId, { photoDataUrl: msg.photoDataUrl, missed: false, photoOwnerId: lobby.drawAssign.get(playerId) });
+          broadcast(lobby);
+          return;
+        }
         lobby.submissions.set(playerId, { photoDataUrl: msg.photoDataUrl, missed: false });
         broadcast(lobby);
         if (lobby.phase === 'submitting') maybeAdvanceFromSubmitting(lobby);
@@ -2397,7 +2461,8 @@ wss.on('connection', (ws) => {
       const targetSub = lobby.submissions.get(targetId);
       if (!targetSub || targetSub.missed) return sendError(ws, 'You can\'t vote for that card.');
       if (!lobby.cardOrder.includes(targetId)) return;
-      lobby.votes.set(playerId, targetId);
+      if (lobby.votes.get(playerId) === targetId) return; // stejný hlas znovu – nic
+      lobby.votes.set(playerId, targetId); // přepsání hlasu je povoleno, dokud trvá hlasování
       broadcast(lobby);
       maybeAdvanceFromVoting(lobby);
       return;
@@ -2409,6 +2474,7 @@ wss.on('connection', (ws) => {
       if (!g || !mine) return;
       if (g === mine) return sendError(ws, "You can't vote for your own group.");
       if (!twinGroupVotable(lobby, g)) return sendError(ws, "You can't vote for that card.");
+      if (lobby.votes.get(playerId) === g.id) return;
       lobby.votes.set(playerId, g.id);
       broadcast(lobby);
       maybeAdvanceFromTwinsVoting(lobby);
@@ -2419,6 +2485,7 @@ wss.on('connection', (ws) => {
       const targetId = msg.targetId;
       if (targetId === playerId) return sendError(ws, 'You can\'t vote for yourself.');
       if (!lobby.cardOrder.includes(targetId)) return;
+      if (lobby.votes.get(playerId) === targetId) return;
       lobby.votes.set(playerId, targetId);
       broadcast(lobby);
       maybeAdvanceFromImpostorVoting(lobby);

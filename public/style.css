@@ -3047,3 +3047,136 @@ svg.ico[stroke="currentColor"]{ stroke-width:2.4; }
 @media (prefers-reduced-motion: reduce){
   .jz-leg, .jz-ear, .jz-tail, .jz-head, .frame-decor .jz-spots, .fb-dach .jz-bob, .frame-aura.aura-jezevcik{ animation:none !important; }
 }
+
+/* ======================= Miku (mythic, dárkový odkaz) — anime chibi Miku, culíky a motorka KTM Duke =======================
+   Kreslení je v decor.js; tady jen pohyb. Společný cyklus 42 s řídí velké události, ať se nepřekrývají:
+   5–17 % jízda KTM →, 24–34 % flyby zpět s wheelie, 36–47 % velký moment (hudební vlny, ~15 s po načtení),
+   55–62 % kawaii srdíčka, 70–82 % druhá jízda. Ostatní (mrkání, culíky, noty, jiskřičky, sakura) jedou plynule.
+   Záře tyrkysová/růžová/oranžová, žádná bílá, žádné bílé záblesky. Skryté prvky mají visibility/opacity 0, ať nezatěžují telefon. */
+.frame-aura.aura-miku{
+  background:conic-gradient(from var(--fa), #14B8A6, #22D3EE, #F472B6, #F97316, #5EEAD4, #FDBA74, #F472B6, #14B8A6);
+  animation:lg-spin 24s linear infinite;
+}
+.halo-frame-miku{ background:conic-gradient(from var(--fa), #22D3EE, #14B8A6, #F472B6, #F97316, #5EEAD4, #FDBA74, #22D3EE); }
+/* pulzující záře kolem rámečku: tyrkysová → růžová → oranžová */
+.frame-preview:has(.aura-miku), .framed-avatar:has(.aura-miku), .photo-frame:has(.aura-miku),
+.result-photo-frame:has(.aura-miku), .looks-frame:has(.aura-miku){ animation:mk-glow 6s ease-in-out infinite; }
+@keyframes mk-glow{
+  0%,100%{ box-shadow:0 0 10px 1px rgba(34,211,238,0.5), 0 0 22px 4px rgba(20,184,166,0.25); }
+  33%{ box-shadow:0 0 16px 3px rgba(244,114,182,0.6), 0 0 32px 8px rgba(244,114,182,0.25); }
+  66%{ box-shadow:0 0 16px 3px rgba(249,115,22,0.6), 0 0 32px 8px rgba(251,146,60,0.25); }
+}
+.mk-tl2, .mk-tr2, .mk-skw, .mk-skw2, .mk-fig, .mk-head, .mk-eyes, .mk-lk, .mk-arm, .mk-sing, .mk-tw, .mk-kw, .mk-pt, .mk-ring, .mk-fl, .mk-bn, .mk-wheelie, .mk-dust, .mk-spk, .mk-sl{ transform-box:fill-box; transform-origin:50% 50%; }
+/* culíky: každý vlastní rytmus (celek se houpe, ohyb se vlní jinak) */
+.mk-tl2{ transform-origin:90% 0; animation:mk-sway 3.4s ease-in-out infinite alternate; }
+.mk-tr2{ transform-origin:0 30%; animation:mk-sway2 4.2s ease-in-out -1.3s infinite alternate; }
+.mk-skw{ transform-origin:50% 0; animation:mk-skew 2.3s ease-in-out -0.7s infinite alternate; }
+.mk-skw2{ transform-origin:0 50%; animation:mk-skew2 2.9s ease-in-out -1.9s infinite alternate; }
+@keyframes mk-sway{ from{ transform:rotate(-2.4deg); } to{ transform:rotate(2.6deg); } }
+@keyframes mk-sway2{ from{ transform:rotate(1.2deg); } to{ transform:rotate(-1.6deg); } }
+@keyframes mk-skew{ from{ transform:skewX(-3deg); } to{ transform:skewX(3.4deg); } }
+@keyframes mk-skew2{ from{ transform:skewY(-2.2deg); } to{ transform:skewY(2.6deg); } }
+/* postava: pohupuje se, hlava kývá, pramínky vlají, mává rukou, mrká */
+.mk-fig{ transform-origin:50% 100%; animation:mk-fig 3.6s ease-in-out infinite alternate; }
+@keyframes mk-fig{ from{ transform:rotate(-1.2deg) translateY(0); } to{ transform:rotate(1.2deg) translateY(-0.8px); } }
+.mk-head{ transform-origin:50% 100%; animation:mk-head 2.8s ease-in-out infinite; }
+@keyframes mk-head{ 0%,100%{ transform:translateY(0) rotate(0); } 40%{ transform:translateY(-1.2px) rotate(-2.2deg); } 70%{ transform:translateY(0.4px) rotate(1.6deg); } }
+.mk-lk{ transform-origin:50% 0; animation:mk-lock 2.1s ease-in-out infinite alternate; }
+.mk-lk.r{ animation-duration:2.6s; animation-delay:-1s; }
+@keyframes mk-lock{ from{ transform:rotate(-5deg); } to{ transform:rotate(5deg); } }
+.mk-arm{ transform-origin:10% 95%; animation:mk-arm 1.1s ease-in-out infinite alternate; }
+@keyframes mk-arm{ from{ transform:rotate(-12deg); } to{ transform:rotate(9deg); } }
+.mk-eyes{ transform-origin:50% 55%; animation:mk-blink 4.6s infinite; }
+@keyframes mk-blink{ 0%,90%,100%{ transform:scaleY(1); } 93%{ transform:scaleY(0.08); } 96%{ transform:scaleY(1); } 97%{ transform:scaleY(1); } }
+/* poletující noty */
+.mk-nf{ animation:mk-note 5s ease-in-out infinite; }
+@keyframes mk-note{
+  0%{ opacity:0; transform:translate(0,5px) rotate(-8deg); }
+  15%{ opacity:1; }
+  50%{ transform:translate(3px,-5px) rotate(8deg); }
+  85%{ opacity:1; }
+  100%{ opacity:0; transform:translate(-2px,-13px) rotate(-6deg); }
+}
+/* anime jiskřičky */
+.mk-tw{ animation:mk-twinkle 2.6s ease-in-out infinite; }
+@keyframes mk-twinkle{ 0%,100%{ opacity:0.55; transform:scale(0.35) rotate(0); } 50%{ opacity:1; transform:scale(1.15) rotate(25deg); } }
+/* sakura */
+.mk-pt{ opacity:0; animation:mk-petal 9s linear infinite; }
+@keyframes mk-petal{
+  0%{ opacity:0; transform:translate(0,-4px) rotate(0); }
+  8%{ opacity:1; }
+  50%{ transform:translate(calc(var(--dx) * 0.35), calc(var(--dy) * 0.5)) rotate(200deg); }
+  92%{ opacity:1; }
+  100%{ opacity:0; transform:translate(var(--dx), var(--dy)) rotate(420deg); }
+}
+/* kawaii srdíčka kolem tváří (jen 55–62 % cyklu) */
+.mk-kw{ opacity:0; animation:mk-kawaii 42s linear infinite; }
+.mk-kaw .mk-tw{ opacity:0; animation:mk-kawaii2 42s linear infinite; }
+@keyframes mk-kawaii{
+  0%,55%{ opacity:0; transform:translateY(3px) scale(0.4); }
+  56.5%{ opacity:1; transform:translateY(0) scale(1.2); }
+  58%{ transform:scale(0.95); }
+  59.5%{ transform:translateY(-1px) scale(1.05); }
+  62%,100%{ opacity:0; transform:translateY(-6px) scale(0.9); }
+}
+@keyframes mk-kawaii2{ 0%,55%{ opacity:0; transform:scale(0.3); } 57%{ opacity:1; transform:scale(1.2) rotate(20deg); } 59%{ transform:scale(0.8) rotate(0); } 62%,100%{ opacity:0; transform:scale(0.3); } }
+/* velký moment: hudební vlny rozzáří okraj, Miku vesele poskakuje, z postavy vyletí noty */
+.mk-ring{ opacity:0; animation:mk-ring 42s linear infinite; }
+@keyframes mk-ring{ 0%,36%{ opacity:0; transform:scale(1); } 37%{ opacity:0.95; transform:scale(1); } 46%{ opacity:0; transform:scale(1.2); } 100%{ opacity:0; transform:scale(1); } }
+.mk-fl{ opacity:0; animation:mk-flash 42s linear infinite; }
+@keyframes mk-flash{ 0%,36%{ opacity:0; } 38%{ opacity:0.75; } 41%{ opacity:0.25; } 43%{ opacity:0.6; } 46%,100%{ opacity:0; } }
+.mk-sing{ transform-origin:50% 100%; animation:mk-sing 42s linear infinite; }
+@keyframes mk-sing{
+  0%,36%,100%{ transform:scale(1); }
+  37.5%,40.5%,43.5%{ transform:scale(1.1); }
+  39%,42%,45%{ transform:scale(1); }
+}
+.mk-bn{ opacity:0; animation:mk-burst 42s ease-out infinite; }
+@keyframes mk-burst{
+  0%,36%{ opacity:0; transform:translate(0,0) scale(0.3) rotate(0); }
+  37.5%{ opacity:1; }
+  46%{ opacity:0; transform:translate(var(--dx),var(--dy)) scale(1.2) rotate(40deg); }
+  100%{ opacity:0; }
+}
+/* motorka: 1× zleva doprava, pak flyby zpět s wheelie (zrcadlově), pak velký moment, později znovu jízda doprava; mimo jízdu skrytá */
+.mk-ride{ visibility:hidden; opacity:0; animation:mk-ride 42s linear infinite; }
+@keyframes mk-ride{
+  0%,4.8%{ visibility:hidden; opacity:0; transform:translateX(-34px); }
+  5%{ visibility:visible; opacity:0; transform:translateX(-34px); }
+  6.5%,15.5%{ opacity:1; }
+  17%{ visibility:visible; opacity:0; transform:translateX(120px); }
+  17.1%,23.8%{ visibility:hidden; opacity:0; transform:translateX(142px) scaleX(-1); }
+  24%{ visibility:visible; opacity:0; transform:translateX(142px) scaleX(-1); }
+  25.5%,32.5%{ opacity:1; }
+  34%{ visibility:visible; opacity:0; transform:translateX(-30px) scaleX(-1); }
+  34.1%,69.8%{ visibility:hidden; opacity:0; transform:translateX(-34px); }
+  70%{ visibility:visible; opacity:0; transform:translateX(-34px); }
+  71.5%,80.5%{ opacity:1; }
+  82%{ visibility:visible; opacity:0; transform:translateX(120px); }
+  82.1%,100%{ visibility:hidden; opacity:0; transform:translateX(-34px); }
+}
+/* wheelie při flyby: přední kolo se zvedne, otáčí se kolem zadního kola */
+.mk-wheelie{ transform-origin:25% 90%; animation:mk-wheelie 42s linear infinite; }
+@keyframes mk-wheelie{ 0%,26%{ transform:rotate(0); } 28%,31.5%{ transform:rotate(-24deg); } 33.5%,100%{ transform:rotate(0); } }
+.mk-bob{ animation:mk-bob 0.28s ease-in-out infinite alternate; }
+@keyframes mk-bob{ from{ transform:translateY(0); } to{ transform:translateY(-0.7px); } }
+.mk-spin{ transform-box:fill-box; transform-origin:50% 50%; animation:mk-spin 0.45s linear infinite; }
+@keyframes mk-spin{ to{ transform:rotate(360deg); } }
+.mk-tl, .mk-tr{ transform-box:fill-box; transform-origin:100% 50%; animation:mk-flutter 0.5s ease-in-out infinite alternate; }
+.mk-tr{ animation-delay:-0.2s; }
+@keyframes mk-flutter{ from{ transform:rotate(-6deg) scaleX(0.96); } to{ transform:rotate(7deg) scaleX(1.04); } }
+.mk-puff{ animation:mk-puff 0.6s ease-out infinite; }
+@keyframes mk-puff{ from{ opacity:0.9; } to{ opacity:0; } }
+/* komiksové rychlostní čáry, prach a jiskry za zadním kolem */
+.mk-sl{ animation:mk-streak 0.36s linear infinite; }
+@keyframes mk-streak{ from{ transform:translateX(0); opacity:1; } to{ transform:translateX(-7px); opacity:0.35; } }
+.mk-dust{ animation:mk-dust 0.7s ease-out infinite; }
+@keyframes mk-dust{ from{ opacity:0.9; transform:translate(0,0) scale(0.4); } to{ opacity:0; transform:translate(-11px,-3px) scale(1.6); } }
+.mk-spk{ animation:mk-spark 0.5s ease-out infinite; }
+@keyframes mk-spark{ from{ opacity:1; transform:translate(0,0) scale(1); } to{ opacity:0; transform:translate(-9px,3px) scale(0.4); } }
+@media (prefers-reduced-motion: reduce){
+  .mk-tl2, .mk-tr2, .mk-skw, .mk-skw2, .mk-fig, .mk-head, .mk-eyes, .mk-lk, .mk-arm, .mk-sing, .mk-nf, .mk-tw, .mk-kw, .mk-pt, .mk-ring, .mk-fl, .mk-bn,
+  .mk-ride, .mk-wheelie, .mk-bob, .mk-spin, .mk-tl, .mk-tr, .mk-puff, .mk-sl, .mk-dust, .mk-spk, .frame-aura.aura-miku,
+  .frame-preview:has(.aura-miku), .framed-avatar:has(.aura-miku), .photo-frame:has(.aura-miku), .result-photo-frame:has(.aura-miku), .looks-frame:has(.aura-miku){ animation:none !important; }
+  .mk-ride, .mk-kw, .mk-kaw .mk-tw, .mk-pt, .mk-ring, .mk-fl, .mk-bn{ opacity:0; visibility:hidden; }
+}

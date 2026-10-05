@@ -60,14 +60,12 @@ function buildTwinsVotingView(state) {
   `;
   document.querySelectorAll('.twin-card[data-id]').forEach((el) => {
     el.onclick = () => {
-      if (votedLocallyFor || lastState.youVoted) return;
-      votedLocallyFor = el.getAttribute('data-id');
-      send({ type: 'cast_vote', targetId: votedLocallyFor });
+      const targetId = el.getAttribute('data-id');
+      if (votedLocallyFor === targetId) return; // už vybraný – nic
+      votedLocallyFor = targetId;
+      send({ type: 'cast_vote', targetId });
       playSfx('vote');
-      document.querySelectorAll('.twin-card[data-id]').forEach((c) => {
-        c.classList.toggle('selected', c === el);
-        if (c !== el) c.classList.add('disabled');
-      });
+      markVoteSelection('.twin-card[data-id]', targetId);
     };
   });
   patchVoteCount(state);

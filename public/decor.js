@@ -205,7 +205,7 @@ function lavaDrip(x, delay, s, side = false) {
 const FRAME_HALO_IDS = new Set(['frame-sweets']);
 
 const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire', 'frame-spacecat', 'frame-dino', 'frame-obzerstvi']);
-const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava', 'frame-jezevcik': 'jezevcik' };
+const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava', 'frame-jezevcik': 'jezevcik', 'frame-miku': 'miku' };
 
 // Fortune — vrstvy navíc (vše barevné, bez bílé): paprsky, oběžná dráha mincí a čtyřlístků, plocha pro výbuchy
 const CLOVER_SVG = '<svg viewBox="0 0 24 24"><g fill="#22C55E" stroke="#14532D" stroke-width="1">'
@@ -1010,6 +1010,184 @@ Object.assign(FRAME_DECOR, {
     ${rbHeart(107, 38, 4.4, '#F472B6', '#9D174D', -0.8)}
     ${rbHeart(-7, 28, 3.8, '#FB7185', '#9F1239', -1.6)}
     ${jzPaw(107, 62, 0.8, -1.1)}`,
+});
+
+// ------------------------------------------ Miku (mythic, dárkový odkaz) ---
+// Originální kreslená anime dívka (chibi postava v rohu): velké lesklé oči s odlesky, červené tvářičky, ofina a pramínky,
+// sluchátka s mikrofonem, tmavý top s tyrkysovým lemem a kravatou. Extra dlouhé culíky s přechodem barev (tyrkysová → pruh → růžový/oranžový konec)
+// se vlní kolem okraje. Po spodním okraji občas přejede KTM Duke (oranžovo-černá) s malou Miku, komiksové rychlostní čáry, prach a jiskry.
+// Časování: jeden společný cyklus 42 s (CSS), ať se velké události nepřekrývají: jízda → 5–17 %, flyby s wheelie zpět → 24–34 %,
+// velký moment (hudební vlny, ~15 s po načtení) → 36–47 %, kawaii srdíčka → 55–62 %, druhá jízda → 70–82 %.
+// Kreslený styl hry: tlustý tmavý obrys, plná barva; bílá jen jako nehybné odlesky v očích.
+const MK = { teal: '#14B8A6', shade: '#0D9488', hi: '#5EEAD4', line: '#0F0A1A', hair: '#22D3EE', hairMid: '#0EA5C6', hairDk: '#0E7490', hairHi: '#A5F3FC', orange: '#F97316', pink: '#F472B6', skin: '#FDE3D3', top: '#334155', dark: '#1E293B' };
+// tvary hudebních symbolů (počátek uprostřed): osminová nota, dvojnota s trámcem, křížek
+function mkNoteShape(fill, kind) {
+  const L = MK.line;
+  if (kind === 'beam') {
+    return `<path d="M-3.6 3 V-6.4 L5.2 -8.2 V1.2" fill="none" stroke="${L}" stroke-width="3.4"/>
+      <path d="M-3.6 -6.4 L5.2 -8.2 V-5 L-3.6 -3.2Z" fill="${fill}" stroke="${L}" stroke-width="1.2"/>
+      <ellipse cx="-5.6" cy="3.4" rx="3" ry="2.3" fill="${fill}" stroke="${L}" stroke-width="1.5"/><ellipse cx="3.2" cy="1.6" rx="3" ry="2.3" fill="${fill}" stroke="${L}" stroke-width="1.5"/>
+      <path d="M-3.6 3 V-6.4 L5.2 -8.2 V1.2" fill="none" stroke="${fill}" stroke-width="1.2"/>`;
+  }
+  if (kind === 'sharp') {
+    return `<path d="M-2.2 -6 V6 M2.2 -7 V5 M-5 -1.6 L5 -3.4 M-5 3 L5 1.2" fill="none" stroke="${L}" stroke-width="3.6"/>
+      <path d="M-2.2 -6 V6 M2.2 -7 V5 M-5 -1.6 L5 -3.4 M-5 3 L5 1.2" fill="none" stroke="${fill}" stroke-width="1.5"/>`;
+  }
+  return `<path d="M2.6 -7 V3" fill="none" stroke="${L}" stroke-width="3.4"/><path d="M2.6 -7 Q7 -6 6.6 -1.4 Q5 -4 2.6 -4Z" fill="${fill}" stroke="${L}" stroke-width="1.6"/>
+    <ellipse cx="0" cy="3.4" rx="3.4" ry="2.6" fill="${fill}" stroke="${L}" stroke-width="1.6"/><path d="M2.6 -7 V3" fill="none" stroke="${fill}" stroke-width="1.3"/>`;
+}
+// plující notička (mk-nf: vystoupá, houpne se a zmizí; každá má jinou délku a fázi)
+function mkNote(cx, cy, k, fill, delay = 0, kind = 'eighth', dur = 5) {
+  return `<g class="mk-nf" style="animation-delay:${delay}s;animation-duration:${dur}s"><g transform="translate(${cx} ${cy}) scale(${k})" stroke-linejoin="round" stroke-linecap="round">${mkNoteShape(fill, kind)}</g></g>`;
+}
+// čtyřcípá anime jiskřička (barevná, nebliká bíle — jen mění velikost)
+function mkStar(cx, cy, r, fill, delay = 0, dur = 2.6) {
+  const a = r * 0.28;
+  return `<g transform="translate(${cx} ${cy})"><g class="mk-tw" style="animation-delay:${delay}s;animation-duration:${dur}s"><path d="M0 ${-r} L${a} ${-a} L${r} 0 L${a} ${a} L0 ${r} L${-a} ${a} L${-r} 0 L${-a} ${-a}Z" fill="${fill}" stroke="${MK.line}" stroke-width="0.8" stroke-linejoin="round"/></g></g>`;
+}
+// srdíčko kawaii efektu (vyskočí jen občas)
+function mkHeart(cx, cy, k, delay = 0) {
+  return `<g transform="translate(${cx} ${cy}) scale(${k})"><g class="mk-kw" style="animation-delay:${delay}s"><path d="M0 2.8 C-4.4 -0.4 -3.2 -4.2 0 -2.4 C3.2 -4.2 4.4 -0.4 0 2.8Z" fill="#FB7185" stroke="#9F1239" stroke-width="0.9" stroke-linejoin="round"/></g></g>`;
+}
+// sakurový okvětní lístek, který pomalu padá a otáčí se (dx/dy = kam doletí)
+function mkPetal(x, y, dx, dy, dur, delay) {
+  return `<g transform="translate(${x} ${y})"><g class="mk-pt" style="--dx:${dx}px;--dy:${dy}px;animation-duration:${dur}s;animation-delay:${delay}s"><path d="M0 3 Q-3.4 0.6 -2.6 -2.6 Q-1 -2 0 -3.4 Q1 -2 2.6 -2.6 Q3.4 0.6 0 3Z" fill="#F9A8D4" stroke="#BE185D" stroke-width="0.7" stroke-linejoin="round"/></g></g>`;
+}
+// dlouhý culík: tlustá čára po dráze d s barevnými pásy (základ → tmavší tyrkys → barevný konec); pathLength=100 kvůli pásům
+function mkTail(d, tip, hiDx) {
+  const p = (extra) => `<path d="${d}" pathLength="100" fill="none" ${extra}/>`;
+  return p(`stroke="${MK.line}" stroke-width="9.4" stroke-linecap="round"`)
+    + p(`stroke="${MK.hair}" stroke-width="6.8"`)
+    + p(`stroke="${MK.hairMid}" stroke-width="6.8" stroke-dasharray="0 42 38 100"`)
+    + p(`stroke="${tip}" stroke-width="6.8" stroke-dasharray="0 80 20 100"`)
+    + `<path d="${d}" transform="translate(${hiDx} 0)" pathLength="100" fill="none" stroke="${MK.hairHi}" stroke-width="1.3" stroke-linecap="round" stroke-dasharray="0 4 30 6 20 100"/>`;
+}
+// motorka KTM 390/790 Duke s malou Miku v sedle, míří doprava; počátek = zem pod středem (x −12–44, y −17–24)
+function mkRide() {
+  const L = MK.line;
+  // kolo: tlustá pneumatika, oranžový disk, 5 paprsků, nábojka; mk-spin je točí (světlá značka na pneu ukáže otáčení); brzdový kotouč jen vpředu
+  const wheel = (cx, disc) => {
+    const sp = [0, 1, 2, 3, 4].map((i) => { const a = (i * 72 - 90) * Math.PI / 180; return `M0 0 L${(3.7 * Math.cos(a)).toFixed(2)} ${(3.7 * Math.sin(a)).toFixed(2)}`; }).join(' ');
+    return `<g transform="translate(${cx} 18.5)"><g class="mk-spin"><circle r="6.3" fill="#27272A" stroke="${L}" stroke-width="1.6"/>
+      <circle cx="5.2" cy="0" r="0.8" fill="#71717A" stroke="none"/><circle cx="-5.2" cy="0" r="0.5" fill="#52525B" stroke="none"/>
+      <circle r="4.3" fill="#3F3F46" stroke="${MK.orange}" stroke-width="1.5"/>
+      ${disc ? `<circle r="2.7" fill="none" stroke="#A1A1AA" stroke-width="0.9"/>` : ''}
+      <path d="${sp}" stroke="${MK.orange}" stroke-width="1.1" fill="none"/><circle r="1.3" fill="#FDBA74" stroke="${L}" stroke-width="0.7"/></g></g>`;
+  };
+  const streak = (y, len, fill, delay) => `<g class="mk-sl" style="animation-delay:${delay}s"><path d="M-3 ${y} L${-len} ${y + 1.2} L-3 ${y + 2.4}Z" fill="${fill}" stroke="${L}" stroke-width="0.9" stroke-linejoin="round"/></g>`;
+  const dust = (r, delay) => `<g class="mk-dust" style="animation-delay:${delay}s"><circle cx="1" cy="22" r="${r}" fill="#FDBA74" stroke="#9A3412" stroke-width="0.8"/></g>`;
+  const spark = (y, fill, delay) => `<g class="mk-spk" style="animation-delay:${delay}s"><path d="M0 ${y - 2.2} L1.1 ${y} L0 ${y + 2.2} L-1.1 ${y}Z" fill="${fill}" stroke="${L}" stroke-width="0.6" stroke-linejoin="round"/></g>`;
+  // tlustá čára s obrysem (obrys pod barvou)
+  const bar = (d, w, fill, ow = 1.8) => `<path d="${d}" fill="none" stroke="${L}" stroke-width="${w + ow}"/><path d="${d}" fill="none" stroke="${fill}" stroke-width="${w}"/>`;
+  return `<g stroke-linejoin="round" stroke-linecap="round">
+    ${streak(-8, 26, MK.hair, 0)}${streak(2, 32, MK.orange, -0.12)}${streak(12, 24, MK.pink, -0.24)}
+    ${dust(2.6, 0)}${dust(2, -0.23)}${dust(2.8, -0.46)}${spark(21, '#FDE047', 0)}${spark(19, MK.orange, -0.2)}
+    <path class="mk-puff" d="M2 13.6 Q-2 13.4 -4.5 11" fill="none" stroke="#FDBA74" stroke-width="2.2"/>
+    ${wheel(8, false)}${wheel(36, true)}
+    ${bar('M8 18.5 L19.4 15.4', 2.6, '#52525B', 1.8)}
+    ${bar('M11.4 7.8 L13.6 15.6', 2.4, MK.orange, 1.6)}<path d="M11.6 9.4 L13.1 14" stroke="#FDE047" stroke-width="0.8" stroke-dasharray="0.9 1.1" fill="none"/>
+    <path d="M17.6 17.8 Q9 18 3.2 12.4" fill="none" stroke="${L}" stroke-width="4.2"/><path d="M17.6 17.8 Q9 18 3.2 12.4" fill="none" stroke="#A1A1AA" stroke-width="2.2"/>
+    <ellipse cx="2.6" cy="11.8" rx="1.5" ry="2.1" transform="rotate(-40 2.6 11.8)" fill="#27272A" stroke="${L}" stroke-width="0.9"/>
+    <rect x="15" y="11.6" width="11.4" height="6.6" rx="2.4" fill="#3F3F46" stroke="${L}" stroke-width="1.5"/><path d="M17.4 13.6 H24 M17.4 16 H24" stroke="#52525B" stroke-width="0.8" fill="none"/>
+    ${bar('M12 8 L19.4 15.6 L26.6 7.6', 1.5, MK.orange, 1.5)}${bar('M19.4 15.6 L17.4 18', 1.5, MK.orange, 1.5)}
+    ${bar('M36 18.5 L30.8 4.8', 2.2, '#F59E0B', 1.8)}
+    <path d="M32 9.4 Q38 7.4 42.2 12.8" fill="none" stroke="${L}" stroke-width="3.6"/><path d="M32 9.4 Q38 7.4 42.2 12.8" fill="none" stroke="${MK.orange}" stroke-width="1.8"/>
+    <path d="M6 6.2 L13.8 6.8 Q14.4 8.8 12.8 9.2 L6.8 8.8Z" fill="#27272A" stroke="${L}" stroke-width="1.5"/>
+    <path d="M1 3.2 L8.4 5.4 L8 8.4 L3.2 7.6Z" fill="${MK.orange}" stroke="${L}" stroke-width="1.5"/><circle cx="1.8" cy="4.8" r="0.9" fill="#EF4444" stroke="${L}" stroke-width="0.5"/>
+    <path d="M12 6.6 Q15.4 2.8 21.6 3 L28.8 4.4 L28.2 8.4 Q20 9.6 13.2 8.8Z" fill="${MK.orange}" stroke="${L}" stroke-width="1.6"/>
+    <path d="M16.2 7.4 Q22 5.8 27.6 6.8 L27.2 8.4 Q20 9.2 15 8.6Z" fill="#27272A" stroke="none"/>
+    <path d="M14.4 5.8 Q18 3.8 23 4.2" fill="none" stroke="#FDBA74" stroke-width="0.8"/>
+    <path d="M29.4 3.4 L35 3.2 Q38 4.8 37.2 8.8 L32.2 10.2 Q29.8 8 29.4 3.4Z" fill="${MK.orange}" stroke="${L}" stroke-width="1.5"/>
+    <path d="M31.8 4.6 L35.6 4.4 L35.4 7.4 L32.8 7.9Z" fill="#27272A" stroke="none"/><path d="M32.6 5.5 L35 5.3 L34.9 6.9 L33.2 7.2Z" fill="#FDE047" stroke="none"/>
+    <path d="M13 17.6 H18" stroke="${L}" stroke-width="2.4" fill="none"/>
+    <g class="mk-tl" style="animation-duration:0.55s"><path d="M19.6 -1.6 Q12 -3.6 4 0.6 Q9 0.8 3 5.4 Q12 3.2 19 3Z" fill="${MK.orange}" stroke="${L}" stroke-width="1.2"/><path d="M4 0.6 Q7 1 5.4 3 Q4 4 3 5.4 Q6.4 2.6 4 0.6Z" fill="${MK.pink}"/></g>
+    ${bar('M12.4 5.8 L20.6 -2.2', 6.2, MK.top, 2)}<path d="M13.6 6.2 L21.4 -1" stroke="${MK.teal}" stroke-width="0.9" fill="none"/>
+    <ellipse cx="12.4" cy="6" rx="3.6" ry="2.8" fill="${MK.dark}" stroke="${L}" stroke-width="1.4"/>
+    ${bar('M12.8 6.6 L19.8 9.4', 3.8, MK.dark, 1.7)}${bar('M19.8 9.4 L16.4 17', 3.4, MK.top, 1.7)}
+    <ellipse cx="16.6" cy="17.8" rx="3.4" ry="1.7" fill="${MK.orange}" stroke="${L}" stroke-width="1.2"/>
+    ${bar('M20.8 -1.4 Q25.4 -0.4 24.8 3 L29.2 3.2', 3.6, MK.top, 1.7)}
+    <path d="M26.6 2.4 L29.4 2.8" stroke="${L}" stroke-width="2" fill="none"/><circle cx="29.8" cy="3.1" r="2" fill="${MK.skin}" stroke="${L}" stroke-width="1.1"/>
+    <path d="M28.6 2.6 L28.4 -0.8" stroke="${L}" stroke-width="1" fill="none"/><ellipse cx="28.4" cy="-1.6" rx="1.9" ry="1.2" fill="#27272A" stroke="${L}" stroke-width="0.9"/>
+    <g class="mk-tr" style="animation-duration:0.46s"><path d="M17.6 -10.4 Q8 -16 -6 -11 Q4 -10 -9 -3.6 Q7 -4.6 17.4 -6Z" fill="${MK.hair}" stroke="${L}" stroke-width="1.3"/><path d="M-6 -11 Q-1.6 -10.6 -3.6 -7.6 Q-6 -7 -9 -3.6 Q-4 -5.4 -3 -9.6Z" fill="${MK.pink}"/><path d="M14 -9.6 Q6 -12.4 -2 -10.6" fill="none" stroke="${MK.hairHi}" stroke-width="0.9"/></g>
+    <g class="mk-tl" style="animation-duration:0.4s;animation-delay:-0.15s"><path d="M17.8 -7 Q11 -6 3 2 Q10 1.6 -1 9 Q13 5.8 18.4 -2Z" fill="${MK.hairMid}" stroke="${L}" stroke-width="1.3"/><path d="M3 2 Q6.4 2.6 4.4 5.4 Q2 6.4 -1 9 Q1.6 4.6 3 2Z" fill="${MK.orange}"/></g>
+    <circle cx="24" cy="-8" r="8.1" fill="${MK.hair}" stroke="${L}" stroke-width="1.5"/>
+    <circle cx="24.4" cy="-7.4" r="6.9" fill="${MK.skin}" stroke="${L}" stroke-width="1.3"/>
+    <ellipse cx="20.2" cy="-3.6" rx="1.8" ry="1.1" fill="#FB7185" stroke="none"/><ellipse cx="29.2" cy="-3.6" rx="1.8" ry="1.1" fill="#FB7185" stroke="none"/>
+    <g class="mk-eyes"><ellipse cx="21.6" cy="-7.6" rx="2.3" ry="2.9" fill="${MK.hairDk}" stroke="${L}" stroke-width="0.5"/><ellipse cx="21.7" cy="-7.2" rx="1.8" ry="2.4" fill="#22D3EE"/><ellipse cx="21.8" cy="-6.9" rx="1.1" ry="1.7" fill="#0F172A"/><circle cx="21" cy="-8.6" r="1" fill="#FFFFFF" stroke="none"/><circle cx="22.4" cy="-6" r="0.5" fill="#FFFFFF" stroke="none"/>
+    <ellipse cx="27.6" cy="-7.6" rx="2.3" ry="2.9" fill="${MK.hairDk}" stroke="${L}" stroke-width="0.5"/><ellipse cx="27.7" cy="-7.2" rx="1.8" ry="2.4" fill="#22D3EE"/><ellipse cx="27.8" cy="-6.9" rx="1.1" ry="1.7" fill="#0F172A"/><circle cx="27" cy="-8.6" r="1" fill="#FFFFFF" stroke="none"/><circle cx="28.4" cy="-6" r="0.5" fill="#FFFFFF" stroke="none"/></g>
+    <path d="M23.4 -2.6 Q24.8 -1.4 26.2 -2.6" fill="none" stroke="#9F1239" stroke-width="0.7"/>
+    <path d="M16.6 -6.4 Q15.6 -15.6 24.4 -15.2 Q33 -15 32 -6.6 L30.6 -9.6 L28.4 -8.4 L26.4 -11 L24.4 -8.6 L22.2 -11 L20 -8.4 L18.2 -9.6Z" fill="${MK.hair}" stroke="${L}" stroke-width="1.3"/>
+    <path d="M19.4 -13.2 Q24.4 -15 29.6 -13" fill="none" stroke="${MK.hairHi}" stroke-width="0.9"/>
+    <path d="M16.4 -5.6 Q14.8 -17.4 24.4 -17 Q34 -17 32.6 -5.6" fill="none" stroke="${L}" stroke-width="2.4"/><path d="M16.4 -5.6 Q14.8 -17.4 24.4 -17 Q34 -17 32.6 -5.6" fill="none" stroke="#52525B" stroke-width="1"/>
+    <circle cx="16.6" cy="-5.6" r="2.7" fill="#27272A" stroke="${L}" stroke-width="1.1"/><circle cx="16.6" cy="-5.6" r="1.2" fill="${MK.teal}"/>
+    <circle cx="32.4" cy="-5.6" r="2.7" fill="#27272A" stroke="${L}" stroke-width="1.1"/><circle cx="32.4" cy="-5.6" r="1.2" fill="${MK.teal}"/>
+    <circle cx="17.4" cy="-13.8" r="2" fill="${MK.orange}" stroke="${L}" stroke-width="1"/>
+  </g>`;
+}
+// Miku: culíky (za postavou) + kawaii chibi postava v rohu (velká kulatá hlava ~2:1 k tělu, oči bez rámů, tvářičky, sluchátka). Rám je kolem 0–100.
+// Postava je kreslená kolem počátku (střed hlavy) a celá zmenšená na ~62 % a posazená do rohu rámečku.
+function mkHead() {
+  const L = MK.line;
+  const eye = (cx) => `
+      <ellipse cx="${cx}" cy="2.4" rx="4.4" ry="5.4" fill="${MK.hairDk}"/>
+      <ellipse cx="${cx}" cy="2.9" rx="3.6" ry="4.5" fill="#22D3EE"/>
+      <ellipse cx="${cx}" cy="3.5" rx="2.3" ry="3.2" fill="#0F172A"/>
+      <circle cx="${cx - 1.4}" cy="0.6" r="2" fill="#FFFFFF" stroke="none"/><circle cx="${cx + 1.5}" cy="5.2" r="0.95" fill="#FFFFFF" stroke="none"/><circle cx="${cx + 2}" cy="2.4" r="0.45" fill="#FFFFFF" stroke="none"/>
+      <path d="M${cx - 4.4} 0.6 Q${cx} -3.2 ${cx + 4.4} 0.6" fill="none" stroke="${L}" stroke-width="1.5"/>`;
+  return `
+    <g class="mk-tl2"><g class="mk-skw">${mkTail('M5 10 C-2 12 -5 22 -4 36 S-1 66 -4.5 90', MK.pink, -1.3)}</g></g>
+    <g class="mk-tr2"><g class="mk-skw2">${mkTail('M22 9 C34 -2 70 -8 98 -2 S112 24 107 52', MK.orange, 0)}</g></g>
+    <g transform="translate(13.8 13.4) scale(0.62)"><g class="mk-fig"><g class="mk-sing"><g stroke-linejoin="round" stroke-linecap="round">
+      <path d="M-8.6 17 Q-12.8 20.6 -11.4 24.4" fill="none" stroke="${L}" stroke-width="5.6"/><path d="M-8.6 17 Q-12.8 20.6 -11.4 24.4" fill="none" stroke="${MK.top}" stroke-width="3.4"/><circle cx="-11.4" cy="25.6" r="2.4" fill="${MK.skin}" stroke="${L}" stroke-width="1.1"/>
+      <g class="mk-arm"><path d="M8.6 17 Q13.8 16.6 14.8 10.6" fill="none" stroke="${L}" stroke-width="5.6"/><path d="M8.6 17 Q13.8 16.6 14.8 10.6" fill="none" stroke="${MK.top}" stroke-width="3.4"/><circle cx="14.9" cy="8.6" r="2.5" fill="${MK.skin}" stroke="${L}" stroke-width="1.1"/></g>
+      <path d="M-9.4 28 L-9 17.6 Q-8.4 12.4 0 12.4 Q8.4 12.4 9 17.6 L9.4 28 Q0 30 -9.4 28Z" fill="${MK.top}" stroke="${L}" stroke-width="1.5"/>
+      <path d="M-4 13 L0 18 L4 13 Q0 15 -4 13Z" fill="#CBD5E1" stroke="${L}" stroke-width="0.9"/>
+      <path d="M-1.8 17 L1.8 17 L2.4 24 L0 25.6 L-2.4 24Z" fill="${MK.teal}" stroke="${L}" stroke-width="1"/>
+      <path d="M-11 27.4 Q0 30.6 11 27.4 L13 33 Q0 36.4 -13 33Z" fill="${MK.dark}" stroke="${L}" stroke-width="1.5"/>
+      <path d="M-12.4 31.4 Q0 34.8 12.4 31.4" fill="none" stroke="${MK.teal}" stroke-width="1.6"/>
+      <g class="mk-head">
+        <ellipse cx="0" cy="-1" rx="16.6" ry="15.6" fill="${MK.hair}" stroke="${L}" stroke-width="1.8"/>
+        <ellipse cx="0" cy="0.6" rx="14.4" ry="13.4" fill="${MK.skin}" stroke="${L}" stroke-width="1.6"/>
+        <ellipse cx="-9.8" cy="7.6" rx="3.5" ry="2.2" fill="#FB7185" stroke="none" opacity="0.92"/><ellipse cx="9.8" cy="7.6" rx="3.5" ry="2.2" fill="#FB7185" stroke="none" opacity="0.92"/>
+        <path d="M-11.2 7 L-10.8 8.6 M-9.4 6.8 L-9 8.4 M9 6.8 L9.4 8.4 M10.8 7 L11.2 8.6" fill="none" stroke="#E11D48" stroke-width="0.5"/>
+        <path d="M-9.6 -4.6 Q-6.4 -5.8 -3.6 -4.8 M3.6 -4.8 Q6.4 -5.8 9.6 -4.6" fill="none" stroke="${MK.hairDk}" stroke-width="1"/>
+        <g class="mk-eyes">${eye(-6.2)}${eye(6.2)}</g>
+        <circle cx="0" cy="6.2" r="0.55" fill="#E8A892" stroke="none"/>
+        <path d="M-1.8 8.4 Q0 10.4 1.8 8.4" fill="none" stroke="#9F1239" stroke-width="0.95"/>
+        <path d="M-15.6 3 Q-16.6 -14 0 -14.6 Q16.6 -14 15.6 3 L13.6 -2.6 L11.2 0.4 L8.6 -4.2 L5.6 -0.6 L2.8 -4.8 L0 -1.2 L-2.8 -4.8 L-5.6 -0.6 L-8.6 -4.2 L-11.2 0.4 L-13.6 -2.6Z" fill="${MK.hair}" stroke="${L}" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M-9.4 -9.6 Q0 -13.2 9.4 -9.6" fill="none" stroke="${MK.hairHi}" stroke-width="1.4"/><path d="M-7 -6.4 Q-3.4 -8.4 -0.6 -7.2" fill="none" stroke="${MK.hairMid}" stroke-width="1.2"/>
+        <g class="mk-lk"><path d="M-15.4 1 Q-17.2 9 -14.6 15 Q-12 9 -12.4 2Z" fill="${MK.hair}" stroke="${L}" stroke-width="1.3"/></g>
+        <g class="mk-lk r"><path d="M15.4 1 Q17.2 9 14.6 15 Q12 9 12.4 2Z" fill="${MK.hair}" stroke="${L}" stroke-width="1.3"/></g>
+        <path d="M-17.2 4 Q-18 -16 0 -16.6 Q18 -16 17.2 4" fill="none" stroke="${L}" stroke-width="3.4"/><path d="M-17.2 4 Q-18 -16 0 -16.6 Q18 -16 17.2 4" fill="none" stroke="#52525B" stroke-width="1.6"/>
+        <circle cx="-17" cy="3.6" r="3.8" fill="#27272A" stroke="${L}" stroke-width="1.3"/><circle cx="-17" cy="3.6" r="1.8" fill="${MK.teal}"/>
+        <circle cx="17" cy="3.6" r="3.8" fill="#27272A" stroke="${L}" stroke-width="1.3"/><circle cx="17" cy="3.6" r="1.8" fill="${MK.teal}"/>
+        <path d="M17 7 Q16.6 13.4 8.8 12.8" fill="none" stroke="${L}" stroke-width="2.4"/><path d="M17 7 Q16.6 13.4 8.8 12.8" fill="none" stroke="#52525B" stroke-width="1.1"/>
+        <circle cx="7.8" cy="12.8" r="1.5" fill="#27272A" stroke="${L}" stroke-width="0.9"/>
+        <circle cx="-17.4" cy="-6.6" r="2.7" fill="${MK.orange}" stroke="${L}" stroke-width="1.2"/><circle cx="17.4" cy="-6.6" r="2.7" fill="${MK.orange}" stroke="${L}" stroke-width="1.2"/>
+      </g></g></g></g></g>`;
+}
+
+Object.assign(FRAME_DECOR, {
+  // Miku (mythic, jen z dárkového odkazu) — tyrkysový rámeček s oranžovým pruhem (barvy KTM), chibi Miku v rohu s culíky kolem okraje,
+  // poletující noty, jiskřičky a sakura, občas KTM Duke po spodním okraji, velký moment s hudebními vlnami a kawaii srdíčka
+  'frame-miku': () => `
+    <rect x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${MK.line}" stroke-width="8.8"/>
+    <rect x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${MK.teal}" stroke-width="6.6"/>
+    <rect x="1.4" y="1.4" width="97.2" height="97.2" rx="8.6" fill="none" stroke="${MK.shade}" stroke-width="2.2"/>
+    <rect x="5.6" y="5.6" width="88.8" height="88.8" rx="4.4" fill="none" stroke="${MK.orange}" stroke-width="1.8"/>
+    <rect x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${MK.hi}" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="14 9 3 60 20 200"/>
+    <rect x="6.6" y="6.6" width="86.8" height="86.8" rx="3.4" fill="none" stroke="#FDBA74" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="0.01 4.6"/>
+    <rect class="mk-fl" x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${MK.pink}" stroke-width="6.2"/>
+    ${mkHead()}
+    ${mkStar(46, 14, 3.2, '#FDE047', 0, 2.6)}${mkStar(103, 30, 3, MK.pink, -0.9, 3.1)}${mkStar(105, 78, 3.4, MK.hi, -1.7, 2.8)}${mkStar(14, 106, 2.8, '#FDBA74', -2.3, 3.4)}
+    ${mkPetal(62, 4, 18, 40, 9, 0)}${mkPetal(104, 10, -10, 88, 11, -3.5)}${mkPetal(100, 46, 8, 55, 8, -5)}${mkPetal(82, 4, 22, 60, 10, -7)}
+    ${mkNote(104, 38, 0.9, '#F97316', -0.6, 'eighth', 5.2)}${mkNote(107, 64, 0.85, MK.pink, -2.2, 'beam', 6)}${mkNote(44, 26, 0.8, '#22D3EE', -3.4, 'sharp', 5.6)}${mkNote(106, 92, 0.8, MK.teal, -1.2, 'eighth', 4.8)}
+    <g class="mk-kaw">${mkHeart(31, 10, 0.9, 0)}${mkHeart(22, 3, 0.8, 0.18)}${mkHeart(30, 22, 0.75, 0.36)}${mkStar(35, 17, 2.6, '#FDE047', 0.1, 1.2)}${mkStar(28, 4, 2.4, MK.pink, 0.3, 1.2)}</g>
+    <rect class="mk-ring" x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="#22D3EE" stroke-width="2.4"/>
+    <rect class="mk-ring" style="animation-delay:0.45s" x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${MK.pink}" stroke-width="2.4"/>
+    <rect class="mk-ring" style="animation-delay:0.9s" x="3" y="3" width="94" height="94" rx="7" fill="none" stroke="${MK.orange}" stroke-width="2.4"/>
+    <g transform="translate(24 12)"><g class="mk-bn" style="--dx:58px;--dy:6px">${mkNoteShape('#FDBA74', 'eighth')}</g><g class="mk-bn" style="--dx:68px;--dy:38px;animation-delay:0.2s"><g transform="scale(1.1)">${mkNoteShape(MK.pink, 'beam')}</g></g><g class="mk-bn" style="--dx:30px;--dy:60px;animation-delay:0.35s">${mkNoteShape('#22D3EE', 'sharp')}</g><g class="mk-bn" style="--dx:82px;--dy:22px;animation-delay:0.5s">${mkNoteShape('#FDE047', 'eighth')}</g></g>
+    <g class="mk-ride"><g transform="translate(0 93.4) scale(0.7)"><g class="mk-wheelie"><g class="mk-bob">${mkRide()}</g></g></g></g>`,
 });
 
 // ------------------------------------------ Legendary: průlety předmětů ---

@@ -94,6 +94,8 @@ const SHOP_SECTIONS = [
       { id: 'frame-obzerstvi', name: 'Obžerství', rarity: 'legendary', promoOnly: true, style: 'linear-gradient(160deg,#FBBF24,#EF4444 50%,#B91C1C 50%,#7F1D1D)' },
       // jen z druhého dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
       { id: 'frame-jezevcik', name: 'Jezevčík', rarity: 'mythic', promoOnly: true, style: 'linear-gradient(160deg,#E0A066,#B4642E 50%,#8A4620 50%,#5C2A0E)' },
+      // jen z třetího dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
+      { id: 'frame-miku', name: 'Miku', rarity: 'mythic', promoOnly: true, style: 'linear-gradient(160deg,#5EEAD4,#14B8A6 50%,#F97316 50%,#0E7490)' },
       // jen z kola štěstí (wheel.js)
       { id: 'frame-fortune', name: 'Fortune', rarity: 'mythic', wheelOnly: true, style: 'conic-gradient(from 20deg,#FDE047,#22C55E,#FDE047,#A855F7,#FDE047)' },
     ],
@@ -150,6 +152,8 @@ const SHOP_SECTIONS = [
       { id: 'name-spacecat', name: 'Space Cat', rarity: 'legendary', gradient: 'linear-gradient(90deg,#C4B5FD,#F472B6,#FDE047,#4ADE80,#22D3EE,#C4B5FD)' },
       // jen z druhého dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
       { id: 'name-jezevcik', name: 'Jezevčík', rarity: 'mythic', promoOnly: true, gradient: 'linear-gradient(90deg,#B88552,#D9A066,#F0C27A,#FBBF24,#E8B068,#B88552)' },
+      // jen z třetího dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
+      { id: 'name-miku', name: 'Miku', rarity: 'mythic', promoOnly: true, gradient: 'linear-gradient(90deg,#14B8A6,#22D3EE,#5EEAD4,#F97316,#FDBA74,#22D3EE,#14B8A6)' },
       // jen z kola štěstí (wheel.js)
       { id: 'name-jackpot', name: 'Jackpot', rarity: 'epic', wheelOnly: true, gradient: 'linear-gradient(90deg,#FDE047,#4ADE80,#FDE047,#4ADE80)' },
     ],

@@ -43,8 +43,13 @@ async function buildCopyOriginalView(state) {
 function buildCopyOriginalWaitView(state) {
   mountedKey = `copy-owait-${state.round}`;
   stopCamera();
-  app.innerHTML = copyWaitHtml(state, 'camera', `
-    <h3>${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))} is striking a pose…</h3>`);
+  app.innerHTML = `
+    ${brandHtml(state)}
+    <div class="screen center">
+      <div class="eyebrow">Round ${state.round} / ${state.totalRounds}</div>
+      ${avatarHtml(state.subjectName, looksOf(state, state.subjectId), 56)}
+      <h3>${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))} is striking a pose…</h3>
+    </div>`;
 }
 
 // Ostatní vidí originál 3 s s velkým odpočtem 3-2-1.
@@ -52,7 +57,13 @@ function buildCopyPeekView(state) {
   mountedKey = `copy-peek-${state.round}`;
   stopCamera();
   if (state.isSubject) {
-    app.innerHTML = copyWaitHtml(state, 'timer', `<h3>The others are memorising your face…</h3>`);
+    app.innerHTML = `
+      ${brandHtml(state)}
+      <div class="screen center">
+        <div class="eyebrow">Round ${state.round} / ${state.totalRounds}</div>
+        ${avatarHtml(state.subjectName, looksOf(state, state.subjectId), 56)}
+        <h3>The others are memorising your face…</h3>
+      </div>`;
     return;
   }
   app.innerHTML = `
@@ -110,7 +121,7 @@ function buildCopyWaitingView(state) {
     <div class="screen center">
       <div class="eyebrow">Round ${state.round} / ${state.totalRounds}</div>
       ${state.isSubject
-        ? `${bigIcon('timer')}<h3>Everyone is copying your face…</h3>`
+        ? `${avatarHtml(state.subjectName, looksOf(state, state.subjectId), 56)}<h3>Everyone is copying your face…</h3>`
         : `${sent
             ? `<div class="sent-photo"><img src="${lastSentPhoto.url}" alt=""><span class="sent-check">${icon('check')}</span></div>`
             : bigIcon('checkCircle', 'good')}

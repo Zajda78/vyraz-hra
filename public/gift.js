@@ -4,6 +4,7 @@
 const GIFTS = {
   obzerstvi3000: { coins: 3000, items: ['frame-obzerstvi'], fx: 'legendary' },
   jezevcik3000: { coins: 3000, items: ['frame-jezevcik', 'name-jezevcik'], fx: 'mythic' },
+  miku3000: { coins: 3000, items: ['frame-miku', 'name-miku'], fx: 'mythic' },
 };
 
 // Vrátí kód z adresy (malými písmeny) a parametr hned odstraní, ať ho reload nespustí znovu.
