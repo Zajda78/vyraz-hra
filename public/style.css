@@ -3354,3 +3354,10 @@ body[class*="gm-"]:not(.home-bg) .caption-card.picked{ animation:gm-pop .28s var
 @keyframes like-pop{ 0%{ transform:scale(0.4); } 60%{ transform:scale(1.35); } 100%{ transform:scale(1); } }
 .twin-card-head .like-btn{ position:static; flex:none; margin-left:auto; }
 @media (prefers-reduced-motion: reduce){ .like-btn.pop .heart-ico{ animation:none; } }
+/* Galerie: fotky čtvercové jako při hlasování, rámečky se zaoblenými rohy (ne ostré) */
+.gal-ph .photo, .gal-ph .result-photo-frame .photo, .gal-photos.n2 .photo, .gal-photos.n3 .photo{ aspect-ratio:1/1; border-radius:14px; }
+.gal-ph .result-photo-frame{ margin:0; padding:5px; border-radius:20px; }
+.gal-ph .result-photo-frame .photo{ border-radius:15px; }
+.gal-slide .gal-photos{ max-height:none; width:min(100%, 360px); }
+.gal-slide .gal-photos.n1{ width:min(100%, 340px); }
+.gal-slide .gal-ph .photo{ max-height:none; }
