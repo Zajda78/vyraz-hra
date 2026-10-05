@@ -204,7 +204,7 @@ function lavaDrip(x, delay, s, side = false) {
 // rámečky s vlastní barevnou září za sebou (CSS .halo-<id>)
 const FRAME_HALO_IDS = new Set(['frame-sweets']);
 
-const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire', 'frame-spacecat', 'frame-dino', 'frame-obzerstvi']);
+const LG_BEVEL_IDS = new Set(['frame-rainbow', 'frame-galaxy', 'frame-diamond', 'frame-king', 'frame-phoenix', 'frame-sweets', 'frame-haunted', 'frame-vampire', 'frame-spacecat', 'frame-dino', 'frame-obzerstvi', 'frame-dragon']);
 const FRAME_AURA = { 'frame-fortune': 'fortune', 'frame-lava': 'lava', 'frame-jezevcik': 'jezevcik', 'frame-miku': 'miku' };
 
 // Fortune — vrstvy navíc (vše barevné, bez bílé): paprsky, oběžná dráha mincí a čtyřlístků, plocha pro výbuchy
@@ -918,6 +918,79 @@ Object.assign(FRAME_DECOR, {
     ${obDrop(80, -5, 0.5, -1.7)}`,
 });
 
+// ------------------------------------------ Dračí sada (Dragon Chest) ---
+// Kreslený styl: tlustý tmavý obrys ve stejném odstínu, plná barva, jeden stín a barevný odlesk. Animace jen transform/opacity.
+
+// Dračí hlava (kolem 0,0): rohy, rudá hlava, tlama s nozdrami, žluté oči se štěrbinou
+function drHeadShapes() {
+  const l = '#7F1D1D';
+  return `<g fill="#F97316" stroke="#7C2D12" stroke-width="1.8" stroke-linejoin="round">
+      <path d="M-8 -6 L-12 -17 L-3 -9Z"/><path d="M8 -6 L12 -17 L3 -9Z"/></g>
+    <ellipse cx="0" cy="0" rx="12" ry="10" fill="#EF4444" stroke="${l}" stroke-width="2.2"/>
+    <path d="M-10.8 3.5 Q0 14 10.8 3.5 Q9.5 9.6 0 9.8 Q-9.5 9.6 -10.8 3.5Z" fill="#DC2626"/>
+    <ellipse cx="0" cy="4.5" rx="7.5" ry="4.8" fill="#FCA5A5" stroke="${l}" stroke-width="1.4"/>
+    <circle cx="-2.6" cy="4" r="1" fill="${l}"/><circle cx="2.6" cy="4" r="1" fill="${l}"/>
+    <circle cx="-5.6" cy="-2.4" r="3.2" fill="#FDE047" stroke="${l}" stroke-width="1.4"/><circle cx="5.6" cy="-2.4" r="3.2" fill="#FDE047" stroke="${l}" stroke-width="1.4"/>
+    <ellipse cx="-5.2" cy="-2.3" rx="0.9" ry="2.3" fill="#3B0A0A"/><ellipse cx="6" cy="-2.3" rx="0.9" ry="2.3" fill="#3B0A0A"/>
+    <path d="M-9 -6.6 L-3 -4.6 M9 -6.6 L3 -4.6" stroke="${l}" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M-3.4 7.2 L-2.6 8.8 L-1.8 7.2 M1.8 7.2 L2.6 8.8 L3.4 7.2" fill="#FEF3C7" stroke="${l}" stroke-width="0.8" stroke-linejoin="round"/>
+    <ellipse cx="-8" cy="-7" rx="3" ry="1.5" fill="#FCA5A5" transform="rotate(-35 -8 -7)"/>`;
+}
+function drHead(cx, cy, k, delay = 0) {
+  return `<g class="rb-squash" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">${drHeadShapes()}</g></g>`;
+}
+// plamínek (základna v 0,0), vlaje jako v ostatních rámečcích
+function drFlame(cx, cy, k, delay = 0) {
+  return `<g class="fd-flicker" style="animation-delay:${delay}s"><g transform="translate(${cx} ${cy}) scale(${k})">
+    <path fill="#F97316" stroke="#9A3412" stroke-width="1.2" stroke-linejoin="round" d="M-3 0 C-7 -8 -1 -14 -3 -20 C5 -12 7 -6 3 0 Z"/>
+    <path fill="#FDE047" d="M-2 0 C-4 -5 -1 -9 -2 -12 C2 -7 2 -3 1 0 Z"/></g></g>`;
+}
+// kamenný krystal (mana): protáhlý drahokam s fasetami, houpe se
+function cyShard(cx, cy, s, fill, dark, light, line, delay = 0) {
+  const P = (x, y) => `${(cx + x * s).toFixed(1)} ${(cy + y * s).toFixed(1)}`;
+  return `<g class="fd-bob" style="animation-delay:${delay}s" stroke-linejoin="round">
+    <path d="M${P(0, -1.3)} L${P(0.7, -0.4)} L${P(0.55, 0.9)} L${P(0, 1.3)} L${P(-0.55, 0.9)} L${P(-0.7, -0.4)} Z" fill="${fill}" stroke="${line}" stroke-width="1.1"/>
+    <path d="M${P(0, -1.3)} L${P(0.7, -0.4)} L${P(0.55, 0.9)} L${P(0, 1.3)} L${P(0, -0.2)} Z" fill="${dark}" stroke="none" opacity="0.7"/>
+    <path d="M${P(-0.45, -0.5)} L${P(-0.25, -0.95)} L${P(-0.1, -0.45)} Z" fill="${light}" stroke="none" opacity="0.9"/></g>`;
+}
+// půlměsíc
+function wzMoon(cx, cy, r, delay = 0) {
+  return `<g class="fd-bob" style="animation-delay:${delay}s"><path d="M${cx + r * 0.3} ${cy - r} A${r} ${r} 0 1 0 ${cx + r * 0.3} ${cy + r} A${r * 1.25} ${r * 1.25} 0 0 1 ${cx + r * 0.3} ${cy - r} Z" fill="#FDE047" stroke="#B45309" stroke-width="1" stroke-linejoin="round"/></g>`;
+}
+
+Object.assign(FRAME_DECOR, {
+  // Wizard (epická) — měsíc, hvězdy a kouzelné jiskry obíhající kolem fotky
+  'frame-wizard': () => `
+    ${wzMoon(97, 8, 9, 0)}
+    <g class="fd-orbit">
+      ${sparkle(50, -8, 5, '#C4B5FD', 0)}
+      ${sparkle(108, 50, 4.5, '#22D3EE', -0.6)}
+      ${sparkle(50, 108, 5, '#F0ABFC', -1.2)}
+      ${sparkle(-8, 50, 4.5, '#FDE047', -1.8)}
+    </g>
+    ${rbStar(4, 92, 5.5, '#A78BFA', '#4C1D95', -0.7)}
+    ${rbStar(106, 78, 4, '#FDE047', '#B45309', -1.4)}`,
+
+  // Crystal (epická) — plovoucí krystaly many a třpytky
+  'frame-crystal': () => `
+    ${cyShard(97, 8, 7.5, '#67E8F9', '#0E7490', '#CFFAFE', '#155E75', 0)}
+    ${cyShard(2, 90, 6, '#C084FC', '#6B21A8', '#F3E8FF', '#581C87', -1.6)}
+    ${cyShard(106, 70, 4.5, '#818CF8', '#3730A3', '#E0E7FF', '#312E81', -0.8)}
+    ${sparkle(-4, 14, 6, '#A5F3FC', -0.4)}
+    ${sparkle(60, 108, 5, '#F0ABFC', -1.1)}`,
+
+  // Dragon (legendary) — dračí hlava s plameny nahoře, vejce, rubín a hvězdičky
+  'frame-dragon': () => `
+    ${drFlame(30, 0, 0.8, 0)}
+    ${drFlame(70, 0, 0.8, -0.4)}
+    ${drHead(50, -4, 0.9, 0)}
+    ${dnEgg(96, 92, 0.95, '#FEE2E2', '#EF4444', '#7F1D1D', -0.4)}
+    ${lgGem(4, 84, 7, LG_GEM_RUBY, -1.2)}
+    ${rbStar(106, 36, 4.6, '#FDE047', '#B45309', -0.9)}
+    ${rbStar(-4, 24, 4.2, '#FB923C', '#9A3412', -0.5)}
+    ${rbStar(84, 106, 3.8, '#FDE047', '#B45309', -1.7)}`,
+});
+
 // ------------------------------------------ Jezevčík (mythic, dárkový odkaz) ---
 // Superdlouhý černý dlouhosrstý jezevčík (black-and-tan), jehož tělo tvoří okraj rámečku (kreslený styl: tlustý tmavší obrys, plná barva,
 // jeden cel-shade pruh a obarvený odlesk). Hlava s ouškem a ocas se potkají nahoře vlevo — honí si vlastní ocas.
@@ -1216,6 +1289,9 @@ const FLYBY_ART = {
 
   // Dino — kreslený pterodaktyl, mává křídly
   'frame-dino': { w: 56, h: 32, dir: true, flap: true, svg: `<svg viewBox="0 0 56 32"><g stroke="#166534" stroke-width="1.6" stroke-linejoin="round"><path d="M20 18 L3 22 L19 22.5Z" fill="#22C55E"/><path class="fb-wing" d="M33 14 Q30 3 13 1 Q20 7 19 13 Q25 8 27 15Z" fill="#22C55E"/><ellipse cx="29" cy="18" rx="11" ry="6.3" fill="#4ADE80"/><path class="fb-wing fb-wing2" d="M29 21 Q29 29 16 31 Q23 26 21 21Z" fill="#16A34A"/><circle cx="40" cy="14" r="5.5" fill="#4ADE80"/></g><path d="M44 12.2 L54.5 15 L44 16.8Z" fill="#FDBA74" stroke="#9A3412" stroke-width="1.4" stroke-linejoin="round"/><path d="M37 9.5 L31.5 5.5 L38.5 8Z" fill="#FB923C" stroke="#9A3412" stroke-width="1.2" stroke-linejoin="round"/><path d="M24 15 Q29 13 34 15 Q29 18.6 24 15Z" fill="#86EFAC"/><circle cx="41.6" cy="12.8" r="1.2" fill="#14532D"/></svg>` },
+
+  // Dragon — kreslený rudý drak, mává křídly a chrlí plamínek
+  'frame-dragon': { w: 60, h: 32, dir: true, flap: true, svg: `<svg viewBox="0 0 60 32"><g stroke="#7F1D1D" stroke-width="1.6" stroke-linejoin="round"><path d="M20 18 L3 22 L19 22.5Z" fill="#DC2626"/><path class="fb-wing" d="M33 14 Q30 3 13 1 Q20 7 19 13 Q25 8 27 15Z" fill="#F97316"/><ellipse cx="29" cy="18" rx="11" ry="6.3" fill="#EF4444"/><path class="fb-wing fb-wing2" d="M29 21 Q29 29 16 31 Q23 26 21 21Z" fill="#EA580C"/><circle cx="40" cy="14" r="5.5" fill="#EF4444"/></g><path d="M44 12.2 L51 14 L44 16.8Z" fill="#FCA5A5" stroke="#7F1D1D" stroke-width="1.4" stroke-linejoin="round"/><path d="M37 9.5 L33 4.5 L39.5 8Z" fill="#F97316" stroke="#7C2D12" stroke-width="1.2" stroke-linejoin="round"/><path d="M24 15 Q29 13 34 15 Q29 18.6 24 15Z" fill="#FCA5A5"/><circle cx="41.6" cy="12.8" r="1.3" fill="#FDE047" stroke="#3B0A0A" stroke-width="0.7"/><path d="M52 12 Q56 9 59 13 Q56 12.6 55.4 14.6 Q58 16.4 52 16Z" fill="#F97316" stroke="#9A3412" stroke-width="1" stroke-linejoin="round"/></svg>` },
 
   // Jezevčík — malý jezevčík v běhu, mává ušima a poskakuje (dlouhé tělo, krátké nožky)
   'frame-jezevcik': { w: 58, h: 28, cls: 'fb-dach', flap: true, svg: `<svg viewBox="0 0 58 28"><g class="jz-bob"><g stroke-linejoin="round" stroke-linecap="round">

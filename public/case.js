@@ -10,6 +10,22 @@
 // z Daily Chest) a po endsAt (místní čas telefonu) truhla ze shopu zmizí.
 const CASES = [
   {
+    id: 'dragon',
+    name: 'Dragon Chest',
+    price: 150,
+    firstFree: true, // první otevření na zařízení zdarma (data.freeOpened v obchodě), pak už za mince
+    isNew: true,
+    exclusive: true, // trvalá truhla (bez endsAt), ale její skiny nepadají nikde jinde
+    // dračí / fantasy sada — tyhle skiny jsou exkluzivní pro tuhle truhlu
+    items: [
+      'frame-dragonscale', 'frame-castle', 'frame-enchanted', 'frame-knight', 'frame-wizard', 'frame-crystal', 'frame-dragon',
+      'name-dragonscale', 'name-knight', 'name-elven', 'name-ember', 'name-arcane', 'name-crystal', 'name-dragon',
+    ],
+    odds: { common: 48, rare: 30, epic: 17, legendary: 5 },
+    colors: { body: ['#7F1D1D', '#3B0A0A'], lid: ['#DC2626', '#991B1B'], trim: ['#FBBF24', '#B45309'] },
+    glow: 'rgba(239,68,68,0.45)',
+  },
+  {
     id: 'spooky',
     name: 'Spooky Chest',
     price: 110,
@@ -86,6 +102,16 @@ const CASES = [
   },
 ];
 // (Daily Chest nahradilo kolo štěstí — wheel.js)
+
+// Má tahle truhla pro hráče první otevření zdarma? (jen jednou na zařízení)
+function caseIsFree(caseDef, data = shopLoad()) {
+  return !!caseDef.firstFree && !(data.freeOpened || []).includes(caseDef.id);
+}
+
+// Cena na tlačítku: „FREE“, nebo mince s cenou
+function casePriceHtml(caseDef, data) {
+  return caseIsFree(caseDef, data) ? '<span class="num">FREE</span>' : `${COIN_SVG}<span class="num">${caseDef.price}</span>`;
+}
 
 function caseById(id) {
   return CASES.find((c) => c.id === id) || CASES[0];
@@ -252,6 +278,23 @@ const CHEST_STYLES = {
       <path d="M16 49 H40" stroke="#BEF264" stroke-width="2.4" stroke-linecap="round" stroke-opacity="0.8"/>`,
   }),
 
+  // Dragon — rudá truhla s dračími šupinami, hřebínkem na víku a zlatým dračím okem
+  dragon: (k, c) => ({
+    base: `${chestBody(c)}
+      <path d="M22 60 q4.5 5 9 0 q4.5 5 9 0 M80 60 q4.5 5 9 0 q4.5 5 9 0 M22 78 q4.5 5 9 0 q4.5 5 9 0 M80 78 q4.5 5 9 0 q4.5 5 9 0 M31 69 q4.5 5 9 0 M71 69 q4.5 5 9 0" stroke-opacity="0.5" stroke-width="2" fill="none"/>
+      <g fill="${c.trim[0]}" stroke-width="2.4"><path d="M14 94 V76 L32 94 Z"/><path d="M106 94 V76 L88 94 Z"/></g>
+      <circle cx="60" cy="66" r="14" fill="${c.trim[0]}" stroke-width="2.6"/>
+      <ellipse cx="60" cy="66" rx="9.5" ry="6.5" fill="#F97316" stroke="#7C2D12" stroke-width="1.8"/>
+      <ellipse cx="60" cy="66" rx="2.2" ry="5.6" fill="#3B0A0A" stroke="none"/>
+      <ellipse cx="56.4" cy="63.4" rx="1.8" ry="1" fill="#FDE047" stroke="none" transform="rotate(-30 56.4 63.4)"/>`,
+    lid: `<path d="M26 22 L19 3 L38 17 Z" fill="#F97316" stroke-width="2.4"/>
+      <path d="M94 22 L101 3 L82 17 Z" fill="#F97316" stroke-width="2.4"/>
+      <path d="M50 17 L60 -5 L70 17 Z" fill="#F97316" stroke-width="2.4"/>
+      ${chestLid(c)}
+      <path d="M28 32 q4.5 5 9 0 q4.5 5 9 0 M74 32 q4.5 5 9 0 q4.5 5 9 0 M51 28 q4.5 5 9 0 q4.5 5 9 0" stroke-opacity="0.5" stroke-width="2" fill="none"/>
+      ${chestBand(c, 21, 17, 9, 32)}${chestBand(c, 90, 17, 9, 32)}`,
+  }),
+
   // Daily — dárková krabice s mašlí (zdarma za reklamu)
   daily: (k, c) => ({
     base: `<rect x="16" y="46" width="88" height="48" rx="7" fill="${c.body[0]}"/>
@@ -343,7 +386,7 @@ function showCaseContents(caseId) {
     </div>
     <div class="odds-row">${oddsHtml}</div>
     <div class="drop-grid">${dropsHtml}</div>
-    <button class="case-open-btn wide" id="contents-open">Open ${COIN_SVG}<span class="num">${caseDef.price}</span></button>
+    <button class="case-open-btn wide" id="contents-open">Open ${casePriceHtml(caseDef, shopLoad())}</button>
   `);
   const openBtn = modal.querySelector('#contents-open');
   if (openBtn) {
@@ -445,6 +488,10 @@ function openCase(caseId, { free = false } = {}) {
   const caseDef = caseById(caseId);
   if (!isCaseAvailable(caseDef)) return showToast('This chest is no longer available.');
   const d = shopLoad();
+  if (!free && caseIsFree(caseDef, d)) {
+    free = true;
+    d.freeOpened = [...(d.freeOpened || []), caseDef.id];
+  }
   if (!free && d.coins < caseDef.price) return showToast('Not enough coins.');
 
   if (!free && !isDevMode()) d.coins -= caseDef.price;

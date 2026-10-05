@@ -206,6 +206,11 @@ const DICT_ROWS = [
   ['Someone got a different prompt — could it be you?', 'Někdo dostal jiné zadání — nejsi to ty?', 'Alguien recibió otra frase… ¿serás tú?'],
   ['Vote sent (you can change it).', 'Hlas odeslán (můžeš ho změnit).', 'Voto enviado (puedes cambiarlo).'],
   ['Impostor caught!', 'Impostor chycen!', '¡Impostor atrapado!'],
+  ['Impostors caught!', 'Imposteři chyceni!', '¡Impostores atrapados!'],
+  ['One impostor was caught!', 'Jeden impostor byl chycen!', '¡Atraparon a un impostor!'],
+  ['The impostors escaped!', 'Imposteři unikli!', '¡Los impostores escaparon!'],
+  ['Nobody guessed the impostors', 'Impostory nikdo neuhodl', 'Nadie adivinó a los impostores'],
+  ['Your fellow impostor:', 'Tvůj spolu-impostor:', 'Tu compañero impostor:'],
   ['The impostor escaped!', 'Impostor unikl!', '¡El impostor escapó!'],
   ['Surprise — you were the impostor, and they caught you!', 'Překvapení — byl jsi impostor a chytili tě!', 'Sorpresa: eras el impostor ¡y te pillaron!'],
   ['Surprise — you were the impostor, and you got away!', 'Překvapení — byl jsi impostor a unikl jsi!', 'Sorpresa: eras el impostor ¡y te escapaste!'],
@@ -229,6 +234,7 @@ const DICT_ROWS = [
   ['No ads', 'Bez reklam', 'Sin anuncios'],
   ['Forever', 'Navždy', 'Para siempre'],
   ["Payments aren't live yet — this is a prototype.", 'Platby zatím nefungují — tohle je prototyp.', 'Los pagos aún no funcionan: esto es un prototipo.'],
+  ['Dragon Chest', 'Dračí truhla', 'Cofre del dragón'],
   ['Spooky Chest', 'Strašidelná truhla', 'Cofre terrorífico'],
   ['Party Chest', 'Párty truhla', 'Cofre de fiesta'],
   ['Frame Chest', 'Truhla rámečků', 'Cofre de marcos'],
@@ -375,6 +381,9 @@ const DICT_ROWS = [
 // Texty poskládané z více částí (čísla, jména) — regulární výraz na celý text.
 // Funkce dostane nalezené části a vrátí překlad.
 const PATTERNS = [
+  [/^You guessed the impostor! \+(\d+) bonus pts$/, (m, lang) => (lang === 'cs' ? `Uhodl jsi impostora! +${m[1]} bonusových b.` : `¡Adivinaste al impostor! +${m[1]} pts de bonificación`)],
+  [/^You guessed an impostor! \+(\d+) bonus pts$/, (m, lang) => (lang === 'cs' ? `Uhodl jsi impostora! +${m[1]} bonusových b.` : `¡Adivinaste a un impostor! +${m[1]} pts de bonificación`)],
+  [/^(\d+) of (\d+) guessed the impostors$/, (m, lang) => (lang === 'cs' ? `${m[1]} z ${m[2]} uhodli impostory` : `${m[1]} de ${m[2]} adivinaron a los impostores`)],
   [/^(\d+) of (\d+) guessed the impostor$/, (m, lang) => (lang === 'cs' ? `${m[1]} z ${m[2]} uhodli impostora` : `${m[1]} de ${m[2]} adivinaron al impostor`)],
   [/^\+(\d+) pts$/, (m, lang) => (lang === 'cs' ? `+${m[1]} b.` : `+${m[1]} pts`)],
   [/^You were caught… but still got \+(\d+) pts$/, (m, lang) => (lang === 'cs' ? `Chytili tě… ale i tak máš +${m[1]} b.` : `Te pillaron… pero aun así +${m[1]} pts`)],

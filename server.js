@@ -46,7 +46,9 @@ const MIN_PLAYERS_TWINS = 6; // Twins — od 6 hráčů (aspoň 3 dvojice), př�
 const TWINS_VOTE_SECONDS = 30;
 function minPlayersFor(mode) { return mode === 'twins' ? MIN_PLAYERS_TWINS : MIN_PLAYERS; }
 const IMPOSTOR_VOTE_SECONDS = 30;
+const IMPOSTOR_TWO_MIN_PLAYERS = 7; // od tolika hráčů jsou v kole dva imposteři
 const IMPOSTOR_CIV_WIN_POINTS = 100; // každý z ostatních, když impostora odhalí
+const IMPOSTOR_GUESS_BONUS = 25; // bonus každému, kdo impostora uhodl (i když ho skupina nakonec neodhalí)
 const IMPOSTOR_WIN_POINTS = 250; // maximum pro impostora (nikdo ho neuhodl); s každým hlasem klesá
 
 // --- Mince za hru ---
@@ -975,8 +977,9 @@ function newLobby(hostId) {
     captions: new Map(), // playerId -> text
     captionOrder: [], // zamíchané pořadí id autorů pro anonymní zobrazení při výběru
     // --- Impostor (mode: 'impostor') ---
+    impostorIds: [], // 1 impostor, při 7+ hráčích 2 (impostorId = první, kvůli zpětné kompatibilitě)
+    lastImpostorIds: [],
     impostorId: null,
-    lastImpostorId: null,
     civilPrompt: null,
     impostorPrompt: null,
     usedPairs: new Set(),
@@ -1065,11 +1068,18 @@ function startImpostorRound(lobby) {
   lobby.impostorPrompt = pairs[otherIndex][crypto.randomInt(2)];
   lobby.prompt = null;
 
-  // impostor = náhodný připojený hráč, pokud to jde, ne stejný jako minule
+  // imposteři = náhodní připojení hráči (víc než 6 hráčů → dva), pokud to jde, ne ti z minulého kola
   const active = connectedPlayers(lobby);
-  const candidates = active.length > 1 ? active.filter((p) => p.id !== lobby.lastImpostorId) : active;
-  lobby.impostorId = candidates[crypto.randomInt(candidates.length)].id;
-  lobby.lastImpostorId = lobby.impostorId;
+  const count = active.length >= IMPOSTOR_TWO_MIN_PLAYERS ? 2 : 1;
+  const fresh = active.filter((p) => !lobby.lastImpostorIds.includes(p.id));
+  // nováčků je málo → doplníme z minulých imposterů, ať jich je vždy `count`
+  const picked = shuffle(fresh).slice(0, count);
+  if (picked.length < count) {
+    picked.push(...shuffle(active.filter((p) => !picked.includes(p))).slice(0, count - picked.length));
+  }
+  lobby.impostorIds = picked.map((p) => p.id);
+  lobby.impostorId = lobby.impostorIds[0] || null;
+  lobby.lastImpostorIds = [...lobby.impostorIds];
 
   lobby.submissions.clear();
   lobby.votes.clear();
@@ -1083,7 +1093,7 @@ function startImpostorRound(lobby) {
 
 function promptFor(lobby, viewerId) {
   if (lobby.mode !== 'impostor') return lobby.prompt;
-  return viewerId === lobby.impostorId ? lobby.impostorPrompt : lobby.civilPrompt;
+  return lobby.impostorIds.includes(viewerId) ? lobby.impostorPrompt : lobby.civilPrompt;
 }
 
 function beginImpostorVoting(lobby) {
@@ -1108,38 +1118,57 @@ function finishImpostorVoting(lobby) {
 
   const tally = new Map();
   for (const targetId of lobby.votes.values()) tally.set(targetId, (tally.get(targetId) || 0) + 1);
-  const impostorVotes = tally.get(lobby.impostorId) || 0;
-  const maxOther = Math.max(0, ...[...tally.entries()].filter(([pid]) => pid !== lobby.impostorId).map(([, v]) => v));
-  // Odhalený = má víc hlasů než kdokoli jiný. Remíza nebo nula hlasů = impostor unikl.
-  const caught = impostorVotes > 0 && impostorVotes > maxOther;
-  // Body impostora: čím víc hráčů ho uhodlo, tím míň. Hlasy impostora samotného se nepočítají.
-  const correctVotes = [...lobby.votes.entries()].filter(([voter, target]) => voter !== lobby.impostorId && target === lobby.impostorId).length;
-  const eligibleVoters = Math.max(correctVotes, connectedPlayers(lobby).filter((p) => p.id !== lobby.impostorId).length);
-  const impostorPoints = eligibleVoters > 0
-    ? Math.round(IMPOSTOR_WIN_POINTS * (1 - correctVotes / eligibleVoters))
-    : IMPOSTOR_WIN_POINTS;
+  const ids = lobby.impostorIds;
+  const isImp = (pid) => ids.includes(pid);
+  const maxOther = Math.max(0, ...[...tally.entries()].filter(([pid]) => !isImp(pid)).map(([, v]) => v));
+  // Odhalený impostor = má víc hlasů než kterýkoli neimpostor (remíza nebo 0 hlasů = unikl).
+  // Každý impostor se posuzuje zvlášť; `caught` = odhalen ASPOŇ JEDEN impostor → civilisté vyhrávají
+  // (IMPOSTOR_CIV_WIN_POINTS + mince). Impostor, který unikl, dostane navíc COINS_IMPOSTOR_WIN.
+  const caughtIds = ids.filter((id) => (tally.get(id) || 0) > 0 && (tally.get(id) || 0) > maxOther);
+  const caught = caughtIds.length > 0;
+  // Hlasy impostorů se nepočítají do bodů ani bonusů — jen hlasy neimpostorů.
+  const civilVotes = [...lobby.votes.entries()].filter(([voter]) => !isImp(voter));
+  const guessedIds = civilVotes.filter(([, target]) => isImp(target)).map(([voter]) => voter);
+  const correctVotes = guessedIds.length; // kolik civilistů tipnulo kteréhokoli impostora
+  const eligibleVoters = Math.max(correctVotes, connectedPlayers(lobby).filter((p) => !isImp(p.id)).length);
+  // Body impostora: čím víc civilistů hlasovalo právě pro něj, tím míň.
+  const impostorPointsById = {};
+  for (const id of ids) {
+    const votesForHim = civilVotes.filter(([, target]) => target === id).length;
+    impostorPointsById[id] = eligibleVoters > 0
+      ? Math.round(IMPOSTOR_WIN_POINTS * (1 - votesForHim / eligibleVoters))
+      : IMPOSTOR_WIN_POINTS;
+  }
+  const impostorPoints = impostorPointsById[ids[0]] || 0; // zpětná kompatibilita (první impostor)
 
   for (const p of lobby.players.values()) {
-    if (caught && p.id !== lobby.impostorId) {
+    if (caught && !isImp(p.id)) {
       p.score += IMPOSTOR_CIV_WIN_POINTS;
       p.coinsEarned = (p.coinsEarned || 0) + COINS_IMPOSTOR_CIV_WIN;
     }
-    if (p.id === lobby.impostorId) p.score += impostorPoints;
-    if (!caught && p.id === lobby.impostorId) {
-      p.coinsEarned = (p.coinsEarned || 0) + COINS_IMPOSTOR_WIN;
+    if (guessedIds.includes(p.id)) p.score += IMPOSTOR_GUESS_BONUS;
+    if (isImp(p.id)) {
+      p.score += impostorPointsById[p.id];
+      if (!caughtIds.includes(p.id)) p.coinsEarned = (p.coinsEarned || 0) + COINS_IMPOSTOR_WIN;
     }
   }
 
-  const impostor = lobby.players.get(lobby.impostorId);
+  const impostorNames = ids.map((id) => lobby.players.get(id)?.name || '???');
   lobby.lastRoundResult = {
     kind: 'impostor',
     round: lobby.round,
-    impostorId: lobby.impostorId,
-    impostorName: impostor ? impostor.name : '???',
+    impostorId: ids[0] || null,
+    impostorName: impostorNames[0] || '???',
+    impostorIds: [...ids],
+    impostorNames,
+    caughtIds,
+    impostorPointsById,
     civilPrompt: lobby.civilPrompt,
     impostorPrompt: lobby.impostorPrompt,
     caught,
     civPoints: IMPOSTOR_CIV_WIN_POINTS,
+    guessBonus: IMPOSTOR_GUESS_BONUS,
+    guessedIds,
     impostorPoints,
     correctVotes,
     eligibleVoters,
@@ -1155,7 +1184,7 @@ function finishImpostorVoting(lobby) {
           photoDataUrl: sub?.missed ? null : sub?.photoDataUrl || null,
           missed: !!sub?.missed,
           votes: tally.get(pid) || 0,
-          isImpostor: pid === lobby.impostorId,
+          isImpostor: isImp(pid),
         };
       })
       .sort((a, b) => (b.isImpostor - a.isImpostor) || (b.votes - a.votes)),
@@ -1747,8 +1776,9 @@ function resetLobbyToWaiting(lobby) {
   lobby.lastPairKeys = new Set();
   lobby.lastRoundResult = null;
   lobby.deadlineAt = null;
+  lobby.impostorIds = [];
+  lobby.lastImpostorIds = [];
   lobby.impostorId = null;
-  lobby.lastImpostorId = null;
   lobby.civilPrompt = null;
   lobby.impostorPrompt = null;
   lobby.gameId = null;
@@ -1799,7 +1829,7 @@ function publicState(lobby, viewerId) {
     promptPack: lobby.promptPack,
     prompt: promptFor(lobby, viewerId),
     // impostor o své roli neví při focení — dozví se ji při hlasování (jen on sám) a ve výsledcích
-    isImpostor: lobby.mode === 'impostor' && (lobby.phase === 'results' || lobby.phase === 'impostor_voting') && viewerId === lobby.impostorId,
+    isImpostor: lobby.mode === 'impostor' && (lobby.phase === 'results' || lobby.phase === 'impostor_voting') && lobby.impostorIds.includes(viewerId),
     players,
     youId: viewerId,
     isHost: viewerId === lobby.hostId,
@@ -1881,9 +1911,11 @@ function publicState(lobby, viewerId) {
     base.youVoted = lobby.votes.has(viewerId);
     base.yourVote = lobby.votes.get(viewerId) || null;
     // zadání obou stran vidí jen impostor
-    if (viewerId === lobby.impostorId) {
+    // a spolu-impostora (jen impostorům, jen při hlasování)
+    if (lobby.impostorIds.includes(viewerId)) {
       base.civilPrompt = lobby.civilPrompt;
       base.impostorPrompt = lobby.impostorPrompt;
+      base.fellowImpostorIds = lobby.impostorIds.filter((id) => id !== viewerId);
     }
   }
 

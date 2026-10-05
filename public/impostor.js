@@ -22,13 +22,21 @@ function buildImpostorVotingView(state) {
   mountedKey = `ivote-${state.round}`;
   stopCamera();
 
+  // spolu-impostor (jen pro impostora; při 7+ hráčích jsou dva)
+  const fellowIds = state.fellowImpostorIds || [];
+  const fellowCards = state.cards.filter((c) => fellowIds.includes(c.id));
+  const fellowHtml = fellowCards.length ? `
+      <div class="impostor-banner fellow-banner">
+        <div class="impostor-banner-title">${tr('Your fellow impostor:', getLang())} ${fellowCards.map((c) => playerNameHtml(c.name, looksOf(state, c.id))).join(', ')}</div>
+      </div>` : '';
+
   const cardsHtml = state.cards.map((c) => {
     const looks = looksOf(state, c.id);
     const photo = c.missed
       ? `<div class="missed"><span class="emoji">${icon('sad')}</span>Too slow!!</div>`
       : `<img src="${c.photoDataUrl}">`;
     return `
-      <div class="ivote-card ${c.isOwn ? 'own' : ''}" ${c.isOwn ? '' : `data-id="${c.id}"`}>
+      <div class="ivote-card ${c.isOwn ? 'own' : ''} ${fellowIds.includes(c.id) ? 'fellow' : ''}" ${c.isOwn ? '' : `data-id="${c.id}"`}>
         <div class="ivote-photo">${photo}</div>
         <div class="ivote-name">${playerNameHtml(c.name, looks)}${c.isOwn ? ' (you)' : ''}</div>
       </div>`;
@@ -50,6 +58,7 @@ function buildImpostorVotingView(state) {
           <div class="imp"><span>${tr('You had', getLang())}</span>${escapeHtml(state.impostorPrompt || state.prompt || '')}</div>
         </div>
       </div>` : ''}
+      ${fellowHtml}
       <div class="timer" id="timer-el">--</div>
       <div class="grid" id="ivote-grid">${cardsHtml}</div>
       <p class="wait-note" id="ivote-count"></p>
@@ -83,21 +92,52 @@ function patchImpostorVoting(state) {
 // ------------------------------------------------------------ výsledky ---
 
 function renderImpostorResults(state, r) {
-  const youImpostor = r.impostorId === state.youId;
+  const impIds = r.impostorIds || [r.impostorId];
+  const multi = impIds.length > 1;
+  const caughtIds = r.caughtIds || (r.caught ? impIds : []);
+  const youImpostor = impIds.includes(state.youId);
+  const youCaught = caughtIds.includes(state.youId);
+  const myImpPoints = youImpostor ? ((r.impostorPointsById || {})[state.youId] ?? r.impostorPoints) : 0;
+  const allCaught = caughtIds.length === impIds.length;
   const youWon = r.caught ? !youImpostor : youImpostor;
   const gain = r.caught
     ? (youImpostor ? null : { points: r.civPoints, coins: r.civCoins })
-    : (youImpostor ? { points: r.impostorPoints, coins: r.impostorCoins } : null);
+    : (youImpostor ? { points: myImpPoints, coins: r.impostorCoins } : null);
   // impostor dostane body vždy (i když je chycený) — podle počtu správných hlasů
-  const shownGain = youImpostor ? { points: r.impostorPoints, coins: r.caught ? 0 : r.impostorCoins } : gain;
-  const guessedText = r.correctVotes > 0 ? `${r.correctVotes} of ${r.eligibleVoters} guessed the impostor` : 'Nobody guessed the impostor';
-  const impBanner = r.caught
-    ? (r.impostorPoints > 0 ? `You were caught… but still got +${r.impostorPoints} pts` : 'You were caught… no points this time')
-    : `You escaped! +${r.impostorPoints} pts`;
+  const youGuessed = (r.guessedIds || []).includes(state.youId);
+  const guessBonus = youGuessed ? (r.guessBonus || 0) : 0;
+  // kdo impostora uhodl, dostane bonus navíc (i když ho skupina neodhalila)
+  const shownGain = youImpostor
+    ? { points: myImpPoints, coins: youCaught ? 0 : r.impostorCoins }
+    : (gain || guessBonus ? { points: (gain ? gain.points : 0) + guessBonus, coins: gain ? gain.coins : 0 } : null);
+  const guessedText = r.correctVotes > 0
+    ? `${r.correctVotes} of ${r.eligibleVoters} guessed the ${multi ? 'impostors' : 'impostor'}`
+    : (multi ? 'Nobody guessed the impostors' : 'Nobody guessed the impostor');
+  const impBanner = youCaught
+    ? (myImpPoints > 0 ? `You were caught… but still got +${myImpPoints} pts` : 'You were caught… no points this time')
+    : `You escaped! +${myImpPoints} pts`;
+  const outcomeTitle = !multi
+    ? (r.caught ? 'Impostor caught!' : 'The impostor escaped!')
+    : (allCaught ? 'Impostors caught!' : (r.caught ? 'One impostor was caught!' : 'The impostors escaped!'));
 
-  const impostorCard = r.cards.find((c) => c.isImpostor);
-  const impostorLooks = looksOf(state, r.impostorId);
+  const impostorCards = impIds.map((id) => r.cards.find((c) => c.id === id)).filter(Boolean);
   const others = r.cards.filter((c) => !c.isImpostor);
+  const revealHtml = impIds.map((id) => {
+    const card = r.cards.find((c) => c.id === id);
+    const looks = looksOf(state, id);
+    const name = (r.impostorNames || [r.impostorName])[impIds.indexOf(id)];
+    const pts = (r.impostorPointsById || {})[id] ?? r.impostorPoints;
+    return `
+      <div class="impostor-reveal">
+        <div class="impostor-reveal-label">${icon('spy')} IMPOSTOR</div>
+        ${card && !card.missed
+          ? framedPhotoHtml(card.photoDataUrl, looks, 'max-width:200px; width:100%; margin:0 auto;')
+          : `<div class="impostor-missed">${icon('sad')}</div>`}
+        <div class="impostor-reveal-name">${playerNameHtml(name, looks)}</div>
+        <div class="impostor-reveal-pts">+${pts} pts</div>
+        <div class="impostor-reveal-votes">${card ? card.votes : 0} ${card && card.votes === 1 ? 'vote' : 'votes'}</div>
+      </div>`;
+  }).join('');
 
   const othersHtml = others.map((c) => `
     <div class="result-card">
@@ -115,23 +155,16 @@ function renderImpostorResults(state, r) {
     ${brandHtml(state)}
     <div class="screen">
       <div class="impostor-outcome ${r.caught ? 'caught' : 'escaped'}">
-        <div class="impostor-outcome-title">${r.caught ? 'Impostor caught!' : 'The impostor escaped!'}</div>
+        <div class="impostor-outcome-title">${outcomeTitle}</div>
         <div class="impostor-outcome-sub">${youImpostor
           ? impBanner
           : (youWon ? 'You won this round' : 'You lost this round')}</div>
         <div class="impostor-outcome-sub">${guessedText}</div>
+        ${youGuessed ? `<div class="impostor-outcome-sub">You guessed ${multi ? 'an' : 'the'} impostor! +${guessBonus} bonus pts</div>` : ''}
         ${shownGain ? `<div class="impostor-gain">+${shownGain.points} pts${shownGain.coins ? ` · ${COIN_SVG}<span class="num">+${shownGain.coins}</span>` : ''}</div>` : ''}
       </div>
 
-      <div class="impostor-reveal">
-        <div class="impostor-reveal-label">${icon('spy')} IMPOSTOR</div>
-        ${impostorCard && !impostorCard.missed
-          ? framedPhotoHtml(impostorCard.photoDataUrl, impostorLooks, 'max-width:200px; width:100%; margin:0 auto;')
-          : `<div class="impostor-missed">${icon('sad')}</div>`}
-        <div class="impostor-reveal-name">${playerNameHtml(r.impostorName, impostorLooks)}</div>
-        <div class="impostor-reveal-pts">+${r.impostorPoints} pts</div>
-        <div class="impostor-reveal-votes">${impostorCard ? impostorCard.votes : 0} ${impostorCard && impostorCard.votes === 1 ? 'vote' : 'votes'}</div>
-      </div>
+      ${revealHtml}
 
       <div class="impostor-prompts">
         <div><span>${tr('Everyone had', getLang())}</span>${escapeHtml(r.civilPrompt)}</div>

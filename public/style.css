@@ -879,6 +879,9 @@ body.no-scroll{ overflow:hidden; }
 .ivote-card:active{ transform:scale(0.97); }
 .ivote-card.own{ opacity:0.6; cursor:default; }
 .ivote-card.selected{ border-color:#EF4444; box-shadow:0 0 0 3px rgba(239,68,68,0.3); }
+.ivote-card.fellow{ border-color:#FBBF24; box-shadow:0 0 0 3px rgba(251,191,36,0.35); }
+.fellow-banner{ padding:10px 14px; }
+.fellow-banner .impostor-banner-title{ flex-wrap:wrap; font-size:0.95rem; }
 .ivote-photo{ aspect-ratio:1/1; position:relative; background:#000; }
 .ivote-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
 .ivote-photo .missed{ width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--ink-dim); background:var(--surface-2); }
@@ -2309,6 +2312,21 @@ body.no-scroll{ overflow:hidden; }
   animation:lg-pulse 2.8s ease-in-out infinite;
 }
 .bv-frame-dino{ --bv-hi:transparent; --bv-lo:transparent; --bv-out:rgba(20,83,45,0.95); --bv-in:rgba(20,83,45,0.85); }
+
+/* Dragon (Dragon Chest) — rudé šupiny s tmavým obrysem, zlatý šupinový pruh a rozžhavené jiskry; pomalu se otáčí, bez záře a bílého lesku */
+.frame-aura.aura-frame-dragon{
+  background:conic-gradient(from var(--fa), #EF4444 0 12.5%, #B91C1C 0 25%, #EF4444 0 37.5%, #B91C1C 0 50%, #EF4444 0 62.5%, #B91C1C 0 75%, #F59E0B 0 81%, #EF4444 0 90.5%, #991B1B 0 100%);
+  animation:lg-spin 24s linear infinite;
+}
+.frame-aura.aura-frame-dragon::before{
+  background:
+    radial-gradient(ellipse 3% 3% at 14% 26%, #FDE047 50%, transparent 100%),
+    radial-gradient(ellipse 2.4% 2.4% at 62% 6%, #FB923C 50%, transparent 100%),
+    radial-gradient(ellipse 3% 3% at 92% 56%, #FDE047 50%, transparent 100%),
+    radial-gradient(ellipse 2.4% 2.4% at 38% 94%, #FB923C 50%, transparent 100%);
+  animation:lg-pulse 2.2s ease-in-out infinite;
+}
+.bv-frame-dragon{ --bv-hi:transparent; --bv-lo:transparent; --bv-out:rgba(69,10,10,0.95); --bv-in:rgba(69,10,10,0.85); }
 
 .frame-decor .dn-wobble{ transform-box:fill-box; transform-origin:50% 100%; animation:dn-wobble 2.4s cubic-bezier(.34,1.56,.64,1) infinite; }
 @keyframes dn-wobble{ 0%,100%{ transform:rotate(-7deg); } 50%{ transform:rotate(7deg) translateY(-1px); } }

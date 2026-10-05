@@ -90,6 +90,14 @@ const SHOP_SECTIONS = [
       { id: 'frame-robot', name: 'Robot', rarity: 'epic', style: 'linear-gradient(135deg,#CBD5E1,#38BDF8 45%,#475569)' },
       { id: 'frame-spacecat', name: 'Space Cat', rarity: 'legendary', style: 'linear-gradient(160deg,#A78BFA,#7C3AED 50%,#5B21B6 50%,#4C1D95)' },
       { id: 'frame-dino', name: 'Dino', rarity: 'legendary', style: 'linear-gradient(160deg,#4ADE80,#22C55E 50%,#16A34A 50%,#166534)' },
+      // Dragon (dračí / fantasy sada — Dragon Chest)
+      { id: 'frame-dragonscale', name: 'Dragon Scale', rarity: 'common', style: '#15803D' },
+      { id: 'frame-castle', name: 'Castle', rarity: 'common', style: '#78716C' },
+      { id: 'frame-enchanted', name: 'Enchanted', rarity: 'rare', style: 'linear-gradient(135deg,#5EEAD4,#818CF8,#C084FC)' },
+      { id: 'frame-knight', name: 'Knight', rarity: 'rare', style: 'linear-gradient(135deg,#E2E8F0,#64748B 50%,#334155)' },
+      { id: 'frame-wizard', name: 'Wizard', rarity: 'epic', style: 'linear-gradient(135deg,#6366F1,#7C3AED 50%,#1E1B4B)' },
+      { id: 'frame-crystal', name: 'Crystal', rarity: 'epic', style: 'linear-gradient(135deg,#67E8F9,#818CF8 50%,#C084FC)' },
+      { id: 'frame-dragon', name: 'Dragon', rarity: 'legendary', style: 'linear-gradient(160deg,#EF4444,#B91C1C 50%,#7F1D1D 50%,#450A0A)' },
       // jen z dárkového odkazu (gift.js) — v žádné truhle ani na kole
       { id: 'frame-obzerstvi', name: 'Obžerství', rarity: 'legendary', promoOnly: true, style: 'linear-gradient(160deg,#FBBF24,#EF4444 50%,#B91C1C 50%,#7F1D1D)' },
       // jen z druhého dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
@@ -150,6 +158,14 @@ const SHOP_SECTIONS = [
       { id: 'name-disco', name: 'Disco', rarity: 'epic', gradient: 'linear-gradient(90deg,#F472B6,#A78BFA,#22D3EE,#FDE047,#F472B6)' },
       { id: 'name-robot', name: 'Robot', rarity: 'epic', gradient: 'linear-gradient(90deg,#67E8F9,#818CF8,#67E8F9,#A3E635)' },
       { id: 'name-spacecat', name: 'Space Cat', rarity: 'legendary', gradient: 'linear-gradient(90deg,#C4B5FD,#F472B6,#FDE047,#4ADE80,#22D3EE,#C4B5FD)' },
+      // Dragon (dračí / fantasy sada — Dragon Chest)
+      { id: 'name-dragonscale', name: 'Dragonscale', rarity: 'common', color: '#4ADE80' },
+      { id: 'name-knight', name: 'Knightly', rarity: 'common', color: '#B6C2D9' },
+      { id: 'name-elven', name: 'Elven', rarity: 'rare', gradient: 'linear-gradient(90deg,#86EFAC,#5EEAD4,#A5B4FC)' },
+      { id: 'name-ember', name: 'Ember', rarity: 'rare', gradient: 'linear-gradient(90deg,#FCA5A5,#F97316,#B91C1C)' },
+      { id: 'name-arcane', name: 'Arcane', rarity: 'epic', gradient: 'linear-gradient(90deg,#818CF8,#C084FC,#22D3EE,#818CF8)' },
+      { id: 'name-crystal', name: 'Crystalline', rarity: 'epic', gradient: 'linear-gradient(90deg,#67E8F9,#A5B4FC,#F0ABFC,#67E8F9)' },
+      { id: 'name-dragon', name: 'Dragonfire', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FDE047,#F97316,#DC2626,#7F1D1D,#DC2626,#F97316)' },
       // jen z druhého dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
       { id: 'name-jezevcik', name: 'Jezevčík', rarity: 'mythic', promoOnly: true, gradient: 'linear-gradient(90deg,#B88552,#D9A066,#F0C27A,#FBBF24,#E8B068,#B88552)' },
       // jen z třetího dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
@@ -297,7 +313,7 @@ function renderShopScreen() {
       <div class="case-art">${caseSvg(c)}</div>
       <h3>${c.name}</h3>
       ${c.endsAt ? `<div class="case-timer">${icon('timer')} ${caseTimeLeft(c)}</div>` : ''}
-      <button class="case-open-btn" data-case="${c.id}">${COIN_SVG}<span class="num">${c.price}</span></button>
+      <button class="case-open-btn" data-case="${c.id}">${casePriceHtml(c, data)}</button>
     </div>
   `).join('');
 

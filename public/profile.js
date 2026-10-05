@@ -208,17 +208,7 @@ function renderProfileScreen() {
 // věci z inventáře. Nasazení platí hned, jméno se uloží tlačítkem.
 
 function editProfileBodyHtml(nameDraft) {
-  const data = shopLoad();
-  const sectionsHtml = SHOP_SECTIONS.map((section) => {
-    const ownedItems = section.items.filter((i) => data.owned.includes(i.id));
-    const tiles = [inventoryTileHtml(section, null, !data.equipped[section.id])]
-      .concat(ownedItems.map((item) => inventoryTileHtml(section, item, data.equipped[section.id] === item.id)))
-      .join('');
-    return `
-      <div class="section-eyebrow">${section.title.toUpperCase()}</div>
-      <div class="shop-grid">${tiles}</div>`;
-  }).join('');
-
+  // skiny se nasazují jen v „Edit look“ (inventář), ne tady
   return `
     <div class="x-close-row"><button class="x-close" id="edit-profile-close" aria-label="Close">${icon('close')}</button></div>
     <h2>Edit profile</h2>
@@ -239,10 +229,6 @@ function editProfileBodyHtml(nameDraft) {
       <input id="edit-profile-name" maxlength="20" value="${escapeHtml(nameDraft)}" placeholder="Your name">
     </div>
     <button id="edit-profile-save" class="btn btn-primary btn-block">Save name</button>
-    <div class="edit-profile-inventory">
-      ${sectionsHtml}
-      ${data.owned.length === 0 ? `<button class="btn btn-ghost btn-block" id="edit-profile-shop">${icon('bag')} Open a chest in the shop</button>` : ''}
-    </div>
   `;
 }
 
@@ -308,26 +294,6 @@ function showEditProfileModal() {
       closeModal();
       stepBack();
     };
-    const toShop = sheet.querySelector('#edit-profile-shop');
-    if (toShop) {
-      toShop.onclick = () => {
-        closeModal();
-        profileOpen = false;
-        homeTab = 'shop';
-        backToShop();
-      };
-    }
-
-    sheet.querySelectorAll('.inv-item').forEach((btn) => {
-      btn.onclick = () => {
-        const d = shopLoad();
-        if (btn.dataset.id) d.equipped[btn.dataset.section] = btn.dataset.id;
-        else delete d.equipped[btn.dataset.section];
-        shopSave(d);
-        sendHello(); // přátelé mají vidět nový vzhled hned
-        render();
-      };
-    });
   }
   render();
 }
