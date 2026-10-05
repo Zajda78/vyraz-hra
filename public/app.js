@@ -1372,6 +1372,7 @@ function buildVotingView(state) {
     return `
       <div class="vote-card" data-id="${c.id}">
         <img src="${c.photoDataUrl}">
+        ${likeBtnHtml(c.id)}
       </div>`;
   }).join('');
 
@@ -1399,6 +1400,7 @@ function buildVotingView(state) {
     };
   });
 
+  wireLikes(state);
   patchVoteCount(state);
 }
 
@@ -1414,11 +1416,51 @@ function markVoteSelection(selector, targetId) {
   });
 }
 
+// --- Liky pod fotkami (jen pro galerii; počty se hráčům neukazují, vidí jen své srdíčko) ---
+const HEART_SVG = '<svg viewBox="0 0 24 24" class="heart-ico" aria-hidden="true"><path d="M7 10v11H3V10h4zm0 0 4.2-7.2c.4-.7 1.3-.9 2-.5.6.4.9 1 .8 1.7L13.4 9H20a2 2 0 0 1 2 2.4l-1.6 8A2 2 0 0 1 18.4 21H7"/></svg>'; // palec nahoru (název konstanty zůstal kvůli stylům)
+
+function likeBtnHtml(targetId) {
+  return `<button type="button" class="like-btn" data-like="${targetId}" aria-label="Like" aria-pressed="false">${HEART_SVG}</button>`;
+}
+
+// Nastaví vzhled srdíček podle seznamu liknutých cílů (bez překreslení obrazovky).
+function applyLikes(ids, popId) {
+  const set = new Set(ids || []);
+  document.querySelectorAll('.like-btn[data-like]').forEach((b) => {
+    const on = set.has(b.getAttribute('data-like'));
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (on && popId === b.getAttribute('data-like')) {
+      b.classList.remove('pop');
+      void b.offsetWidth; // restart animace
+      b.classList.add('pop');
+    }
+  });
+}
+
+// Napojí srdíčka; klepnutí přepne like a nikdy nevybere kartu (stopPropagation).
+function wireLikes(state) {
+  document.querySelectorAll('.like-btn[data-like]').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const targetId = b.getAttribute('data-like');
+      const on = !b.classList.contains('on');
+      send({ type: 'like_photo', targetId, on });
+      playSfx('vote');
+      const cur = new Set([...document.querySelectorAll('.like-btn.on')].map((x) => x.getAttribute('data-like')));
+      if (on) { cur.clear(); cur.add(targetId); } else cur.delete(targetId); // jen jeden like — nový přesune starý
+      applyLikes([...cur], on ? targetId : null);
+    };
+  });
+  applyLikes(state.myLikes);
+}
+
 function patchVoteCount(state) {
   if (state.yourVote) {
     votedLocallyFor = state.yourVote;
     markVoteSelection(state.phase === 'twins_voting' ? '.twin-card[data-id]' : '.vote-card[data-id]', state.yourVote);
   }
+  applyLikes(state.myLikes);
   const el = document.getElementById('vote-count-text');
   if (el) el.textContent = state.youVoted
     ? `Vote sent (you can change it). ${state.votedCount} / ${state.activeCount} voted…`
@@ -1637,6 +1679,8 @@ function renderGameOverScreen(state) {
         <div class="scoreboard">${scoreboardHtml}</div>
       </div>
 
+      ${galleryHtml(state)}
+
       ${state.isHost
         ? `<div class="btn-row">
             <button id="again-btn" class="btn btn-primary btn-block">Play again</button>
@@ -1651,6 +1695,7 @@ function renderGameOverScreen(state) {
     document.getElementById('again-btn').onclick = () => send({ type: 'play_again' });
   }
   document.getElementById('menu-btn').onclick = leaveLobby;
+  wireGallery(state);
 }
 
 // ------------------------------------------------------------ DISPATCH ---

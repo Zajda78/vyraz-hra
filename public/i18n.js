@@ -192,6 +192,10 @@ const DICT_ROWS = [
   ['Main menu', 'Hlavní menu', 'Menú principal'],
   ['Waiting for the host to start a new game…', 'Čeká se, až hostitel spustí novou hru…', 'Esperando a que el anfitrión empiece otra partida…'],
   ['Final standings', 'Konečné pořadí', 'Clasificación final'],
+  ['Round Gallery', 'Galerie kola', 'Galería de rondas'],
+  ['Top 3 Photos', 'Top 3 fotky', 'Top 3 fotos'],
+  ["What happens in the game stays in the game — photos can't be saved.", 'Co se stane ve hře, zůstane ve hře — fotky nejdou uložit.', 'Lo que pasa en el juego se queda en el juego: las fotos no se pueden guardar.'],
+  ['Save', 'Uložit', 'Guardar'],
   ['The host ended the game.', 'Hostitel ukončil hru.', 'El anfitrión terminó la partida.'],
   // impostor
   ['While taking the photo, nobody knows who the impostor is — not even the impostor!', 'Při focení nikdo neví, kdo je impostor — ani impostor sám!', 'Mientras se hace la foto, nadie sabe quién es el impostor, ¡ni siquiera él!'],
@@ -381,6 +385,7 @@ const DICT_ROWS = [
 // Texty poskládané z více částí (čísla, jména) — regulární výraz na celý text.
 // Funkce dostane nalezené části a vrátí překlad.
 const PATTERNS = [
+  [/^#(\d)(?: · 👍 (\d+))?$/, (m) => (m[2] ? `#${m[1]} · 👍 ${m[2]}` : `#${m[1]}`)], // štítek v galerii: čísla + palec, stejné ve všech jazycích
   [/^You guessed the impostor! \+(\d+) bonus pts$/, (m, lang) => (lang === 'cs' ? `Uhodl jsi impostora! +${m[1]} bonusových b.` : `¡Adivinaste al impostor! +${m[1]} pts de bonificación`)],
   [/^You guessed an impostor! \+(\d+) bonus pts$/, (m, lang) => (lang === 'cs' ? `Uhodl jsi impostora! +${m[1]} bonusových b.` : `¡Adivinaste a un impostor! +${m[1]} pts de bonificación`)],
   [/^(\d+) of (\d+) guessed the impostors$/, (m, lang) => (lang === 'cs' ? `${m[1]} z ${m[2]} uhodli impostory` : `${m[1]} de ${m[2]} adivinaron a los impostores`)],
@@ -389,6 +394,8 @@ const PATTERNS = [
   [/^You were caught… but still got \+(\d+) pts$/, (m, lang) => (lang === 'cs' ? `Chytili tě… ale i tak máš +${m[1]} b.` : `Te pillaron… pero aun así +${m[1]} pts`)],
   [/^You escaped! \+(\d+) pts$/, (m, lang) => (lang === 'cs' ? `Unikl jsi! +${m[1]} b.` : `¡Escapaste! +${m[1]} pts`)],
   [/^Round (\d+) \/ (\d+)(.*)$/i, (m, lang) => `${lang === 'cs' ? 'Kolo' : 'Ronda'} ${m[1]} / ${m[2]}${m[3] ? ' ' + tr(m[3].trim(), lang) : ''}`],
+  [/^Round (\d+)$/, (m, lang) => `${lang === 'cs' ? 'Kolo' : 'Ronda'} ${m[1]}`],
+  [/^Copy of (.+)$/, (m, lang) => `${lang === 'cs' ? 'Kopie hráče' : 'Copia de'} ${m[1]}`],
   [/^results$/i, (m, lang) => (lang === 'cs' ? 'výsledky' : 'resultados')],
   [/^— vote$/, (m, lang) => (lang === 'cs' ? '— hlasování' : '— votación')],
   [/^— pick$/, (m, lang) => (lang === 'cs' ? '— výběr' : '— elección')],

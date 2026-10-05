@@ -41,7 +41,7 @@ function buildTwinsVotingView(state) {
   const cardsHtml = state.twinGroups.map((g) => `
     <div class="twin-card ${g.isOwn ? 'own' : ''} ${!g.isOwn && !g.votable ? 'disabled' : ''} ${state.yourVote === g.id ? 'selected' : ''}"
          style="--tc:${twinColor(g.index)}" ${!g.isOwn && g.votable ? `data-id="${g.id}"` : ''}>
-      <div class="twin-card-head">${teamBadgeHtml(g.id, g.index)}${g.isOwn ? '<span class="twin-own">Your team</span>' : ''}</div>
+      <div class="twin-card-head">${teamBadgeHtml(g.id, g.index)}${g.isOwn ? '<span class="twin-own">Your team</span>' : ''}${!g.isOwn && g.votable ? likeBtnHtml(g.id) : ''}</div>
       ${twinPhotosHtml(state, g.members)}
     </div>`).join('');
 
@@ -68,6 +68,7 @@ function buildTwinsVotingView(state) {
       markVoteSelection('.twin-card[data-id]', targetId);
     };
   });
+  wireLikes(state);
   patchVoteCount(state);
 }
 

@@ -37,7 +37,7 @@ function buildImpostorVotingView(state) {
       : `<img src="${c.photoDataUrl}">`;
     return `
       <div class="ivote-card ${c.isOwn ? 'own' : ''} ${fellowIds.includes(c.id) ? 'fellow' : ''}" ${c.isOwn ? '' : `data-id="${c.id}"`}>
-        <div class="ivote-photo">${photo}</div>
+        <div class="ivote-photo">${photo}${!c.isOwn && !c.missed ? likeBtnHtml(c.id) : ''}</div>
         <div class="ivote-name">${playerNameHtml(c.name, looks)}${c.isOwn ? ' (you)' : ''}</div>
       </div>`;
   }).join('');
@@ -72,6 +72,7 @@ function buildImpostorVotingView(state) {
       markImpostorVote(el.dataset.id);
     };
   });
+  wireLikes(state);
   patchImpostorVoting(state);
 }
 
@@ -83,6 +84,7 @@ function markImpostorVote(targetId) {
 
 function patchImpostorVoting(state) {
   if (state.yourVote) markImpostorVote(state.yourVote);
+  applyLikes(state.myLikes);
   const el = document.getElementById('ivote-count');
   if (el) el.textContent = state.youVoted
     ? `Vote sent (you can change it). ${state.votedCount} / ${state.activeCount} voted…`

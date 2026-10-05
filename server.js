@@ -957,6 +957,8 @@ function newLobby(hostId) {
     players: new Map(), // id -> { id, name, score, ws, connected }
     submissions: new Map(), // id -> { photoDataUrl, missed }
     votes: new Map(), // voterId -> targetId
+    likes: new Map(), // targetId -> Set(voterId) — liky pod fotkami (jen pro galerii)
+    likeTimes: new Map(), // ${targetId}| -> čas zapnutí liku
     drawDone: new Set(), // hráči, kteří dokreslili (nebo neměli co)
     cardOrder: [], // shuffled player ids for this round's reveal
     huntSeconds: HUNT_SECONDS_DEFAULT, // Snap Hunt — čas na hledání a vyfocení
@@ -987,6 +989,7 @@ function newLobby(hostId) {
     deadlineAt: null,
     timer: null,
     lastRoundResult: null,
+    gallery: [], // Round Gallery — nejlepší fotka každého kola, posílá se jen ve fázi gameover
   };
 }
 
@@ -1033,7 +1036,7 @@ function startRound(lobby) {
   lobby.round += 1;
   lobby.prompt = pickPrompt(lobby);
   lobby.submissions.clear();
-  lobby.votes.clear();
+  lobby.votes.clear(); clearLikes(lobby);
   lobby.drawDone = new Set();
   lobby.drawAssign = new Map();
   lobby.cardOrder = [];
@@ -1082,7 +1085,7 @@ function startImpostorRound(lobby) {
   lobby.lastImpostorIds = [...lobby.impostorIds];
 
   lobby.submissions.clear();
-  lobby.votes.clear();
+  lobby.votes.clear(); clearLikes(lobby);
   lobby.cardOrder = [];
   lobby.lastRoundResult = null;
   lobby.phase = 'submitting';
@@ -1099,7 +1102,7 @@ function promptFor(lobby, viewerId) {
 function beginImpostorVoting(lobby) {
   clearTimer(lobby);
   lobby.cardOrder = shuffle(connectedPlayers(lobby).map((p) => p.id));
-  lobby.votes.clear();
+  lobby.votes.clear(); clearLikes(lobby);
   lobby.phase = 'impostor_voting';
   lobby.deadlineAt = Date.now() + IMPOSTOR_VOTE_SECONDS * 1000;
   lobby.timer = setTimeout(() => finishImpostorVoting(lobby), IMPOSTOR_VOTE_SECONDS * 1000);
@@ -1348,7 +1351,7 @@ function twinGroupVotable(lobby, g) {
 
 function beginTwinsVoting(lobby) {
   clearTimer(lobby);
-  lobby.votes.clear();
+  lobby.votes.clear(); clearLikes(lobby);
   lobby.phase = 'twins_voting';
   lobby.deadlineAt = Date.now() + TWINS_VOTE_SECONDS * 1000;
   lobby.timer = setTimeout(() => finishTwinsVoting(lobby), TWINS_VOTE_SECONDS * 1000);
@@ -1705,14 +1708,127 @@ function finishVoting(lobby) {
   broadcast(lobby);
 }
 
+// ----------------------------------------------------------- Round Gallery ---
+// Galerie = TOP 3 nejvíc lajkovaných fotek z celé hry. Po každém kole se kandidáti z
+// lobby.lastRoundResult přidají k lobby.gallery a nechají se jen 3 nejlepší (míň fotek v paměti).
+// Při shodě liků vyhrává ta fotka, která svůj počet liků získala dřív (čas nejpozdějšího z jejích
+// liků, `lobby.likeTimes`). Klientům se posílá až ve fázi gameover. Hlasování ve hře liky neovlivňují.
+// Položka: { round, kind, label, likes, at, photos: [{ name, looks, photoDataUrl }] }
+const GALLERY_TOP = 3;
+
+// Smaže liky (nové kolo, konec hry, reset lobby).
+function clearLikes(lobby) {
+  if (!lobby.likes) lobby.likes = new Map();
+  if (!lobby.likeTimes) lobby.likeTimes = new Map();
+  lobby.likes.clear();
+  lobby.likeTimes.clear();
+}
+
+// Zapne/vypne like od hráče pro cíl (id hráče / skupiny).
+function setLike(lobby, voterId, targetId, on) {
+  if (!lobby.likes) lobby.likes = new Map();
+  if (!lobby.likeTimes) lobby.likeTimes = new Map();
+  let set = lobby.likes.get(targetId);
+  if (on) {
+    // jen JEDEN like na hráče: zapnutí nového přesune like z předchozí fotky
+    for (const [tid, s] of [...lobby.likes]) {
+      if (tid !== targetId && s.has(voterId)) {
+        s.delete(voterId);
+        lobby.likeTimes.delete(`${tid}|${voterId}`);
+        if (!s.size) lobby.likes.delete(tid);
+      }
+    }
+    if (!set) lobby.likes.set(targetId, (set = new Set()));
+    if (!set.has(voterId)) {
+      set.add(voterId);
+      lobby.likeTimes.set(`${targetId}|${voterId}`, Date.now());
+    }
+  } else if (set) {
+    set.delete(voterId);
+    lobby.likeTimes.delete(`${targetId}|${voterId}`);
+    if (!set.size) lobby.likes.delete(targetId);
+  }
+}
+
+// Id cílů, které hráč právě lajkuje (liky ostatních se klientům neposílají).
+function myLikesOf(lobby, viewerId) {
+  const out = [];
+  if (lobby.likes) for (const [tid, set] of lobby.likes) if (set.has(viewerId)) out.push(tid);
+  return out;
+}
+
+// Počet liků cíle.
+function likeCount(lobby, targetId) {
+  const set = lobby.likes && lobby.likes.get(targetId);
+  return set ? set.size : 0;
+}
+
+// Kdy cíl dosáhl svého aktuálního počtu liků = čas nejpozdějšího z jeho liků.
+function likeReachedAt(lobby, targetId) {
+  let at = 0;
+  const set = lobby.likes && lobby.likes.get(targetId);
+  if (set) for (const voter of set) at = Math.max(at, (lobby.likeTimes && lobby.likeTimes.get(`${targetId}|${voter}`)) || 0);
+  return at || Date.now();
+}
+
+// Seřadí kandidáty a nechá jen GALLERY_TOP nejlepších (víc liků lepší, při shodě dřívější).
+function trimGallery(list) {
+  return list.sort((a, b) => (b.likes - a.likes) || (a.at - b.at)).slice(0, GALLERY_TOP);
+}
+
+function recordGallery(lobby) {
+  const r = lobby.lastRoundResult;
+  if (!r || !r.round) return;
+  if (!lobby.gallery) lobby.gallery = [];
+  if (!lobby.galleryRounds) lobby.galleryRounds = new Set();
+  if (lobby.galleryRounds.has(r.round)) return; // bez duplikátů (host přeskočil výsledky apod.)
+  lobby.galleryRounds.add(r.round);
+  const looksOf = (pid) => lobby.players.get(pid)?.looks || null;
+  const stripUrl = (u) => (typeof u === 'string' && u.startsWith('data:image/') ? u : null);
+  const base = { round: r.round, kind: r.kind || lobby.mode };
+  const cands = [];
+
+  if (r.kind === 'caption') {
+    // vítěz vybraný hlavní postavou = jeden „like“
+    const win = (r.captions || []).find((x) => x.isWinner);
+    if (win && stripUrl(r.photoDataUrl)) {
+      cands.push({ ...base, label: win.text, likes: 1, at: Date.now(), photos: [{ name: r.subjectName, looks: looksOf(r.subjectId), photoDataUrl: r.photoDataUrl }] });
+    }
+  } else if (r.kind === 'copycat') {
+    const win = (r.copies || []).find((x) => x.isWinner && stripUrl(x.photoDataUrl));
+    if (win) cands.push({ ...base, label: `Copy of ${r.subjectName}`, likes: 1, at: Date.now(), photos: [{ name: win.name, looks: looksOf(win.id), photoDataUrl: win.photoDataUrl }] });
+  } else if (r.kind === 'twins') {
+    for (const g of r.groups || []) {
+      const members = (g.members || []).filter((m) => stripUrl(m.photoDataUrl));
+      const likes = likeCount(lobby, g.id);
+      if (likes > 0 && members.length) {
+        cands.push({ ...base, label: r.prompt || '', likes, at: likeReachedAt(lobby, g.id), photos: members.map((m) => ({ name: m.name, looks: looksOf(m.id), photoDataUrl: m.photoDataUrl })) });
+      }
+    }
+  } else {
+    // Reaction / Doodle / Snap Hunt / Impostor — každá karta s aspoň 1 likem je kandidát
+    const label = r.kind === 'impostor' ? r.civilPrompt : r.prompt;
+    for (const c of r.cards || []) {
+      const likes = likeCount(lobby, c.id);
+      if (likes > 0 && stripUrl(c.photoDataUrl)) {
+        cands.push({ ...base, label: label || '', likes, at: likeReachedAt(lobby, c.id), photos: [{ name: c.name, looks: looksOf(c.id), photoDataUrl: c.photoDataUrl }] });
+      }
+    }
+  }
+
+  // nové kandidáty ořežeme hned (nikdy se neukládá víc než 3 fotky); víc liků lepší, při shodě dřívější
+  lobby.gallery = trimGallery(lobby.gallery.concat(trimGallery(cands)));
+}
+
 function advanceAfterResults(lobby) {
   if (lobby.phase !== 'results') return;
   clearTimer(lobby);
+  recordGallery(lobby);
   if (lobby.round >= lobby.totalRounds) {
     // Hra skončila — fotky z posledního kola už nikde nejsou potřeba (zobrazené
     // skóre a pódium je jen z čísel), takže je hned uvolníme z paměti.
     lobby.submissions.clear();
-    lobby.votes.clear();
+    lobby.votes.clear(); clearLikes(lobby);
     lobby.cardOrder = [];
     lobby.groups = [];
     lobby.subjectPhoto = null;
@@ -1761,7 +1877,7 @@ function resetLobbyToWaiting(lobby) {
   // usedPrompts / usedPairs se schválně NEmažou — v další hře stejné lobby
   // nepřijdou znovu ty samé otázky (sady se vyprázdní samy, až se vystřídají všechny)
   lobby.submissions.clear();
-  lobby.votes.clear();
+  lobby.votes.clear(); clearLikes(lobby);
   lobby.drawDone = new Set();
   lobby.drawAssign = new Map();
   lobby.drawHistory = new Map(); // nová hra = čistá historie přidělení fotek v Doodle
@@ -1775,6 +1891,9 @@ function resetLobbyToWaiting(lobby) {
   lobby.groups = [];
   lobby.lastPairKeys = new Set();
   lobby.lastRoundResult = null;
+  lobby.gallery = []; // Round Gallery — nová hra = prázdná galerie
+  lobby.galleryRounds = new Set();
+  lobby.voteTimes = new Map();
   lobby.deadlineAt = null;
   lobby.impostorIds = [];
   lobby.lastImpostorIds = [];
@@ -1865,6 +1984,7 @@ function publicState(lobby, viewerId) {
       base.activeCount = connectedPlayers(lobby).length;
       base.youVoted = lobby.votes.has(viewerId);
       base.yourVote = lobby.votes.get(viewerId) || null;
+      base.myLikes = myLikesOf(lobby, viewerId);
     }
   }
 
@@ -1893,6 +2013,7 @@ function publicState(lobby, viewerId) {
     base.activeCount = connectedPlayers(lobby).length;
     base.youVoted = lobby.votes.has(viewerId);
     base.yourVote = lobby.votes.get(viewerId) || null;
+    base.myLikes = myLikesOf(lobby, viewerId);
   }
 
   if (lobby.phase === 'impostor_voting') {
@@ -1910,6 +2031,7 @@ function publicState(lobby, viewerId) {
     base.activeCount = connectedPlayers(lobby).length;
     base.youVoted = lobby.votes.has(viewerId);
     base.yourVote = lobby.votes.get(viewerId) || null;
+    base.myLikes = myLikesOf(lobby, viewerId);
     // zadání obou stran vidí jen impostor
     // a spolu-impostora (jen impostorům, jen při hlasování)
     if (lobby.impostorIds.includes(viewerId)) {
@@ -1970,6 +2092,7 @@ function publicState(lobby, viewerId) {
     const top = players.length ? players[0].score : 0;
     base.winners = players.filter((p) => p.score === top).map((p) => p.name);
     base.reward = lobby.players.get(viewerId)?.reward || null;
+    base.gallery = lobby.gallery || [];
   }
 
   return base;
@@ -2521,6 +2644,24 @@ wss.on('connection', (ws) => {
       lobby.votes.set(playerId, targetId);
       broadcast(lobby);
       maybeAdvanceFromImpostorVoting(lobby);
+      return;
+    }
+
+    if (msg.type === 'like_photo' && ['voting', 'twins_voting', 'impostor_voting'].includes(lobby.phase)) {
+      const targetId = msg.targetId;
+      const on = !!msg.on;
+      if (typeof targetId !== 'string') return;
+      if (lobby.phase === 'twins_voting') {
+        const g = lobby.groups.find((x) => x.id === targetId);
+        const mine = twinGroupOf(lobby, playerId);
+        if (!g || !mine || g === mine || !twinGroupVotable(lobby, g)) return;
+      } else {
+        if (targetId === playerId || !lobby.cardOrder.includes(targetId)) return;
+        const targetSub = lobby.submissions.get(targetId);
+        if (!targetSub || targetSub.missed) return;
+      }
+      setLike(lobby, playerId, targetId, on);
+      broadcast(lobby);
       return;
     }
 
