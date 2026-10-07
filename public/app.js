@@ -983,10 +983,22 @@ async function buildCameraView(state) {
   }
 }
 
+// Spoušť je zamčená, dokud kamera nenaběhne (první snímky bývají černé).
+function lockShutterUntilPlaying(video) {
+  const shutter = document.getElementById('shutter-btn');
+  if (shutter) shutter.disabled = true;
+  video.addEventListener('playing', () => {
+    setTimeout(() => { const b = document.getElementById('shutter-btn'); if (b) b.disabled = false; }, 700);
+  }, { once: true });
+}
+
 // Spustí kameru podle cameraFacing do #cam-video.
 async function startCameraStream() {
   const video = document.getElementById('cam-video');
   if (!video) return;
+  // spoušť je zamčená, dokud kamera nenaběhne (první snímky bývají černé) — ochrana před
+  // náhodným klepnutím hned po zobrazení obrazovky, které by odeslalo černou fotku
+  lockShutterUntilPlaying(video);
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: cameraFacing, width: { ideal: 640 }, height: { ideal: 640 } },
@@ -994,18 +1006,86 @@ async function startCameraStream() {
     });
     video.srcObject = cameraStream;
     video.classList.toggle('rear', cameraFacing === 'environment');
+    video.play().catch(() => {});
+    // telefon kameru sám vypne (jiná appka, zamčená obrazovka…) → obnov ji, ať nezůstane černá
+    const track = cameraStream.getVideoTracks()[0];
+    if (track) track.addEventListener('ended', () => recoverCamera());
   } catch (err) {
-    document.querySelector('.camera-wrap').innerHTML = `
-      <div class="missed" style="justify-content:center;">
-        <span class="emoji">${icon('cameraOff')}</span>
-        <span>Couldn't access the camera.<br>Check your browser permissions.</span>
-      </div>`;
+    showCameraError(err);
   }
+}
+
+// Kamera není povolená / nejde spustit: hláška + tlačítko „Turn on camera“, které o povolení
+// požádá znovu přímo ve hře (a když je zablokovaná natrvalo, vysvětlí, kde ji povolit).
+async function showCameraError(err) {
+  const wrap = document.querySelector('.camera-wrap');
+  if (!wrap) return;
+  let blocked = !!err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+  try {
+    if (navigator.permissions && navigator.permissions.query) {
+      const st = await navigator.permissions.query({ name: 'camera' });
+      if (st.state === 'denied') blocked = true;
+    }
+  } catch { /* prohlížeč stav kamery nezná */ }
+  if (!document.querySelector('.camera-wrap')) return;
+  wrap.innerHTML = `
+    <div class="missed camera-error" style="justify-content:center;">
+      <span class="emoji">${icon('cameraOff')}</span>
+      <span>Couldn't access the camera.</span>
+      <button type="button" class="btn btn-primary" id="camera-retry">Turn on camera</button>
+      ${blocked ? '<span class="camera-help">If nothing happens, tap the lock icon next to the web address and allow the camera.</span>' : ''}
+    </div>`;
+  document.getElementById('camera-retry').onclick = async () => {
+    // vrať video + záblesk a zkus kameru spustit znovu (prohlížeč se zeptá na povolení)
+    wrap.innerHTML = `<video id="cam-video" autoplay playsinline muted></video><div class="flash" id="flash-el"></div>`;
+    await startCameraStream();
+  };
+}
+
+// Znovu spustí kameru, když se vypnula nebo zčernala (jen když je na obrazovce foťák).
+let cameraRecovering = false;
+async function recoverCamera() {
+  if (cameraRecovering || !document.getElementById('cam-video')) return;
+  cameraRecovering = true;
+  try {
+    stopCamera();
+    await startCameraStream();
+  } finally {
+    cameraRecovering = false;
+  }
+}
+
+// Po návratu do appky (přepnutí aplikací, odemčení telefonu) zkontroluj, jestli kamera pořád běží.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  setTimeout(() => {
+    const video = document.getElementById('cam-video');
+    if (!video) return;
+    const track = cameraStream && cameraStream.getVideoTracks()[0];
+    if (!track || track.readyState !== 'live' || track.muted || video.paused || video.readyState < 2) recoverCamera();
+  }, 400);
+});
+
+// Skoro celý černý (nebo jednobarevný) snímek = kamera ještě neposlala skutečný obraz.
+function isBlankFrame(ctx, size) {
+  try {
+    const d = ctx.getImageData(0, 0, size, size).data;
+    let sum = 0, sumSq = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4 * 97) {
+      const l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      sum += l; sumSq += l * l; n++;
+    }
+    const mean = sum / n;
+    const variance = sumSq / n - mean * mean;
+    return mean < 8 && variance < 20;
+  } catch { return false; }
 }
 
 function capturePhoto() {
   const video = document.getElementById('cam-video');
-  if (!video || !video.videoWidth) return;
+  if (!video || !video.videoWidth || video.readyState < 2) return;
+  const shutterEl = document.getElementById('shutter-btn');
+  if (shutterEl && shutterEl.disabled) return;
   const size = 480;
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -1020,6 +1100,12 @@ function capturePhoto() {
     ctx.scale(-1, 1);
   }
   ctx.drawImage(video, sx, sy, side, side, 0, 0, size, size);
+  // černý snímek (kamera ještě nenaběhla) se neodešle — fotka se nechá vyfotit znovu
+  if (isBlankFrame(ctx, size)) {
+    showToast('Camera is still starting — try again');
+    recoverCamera(); // kamera mohla zčernat — restartuj ji
+    return;
+  }
   const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
 
   const flash = document.getElementById('flash-el');
@@ -1087,20 +1173,8 @@ async function buildSubjectPhotoView(state) {
     </div>
   `;
 
-  const video = document.getElementById('cam-video');
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
-      audio: false,
-    });
-    video.srcObject = cameraStream;
-  } catch (err) {
-    document.querySelector('.camera-wrap').innerHTML = `
-      <div class="missed" style="justify-content:center;">
-        <span class="emoji">${icon('cameraOff')}</span>
-        <span>Couldn't access the camera.<br>Check your browser permissions.</span>
-      </div>`;
-  }
+  cameraFacing = 'user';
+  await startCameraStream();
 
   document.getElementById('shutter-btn').onclick = () => capturePhoto();
 }
@@ -1714,6 +1788,7 @@ function renderApp(state) {
   // GAMES VISUAL PASS 2026-10-05: třída módu na body (akcentní barva módu v CSS)
   for (const c of [...document.body.classList]) if (c.startsWith('gm-')) document.body.classList.remove(c);
   if (state.mode) document.body.classList.add('gm-' + state.mode);
+  document.body.classList.toggle('imp-role', !!state.isImpostor); // hráč s rolí impostora zůstane v červené
 
   if (state.phase === 'lobby') return renderLobbyScreen(state);
 

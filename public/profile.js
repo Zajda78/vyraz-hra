@@ -164,10 +164,16 @@ function renderProfileScreen() {
 
     <div class="screen">
       <div class="profile-hero">
-        ${framedAvatarHtml(128)}
-        <div class="profile-hero-name">
-          ${styledNameHtml('No name')}
-          <button id="profile-rename" class="chip-btn chip-icon" title="Edit profile" aria-label="Edit profile">${icon('pencil')}</button>
+        <div class="profile-avatar-wrap">
+          <label class="edit-avatar-tap" aria-label="Change profile photo">
+            ${framedAvatarHtml(128)}
+            <span class="edit-badge">${icon('camera')}</span>
+            <input type="file" accept="image/*" id="profile-avatar-file" hidden>
+          </label>
+          ${getAvatar() ? `<button type="button" class="edit-avatar-remove" id="profile-avatar-remove" aria-label="Remove photo">${icon('close')}</button>` : ''}
+        </div>
+        <div class="profile-hero-name" id="profile-name-slot">
+          <button type="button" class="edit-name-btn" id="profile-name-tap" aria-label="Change name">${styledNameHtml('No name')}<span class="edit-badge">${icon('pencil')}</span></button>
         </div>
       </div>
 
@@ -193,7 +199,7 @@ function renderProfileScreen() {
   // "Hry" v liště z profilu vrátí na hlavní stránku
   document.querySelector('.bottom-nav-btn[data-tab="games"]').onclick = closeProfile;
   document.getElementById('profile-back').onclick = closeProfile;
-  document.getElementById('profile-rename').onclick = showEditProfileModal;
+  wireProfileEditing();
   document.getElementById('profile-edit-looks').onclick = () => {
     profileOpen = false;
     homeTab = 'shop';
@@ -206,32 +212,72 @@ function renderProfileScreen() {
   };
 }
 
-// ------------------------------------------------- úprava profilu ---
-// Tužka u jména otevře okno, kde jde změnit jméno a zároveň nasadit
-// věci z inventáře. Nasazení platí hned, jméno se uloží tlačítkem.
+// Na obrazovce profilu: klepnutí na profilovku = výběr fotky, klepnutí na jméno = úprava jména
+// (uloží se Enterem / klepnutím mimo). Žádná tužka ani okno navíc.
+function wireProfileEditing() {
+  const file = document.getElementById('profile-avatar-file');
+  if (file) {
+    file.addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      try {
+        setAvatar(await fileToAvatar(f));
+        showToast('Profile photo updated');
+      } catch {
+        showError("Couldn't load that image.");
+      }
+      renderProfileScreen();
+    });
+  }
+  const remove = document.getElementById('profile-avatar-remove');
+  if (remove) remove.onclick = () => { setAvatar(null); renderProfileScreen(); };
 
-function editProfileBodyHtml(nameDraft) {
+  const tap = document.getElementById('profile-name-tap');
+  if (tap) {
+    tap.onclick = () => {
+      const slot = document.getElementById('profile-name-slot');
+      slot.innerHTML = `<input id="profile-name-input" class="edit-name-input" maxlength="20" value="${escapeHtml(getSavedName())}" placeholder="Your name" autocomplete="off">`;
+      const input = document.getElementById('profile-name-input');
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      let done = false;
+      const commit = () => {
+        if (done) return;
+        done = true;
+        const name = input.value.trim();
+        if (name) {
+          localStorage.setItem('vyraz_name', name);
+          sendHello(); // ostatní mají vidět nové jméno hned
+        } else if (getSavedName()) showError('Please enter a name.');
+        renderProfileScreen();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } });
+    };
+  }
+}
+
+// ------------------------------------------------- úprava profilu ---
+// Tužka u jména otevře okno: profilovku změníš klepnutím na ni, jméno klepnutím na jméno
+// (uloží se hned po Enter / klepnutí mimo). Žádná tlačítka navíc.
+
+function editProfileBodyHtml(name, editingName) {
   // skiny se nasazují jen v „Edit look“ (inventář), ne tady
+  const nameHtml = editingName
+    ? `<input id="edit-profile-name" class="edit-name-input" maxlength="20" value="${escapeHtml(name)}" placeholder="Your name" autocomplete="off">`
+    : `<button type="button" class="edit-name-btn" id="edit-name-tap" aria-label="Change name">${playerNameHtml(name || 'Name', myLooks())}<span class="edit-badge">${icon('pencil')}</span></button>`;
   return `
     <div class="x-close-row"><button class="x-close" id="edit-profile-close" aria-label="Close">${icon('close')}</button></div>
     <h2>Edit profile</h2>
     <div class="edit-profile-preview">
-      ${avatarHtml(nameDraft || '?', myLooks(), 88)}
-      ${playerNameHtml(nameDraft || 'Name', myLooks())}
-    </div>
-    <div class="avatar-actions">
-      <label class="chip-btn avatar-btn">${icon('image')} ${getAvatar() ? 'Change photo' : 'Add photo'}
+      <label class="edit-avatar-tap" aria-label="Change profile photo">
+        ${avatarHtml(name || '?', myLooks(), 88)}
+        <span class="edit-badge">${icon('camera')}</span>
         <input type="file" accept="image/*" id="avatar-file" hidden>
       </label>
-      <label class="chip-btn avatar-btn">${icon('camera')} Selfie
-        <input type="file" accept="image/*" capture="user" id="avatar-selfie" hidden>
-      </label>
-      ${getAvatar() ? `<button class="chip-btn avatar-btn" id="avatar-remove">${icon('close')} Remove</button>` : ''}
+      ${getAvatar() ? `<button type="button" class="edit-avatar-remove" id="avatar-remove" aria-label="Remove photo">${icon('close')}</button>` : ''}
+      ${nameHtml}
     </div>
-    <div class="field">
-      <input id="edit-profile-name" maxlength="20" value="${escapeHtml(nameDraft)}" placeholder="Your name">
-    </div>
-    <button id="edit-profile-save" class="btn btn-primary btn-block">Save name</button>
   `;
 }
 
@@ -252,47 +298,53 @@ function stepBack() {
 }
 
 function showEditProfileModal() {
-  let nameDraft = getSavedName();
+  let editingName = false;
   const modal = openModal('');
   const sheet = modal.querySelector('.modal-sheet');
   // ťuknutí na ztmavené pozadí okno zavře (openModal) — a vrátí domů
   modal.addEventListener('click', (e) => { if (e.target === modal) goHome(); });
 
   function render() {
-    const scroll = sheet.scrollTop;
-    sheet.innerHTML = editProfileBodyHtml(nameDraft);
-    sheet.scrollTop = scroll;
+    sheet.innerHTML = editProfileBodyHtml(getSavedName(), editingName);
 
+    // klepnutí na jméno → pole pro úpravu; uloží se Enterem nebo klepnutím mimo
+    const tap = sheet.querySelector('#edit-name-tap');
+    if (tap) tap.onclick = () => { editingName = true; render(); };
     const input = sheet.querySelector('#edit-profile-name');
-    input.addEventListener('input', () => {
-      nameDraft = input.value;
-      const preview = sheet.querySelector('.edit-profile-preview');
-      preview.innerHTML = `${avatarHtml(nameDraft.trim() || '?', myLooks(), 88)}${playerNameHtml(nameDraft.trim() || 'Name', myLooks())}`;
-    });
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      let done = false;
+      const commit = () => {
+        if (done) return;
+        done = true;
+        const name = input.value.trim();
+        if (name) {
+          localStorage.setItem('vyraz_name', name);
+          sendHello(); // ostatní mají vidět nové jméno hned
+        } else showError('Please enter a name.');
+        editingName = false;
+        render();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } });
+    }
 
-    const onPicked = async (e) => {
+    // klepnutí na profilovku → výběr fotky (telefon nabídne galerii i foťák)
+    sheet.querySelector('#avatar-file').addEventListener('change', async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       try {
         setAvatar(await fileToAvatar(file));
         showToast('Profile photo updated');
       } catch {
-        showError('Couldn\'t load that image.');
+        showError("Couldn't load that image.");
       }
       render();
-    };
-    sheet.querySelector('#avatar-file').addEventListener('change', onPicked);
-    sheet.querySelector('#avatar-selfie').addEventListener('change', onPicked);
+    });
     const remove = sheet.querySelector('#avatar-remove');
     if (remove) remove.onclick = () => { setAvatar(null); render(); };
 
-    sheet.querySelector('#edit-profile-save').onclick = () => {
-      const name = nameDraft.trim();
-      if (!name) return showError('Please enter a name.');
-      localStorage.setItem('vyraz_name', name);
-      closeModal();
-      stepBack();
-    };
     sheet.querySelector('#edit-profile-close').onclick = () => {
       closeModal();
       stepBack();

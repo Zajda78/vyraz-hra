@@ -861,8 +861,8 @@ body.no-scroll{ overflow:hidden; }
 
 /* ------------------------------------------------------------ IMPOSTOR --- */
 
-.mode-card-impostor{ --c1:#EF4444; --c2:#7C3AED; --base:#2a0f1f; }
-.rules-tab-impostor{ --c1:#EF4444; --c2:#7C3AED; }
+.mode-card-impostor{ --c1:#EF4444; --c2:#7C3AED; --base:#2a0f1f; } /* velká dlaždice na stránce Hry zůstává červená */
+.rules-tab-impostor{ --c1:#3B82F6; --c2:#7C3AED; }
 .rules-tabs{ grid-template-columns:repeat(2, 1fr); }
 
 .role-badge{
@@ -1025,7 +1025,7 @@ body.no-scroll{ overflow:hidden; }
 .single-game-card .mode-tile{ margin:0; width:48px; height:48px; flex:none; }
 .single-game-card .mode-tile svg{ width:28px; height:28px; }
 .mode-color-draw{ --c1:#22D3EE; --c2:#3FAE6B; }
-.mode-color-impostor{ --c1:#EF4444; --c2:#7C3AED; }
+.mode-color-impostor{ --c1:#3B82F6; --c2:#7C3AED; }
 .single-game-text{ flex:1; display:flex; flex-direction:column; gap:2px; color:#fff; }
 .single-game-text strong{ font-family:'Unbounded',sans-serif; font-size:0.95rem; }
 .single-game-text span{ font-size:0.85rem; font-weight:600; color:rgba(255,255,255,0.75); }
@@ -3207,7 +3207,8 @@ svg.ico[stroke="currentColor"]{ stroke-width:2.4; }
 body.gm-classic { --mc:#8B5CF6; --mc-bd:#5B34B8; --mc-lip:#4C1D95; }
 body.gm-caption { --mc:#EA580C; --mc-bd:#A63C05; --mc-lip:#7A2B04; }
 body.gm-draw    { --mc:#0891B2; --mc-bd:#0B5F75; --mc-lip:#084859; }
-body.gm-impostor{ --mc:#DC2626; --mc-bd:#991B1B; --mc-lip:#7F1D1D; }
+body.gm-impostor{ --mc:#2F6FED; --mc-bd:#1E40AF; --mc-lip:#1E3A8A; } /* obyčejný hráč: modrá */
+body.gm-impostor.imp-role{ --mc:#DC2626; --mc-bd:#991B1B; --mc-lip:#7F1D1D; } /* hráč s rolí impostora: červená */
 body.gm-hunt    { --mc:#3B82F6; --mc-bd:#1D4ED8; --mc-lip:#1E3A8A; }
 body.gm-copycat { --mc:#0D9488; --mc-bd:#0B6B61; --mc-lip:#084A44; }
 body.gm-twins   { --mc:#C026D3; --mc-bd:#86198F; --mc-lip:#640F6E; }
@@ -3361,3 +3362,41 @@ body[class*="gm-"]:not(.home-bg) .caption-card.picked{ animation:gm-pop .28s var
 .gal-slide .gal-photos{ max-height:none; width:min(100%, 360px); }
 .gal-slide .gal-photos.n1{ width:min(100%, 340px); }
 .gal-slide .gal-ph .photo{ max-height:none; }
+
+/* Úprava profilu: klepnutí na profilovku / jméno místo tlačítek */
+.edit-profile-preview{ position:relative; }
+.edit-avatar-tap{ position:relative; display:inline-block; cursor:pointer; }
+.edit-avatar-tap:active{ transform:scale(0.96); }
+.edit-badge{ position:absolute; right:-6px; bottom:-6px; width:28px; height:28px; border-radius:50%; background:var(--accent); border:3px solid var(--ol-2,#170A30); display:flex; align-items:center; justify-content:center; }
+.edit-badge svg{ width:14px; height:14px; stroke:#fff; fill:none; stroke-width:2.6; }
+.edit-name-btn{ position:relative; background:none; border:0; padding:6px 34px 6px 10px; font:inherit; color:inherit; cursor:pointer; font-size:1.3rem; }
+.edit-name-btn .edit-badge{ right:2px; bottom:50%; transform:translateY(50%); width:24px; height:24px; }
+.edit-name-btn:active{ transform:scale(0.97); }
+.edit-name-input{ width:min(100%, 260px); text-align:center; font:inherit; font-size:1.3rem; font-weight:800; padding:10px 12px; border-radius:14px; border:3px solid var(--accent); background:var(--surface-2); color:var(--ink); }
+.edit-avatar-remove{ position:absolute; left:calc(50% - 60px); top:-4px; width:28px; height:28px; border-radius:50%; border:3px solid var(--ol-2,#170A30); background:#3a2b57; display:flex; align-items:center; justify-content:center; padding:0; cursor:pointer; }
+.edit-avatar-remove svg{ width:12px; height:12px; stroke:var(--danger); fill:none; stroke-width:3; }
+.profile-avatar-wrap{ position:relative; display:inline-block; }
+.profile-avatar-wrap .edit-avatar-remove{ left:auto; right:-8px; top:-8px; }
+.profile-hero-name .edit-name-btn{ font-size:1.5rem; }
+.camera-error{ flex-direction:column; gap:12px; text-align:center; padding:16px; }
+.camera-error .btn{ width:auto; }
+.camera-error .camera-help{ font-weight:700; font-size:.95rem; color:var(--ink); }
+.camera-wrap .camera-error{ display:flex !important; flex-direction:column !important; align-items:center; justify-content:center !important; gap:14px; text-align:center; padding:16px; position:absolute; inset:0; }
+.camera-wrap .camera-error .emoji svg{ width:44px; height:44px; }
+
+/* Palec nahoru ve stejném kresleném stylu jako zbytek hry: tlustý tmavý obrys, plastický spodní lem, pružné stisknutí */
+.like-btn{
+  width:42px; height:42px; right:8px; bottom:10px;
+  background:var(--mc, #8B5CF6); border:3px solid var(--ol, #0E0620);
+  box-shadow:0 4px 0 var(--mc-lip, #4C1D95), inset 0 -5px 0 rgba(14,6,32,0.28), inset 0 3px 0 rgba(255,255,255,0.22);
+  transition:transform .12s var(--pop, ease), box-shadow .12s ease, background .15s ease;
+}
+.like-btn:active{ transform:translateY(3px) scale(0.97); box-shadow:0 1px 0 var(--mc-lip, #4C1D95), inset 0 -3px 0 rgba(14,6,32,0.28), inset 0 3px 0 rgba(255,255,255,0.22); }
+.like-btn .heart-ico{ width:24px; height:24px; fill:#F3E8FF; stroke:var(--ol, #0E0620); stroke-width:2.2; stroke-linejoin:round; stroke-linecap:round; filter:drop-shadow(0 1.5px 0 rgba(14,6,32,0.55)); }
+.like-btn.on{ background:#F7B731; box-shadow:0 4px 0 #B45309, inset 0 -5px 0 rgba(180,83,9,0.35), inset 0 3px 0 rgba(255,255,255,0.35); }
+.like-btn.on:active{ box-shadow:0 1px 0 #B45309, inset 0 -3px 0 rgba(180,83,9,0.35), inset 0 3px 0 rgba(255,255,255,0.35); }
+.like-btn.on .heart-ico{ fill:#FFFFFF; stroke:var(--ol, #0E0620); }
+.like-btn.pop{ animation:like-btn-pop .4s var(--pop, cubic-bezier(.3,1.6,.5,1)); }
+@keyframes like-btn-pop{ 0%{ transform:scale(0.8); } 60%{ transform:scale(1.15); } 100%{ transform:scale(1); } }
+.twin-card-head .like-btn{ width:40px; height:40px; }
+@media (prefers-reduced-motion: reduce){ .like-btn.pop{ animation:none; } }
