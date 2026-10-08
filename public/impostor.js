@@ -60,6 +60,7 @@ function buildImpostorVotingView(state) {
       </div>` : ''}
       ${fellowHtml}
       <div class="timer" id="timer-el">--</div>
+      ${state.dualVote ? `<div class="pick-two-note">${tr('Pick 2 people — you can change your picks', getLang())}</div>` : ''}
       <div class="grid" id="ivote-grid">${cardsHtml}</div>
       <p class="wait-note" id="ivote-count"></p>
     </div>
@@ -69,26 +70,44 @@ function buildImpostorVotingView(state) {
     el.onclick = () => {
       send({ type: 'cast_vote', targetId: el.dataset.id });
       playSfx('vote');
-      markImpostorVote(el.dataset.id);
+      if (state.dualVote) {
+        // stejná logika jako na serveru: klepnutí odebere vybraného, třetí nahradí nejstarší
+        const cur = [...document.querySelectorAll('.ivote-card.selected')].map((c) => c.dataset.id);
+        const at = cur.indexOf(el.dataset.id);
+        if (at >= 0) cur.splice(at, 1); else { cur.push(el.dataset.id); while (cur.length > 2) cur.shift(); }
+        markImpostorVote(cur);
+      } else {
+        markImpostorVote(el.dataset.id);
+      }
     };
   });
   wireLikes(state);
   patchImpostorVoting(state);
 }
 
+// targetId = jedno id, nebo pole id (2 impostoři → až 2 vybrané karty s fajfkou)
 function markImpostorVote(targetId) {
+  const sel = new Set(Array.isArray(targetId) ? targetId : [targetId]);
   document.querySelectorAll('.ivote-card[data-id]').forEach((c) => {
-    c.classList.toggle('selected', c.dataset.id === targetId);
+    const on = sel.has(c.dataset.id);
+    c.classList.toggle('selected', on);
+    const photo = c.querySelector('.ivote-photo');
+    const chk = c.querySelector('.ivote-check');
+    if (on && !chk && photo) photo.insertAdjacentHTML('beforeend', `<div class="ivote-check">${icon('check')}</div>`);
+    if (!on && chk) chk.remove();
   });
 }
 
 function patchImpostorVoting(state) {
-  if (state.yourVote) markImpostorVote(state.yourVote);
+  if (state.dualVote) markImpostorVote(state.yourVotes || []);
+  else if (state.yourVote) markImpostorVote(state.yourVote);
   applyLikes(state.myLikes);
   const el = document.getElementById('ivote-count');
   if (el) el.textContent = state.youVoted
     ? `Vote sent (you can change it). ${state.votedCount} / ${state.activeCount} voted…`
-    : `${state.votedCount} / ${state.activeCount} voted…`;
+    : (state.dualVote && (state.yourVotes || []).length === 1
+      ? `Pick 1 more person… ${state.votedCount} / ${state.activeCount} voted…`
+      : `${state.votedCount} / ${state.activeCount} voted…`);
 }
 
 // ------------------------------------------------------------ výsledky ---
@@ -107,7 +126,7 @@ function renderImpostorResults(state, r) {
     : (youImpostor ? { points: myImpPoints, coins: r.impostorCoins } : null);
   // impostor dostane body vždy (i když je chycený) — podle počtu správných hlasů
   const youGuessed = (r.guessedIds || []).includes(state.youId);
-  const guessBonus = youGuessed ? (r.guessBonus || 0) : 0;
+  const guessBonus = youGuessed ? (r.guessBonus || 0) * ((r.guessCountById || {})[state.youId] || 1) : 0;
   // kdo impostora uhodl, dostane bonus navíc (i když ho skupina neodhalila)
   const shownGain = youImpostor
     ? { points: myImpPoints, coins: youCaught ? 0 : r.impostorCoins }
@@ -162,7 +181,7 @@ function renderImpostorResults(state, r) {
           ? impBanner
           : (youWon ? 'You won this round' : 'You lost this round')}</div>
         <div class="impostor-outcome-sub">${guessedText}</div>
-        ${youGuessed ? `<div class="impostor-outcome-sub">You guessed ${multi ? 'an' : 'the'} impostor! +${guessBonus} bonus pts</div>` : ''}
+        ${youGuessed ? `<div class="impostor-outcome-sub">${(r.guessCountById || {})[state.youId] > 1 ? 'You guessed both impostors!' : `You guessed ${multi ? 'an' : 'the'} impostor!`} +${guessBonus} bonus pts</div>` : ''}
         ${shownGain ? `<div class="impostor-gain">+${shownGain.points} pts${shownGain.coins ? ` · ${COIN_SVG}<span class="num">+${shownGain.coins}</span>` : ''}</div>` : ''}
       </div>
 

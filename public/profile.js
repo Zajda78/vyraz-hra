@@ -168,10 +168,11 @@ function renderProfileScreen() {
           <label class="edit-avatar-tap" aria-label="Change profile photo">
             ${framedAvatarHtml(128)}
             <span class="edit-badge">${icon('camera')}</span>
-            <input type="file" accept="image/*" id="profile-avatar-file" hidden>
+            <input type="file" accept="image/*" capture="user" id="profile-avatar-file" hidden>
           </label>
           ${getAvatar() ? `<button type="button" class="edit-avatar-remove" id="profile-avatar-remove" aria-label="Remove photo">${icon('close')}</button>` : ''}
         </div>
+        <div class="avatar-now-chip">${icon('camera')} Right now</div>
         <div class="profile-hero-name" id="profile-name-slot">
           <button type="button" class="edit-name-btn" id="profile-name-tap" aria-label="Change name">${styledNameHtml('No name')}<span class="edit-badge">${icon('pencil')}</span></button>
         </div>
@@ -273,7 +274,7 @@ function editProfileBodyHtml(name, editingName) {
       <label class="edit-avatar-tap" aria-label="Change profile photo">
         ${avatarHtml(name || '?', myLooks(), 88)}
         <span class="edit-badge">${icon('camera')}</span>
-        <input type="file" accept="image/*" id="avatar-file" hidden>
+        <input type="file" accept="image/*" capture="user" id="avatar-file" hidden>
       </label>
       ${getAvatar() ? `<button type="button" class="edit-avatar-remove" id="avatar-remove" aria-label="Remove photo">${icon('close')}</button>` : ''}
       ${nameHtml}

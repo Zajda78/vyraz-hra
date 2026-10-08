@@ -214,6 +214,7 @@ const DICT_ROWS = [
   ['One impostor was caught!', 'Jeden impostor byl chycen!', '¡Atraparon a un impostor!'],
   ['The impostors escaped!', 'Imposteři unikli!', '¡Los impostores escaparon!'],
   ['Nobody guessed the impostors', 'Impostory nikdo neuhodl', 'Nadie adivinó a los impostores'],
+  ['Pick 2 people — you can change your picks', 'Vyber 2 lidi — výběr můžeš měnit', 'Elige a 2 personas — puedes cambiar tu elección'],
   ['Your fellow impostor:', 'Tvůj spolu-impostor:', 'Tu compañero impostor:'],
   ['The impostor escaped!', 'Impostor unikl!', '¡El impostor escapó!'],
   ['Surprise — you were the impostor, and they caught you!', 'Překvapení — byl jsi impostor a chytili tě!', 'Sorpresa: eras el impostor ¡y te pillaron!'],
@@ -334,6 +335,7 @@ const DICT_ROWS = [
   ['Photo of', 'Fotka hráče', 'Foto de'],
   ['Edit look', 'Upravit vzhled', 'Editar aspecto'],
   ['Edit profile', 'Upravit profil', 'Editar perfil'],
+  ['Right now', 'Právě teď', 'Ahora mismo'],
   ['Turn on camera', 'Zapnout kameru', 'Activar cámara'],
   ['If nothing happens, tap the lock icon next to the web address and allow the camera.', 'Když se nic nestane, klepni na zámek vedle adresy webu a povol kameru.', 'Si no pasa nada, toca el candado junto a la dirección web y permite la cámara.'],
   ['Camera is still starting — try again', 'Kamera ještě nenaběhla — zkus to znovu', 'La cámara aún está iniciando: inténtalo de nuevo'],
@@ -390,6 +392,8 @@ const DICT_ROWS = [
 const PATTERNS = [
   [/^#(\d)(?: · 👍 (\d+))?$/, (m) => (m[2] ? `#${m[1]} · 👍 ${m[2]}` : `#${m[1]}`)], // štítek v galerii: čísla + palec, stejné ve všech jazycích
   [/^You guessed the impostor! \+(\d+) bonus pts$/, (m, lang) => (lang === 'cs' ? `Uhodl jsi impostora! +${m[1]} bonusových b.` : `¡Adivinaste al impostor! +${m[1]} pts de bonificación`)],
+  [/^You guessed both impostors! \+(\d+) bonus pts$/, (m, lang) => (lang === 'cs' ? `Uhodl jsi oba impostory! +${m[1]} bonusových b.` : `¡Adivinaste a los dos impostores! +${m[1]} pts de bonificación`)],
+  [/^Pick 1 more person… (\d+) \/ (\d+) voted…$/, (m, lang) => (lang === 'cs' ? `Vyber ještě 1 člověka… ${m[1]} / ${m[2]} hlasovalo…` : `Elige a 1 persona más… ${m[1]} / ${m[2]} han votado…`)],
   [/^You guessed an impostor! \+(\d+) bonus pts$/, (m, lang) => (lang === 'cs' ? `Uhodl jsi impostora! +${m[1]} bonusových b.` : `¡Adivinaste a un impostor! +${m[1]} pts de bonificación`)],
   [/^(\d+) of (\d+) guessed the impostors$/, (m, lang) => (lang === 'cs' ? `${m[1]} z ${m[2]} uhodli impostory` : `${m[1]} de ${m[2]} adivinaron a los impostores`)],
   [/^(\d+) of (\d+) guessed the impostor$/, (m, lang) => (lang === 'cs' ? `${m[1]} z ${m[2]} uhodli impostora` : `${m[1]} de ${m[2]} adivinaron al impostor`)],

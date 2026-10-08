@@ -3400,3 +3400,12 @@ body[class*="gm-"]:not(.home-bg) .caption-card.picked{ animation:gm-pop .28s var
 @keyframes like-btn-pop{ 0%{ transform:scale(0.8); } 60%{ transform:scale(1.15); } 100%{ transform:scale(1); } }
 .twin-card-head .like-btn{ width:40px; height:40px; }
 @media (prefers-reduced-motion: reduce){ .like-btn.pop{ animation:none; } }
+
+/* Profilovka se fotí „Právě teď“ (selfie), ne z galerie */
+.avatar-now-chip{ display:inline-flex; align-items:center; gap:6px; margin:10px auto 2px; padding:6px 14px; border-radius:999px; font-weight:800; font-size:1rem; color:#fff; background:var(--accent); border:3px solid var(--ol, #0E0620); box-shadow:0 3px 0 #4C1D95; }
+.avatar-now-chip svg{ width:16px; height:16px; stroke:#fff; fill:none; stroke-width:2.4; }
+
+/* Impostor: hlasování pro 2 lidi najednou */
+.pick-two-note{ margin:6px 0 10px; padding:10px 14px; border-radius:14px; text-align:center; font-weight:800; font-size:1.05rem; color:#fff; background:#EF4444; border:3px solid var(--ol, #0E0620); box-shadow:0 3px 0 #7F1D1D; }
+.ivote-check{ position:absolute; top:8px; left:8px; width:28px; height:28px; border-radius:50%; background:#EF4444; color:#fff; display:flex; align-items:center; justify-content:center; border:2px solid #7F1D1D; box-shadow:0 2px 0 #7F1D1D; }
+.ivote-check .ico{ width:16px; height:16px; stroke-width:3; }
