@@ -402,7 +402,8 @@ function showCaseContents(caseId) {
 // (soubory v sfx/, přehrává playSfx ze sounds.js)
 
 function revealSound(rarity, duplicate) {
-  playSfx(`reveal-${rarity}`);
+  playSfx(rarity === 'legendary' ? 'impact' : `reveal-${rarity}`); // legendary = hluboká rána (+ třpyt níže)
+  if (rarity === 'legendary') setTimeout(() => playSfx('sparkle'), 200); // k hluboké ráně se přidá třpyt
   if (duplicate) setTimeout(() => playSfx('coins'), 500); // vrácené mince za duplikát
 }
 
@@ -506,7 +507,8 @@ function openCase(caseId, { free = false } = {}) {
 }
 
 function showCaseOverlay(caseDef, won, duplicate, refund) {
-  playSfx('chest-open');
+  playSfx('chest-open'); // cvaknutí zámku
+  playSfx('chest-riser'); // narůstající napětí, než se pás zastaví
   closeCaseOverlay();
   const strip = Array.from({ length: STRIP_LENGTH }, (_, i) => (i === STRIP_WIN_INDEX ? won : rollItem(caseDef)));
   const reduced = caseReducedMotion();
@@ -627,6 +629,7 @@ function showReveal(caseDef, won, duplicate, refund) {
   if (!overlay) return;
   overlay.querySelector('.strip-card.is-win').classList.add('highlight');
   revealSound(won.rarity, duplicate);
+  playSkinSfx(won.id); // kočka / dino / drak mají vlastní zvuk
 
   const rarity = RARITIES[won.rarity];
   const fx = CASE_FX[won.rarity] || CASE_FX.common;

@@ -343,7 +343,7 @@ function renderShopScreen() {
       ${shopTabsHtml()}
 
       <div class="shop-tab-body">
-        ${shopTab === 'free' ? dailyRewardsHtml() : ''}
+        ${shopTab === 'free' ? dailyRewardsHtml() + redeemCodeCardHtml() : ''}
 
         ${shopTab === 'chests' ? `<div class="case-grid">${casesHtml}</div>` : ''}
 
@@ -366,9 +366,9 @@ function renderShopScreen() {
   wireBottomNav();
   document.getElementById('inventory-btn').onclick = () => openInventory();
   document.querySelectorAll('[data-shop-tab]').forEach((b) => {
-    b.onclick = () => { shopTab = b.dataset.shopTab; renderShopScreen(); };
+    b.onclick = () => { shopTab = b.dataset.shopTab; playSfx('swipe'); renderShopScreen(); };
   });
-  if (shopTab === 'free') wireDailyRewards();
+  if (shopTab === 'free') { wireDailyRewards(); wireRedeemCode(); }
   if (shopTab === 'packs') {
     wirePackBuy(document.getElementById('shop-pack'), renderShopScreen);
     wireQuestionPacksBuy(document.getElementById('shop-qpacks'), renderShopScreen);
@@ -378,6 +378,7 @@ function renderShopScreen() {
     card.classList.remove('shake');
     void card.offsetWidth; // restart animace, i když se ťukne vícekrát za sebou
     card.classList.add('shake');
+    playSfx('chest-shake');
   };
   document.querySelectorAll('.case-grid .case-card').forEach((card) => {
     // po zatřesení se truhla vrátí k levitování

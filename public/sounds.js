@@ -8,13 +8,32 @@ const SFX_NAMES = [
   'tap', 'vote', 'player-join', 'game-start', 'timer-tick', 'time-up', 'shutter',
   'round-results', 'win', 'coins', 'chest-open', 'chest-tick',
   'reveal-common', 'reveal-rare', 'reveal-epic', 'reveal-legendary',
+  'like', 'error', // like = palec nahoru při hlasování, error = chybová hláška
+  // nové zvuky (8. 10. 2026, složka Zvuky): foto módy, truhly, kolo štěstí, skiny, galerie
+  'pick', 'round-wow', 'round-laugh', 'type', 'impact', 'sparkle', 'gift-reveal',
+  'chest-riser', 'chest-shake', 'payout', 'wheel-spin', 'swipe',
+  'skin-meow', 'skin-roar', 'skin-dragon',
 ];
 
 // hlasitost jednotlivých zvuků (0–1) — časté a drobné zvuky jsou tišší
 const SFX_VOLUME = {
   tap: 0.3, 'chest-tick': 0.3, 'timer-tick': 0.55, vote: 0.5, shutter: 0.6,
-  'player-join': 0.5, coins: 0.6,
+  'player-join': 0.5, coins: 0.6, like: 0.55, error: 0.45,
+  pick: 0.6, 'round-wow': 0.6, 'round-laugh': 0.5, type: 0.35, impact: 0.6, sparkle: 0.5,
+  'gift-reveal': 0.65, 'chest-riser': 0.35, 'chest-shake': 0.5, payout: 0.5, 'wheel-spin': 0.5,
+  swipe: 0.4, 'skin-meow': 0.6, 'skin-roar': 0.55, 'skin-dragon': 0.5, win: 0.65, tap: 0.45,
 };
+
+// Skiny s vlastním zvukem při odhalení (kočka, dino, drak) — přehraje se krátce po fanfáře.
+const SKIN_SOUNDS = {
+  'frame-spacecat': 'skin-meow', 'name-spacecat': 'skin-meow',
+  'frame-dino': 'skin-roar',
+  'frame-dragon': 'skin-dragon', 'name-dragon': 'skin-dragon',
+};
+function playSkinSfx(itemId, delay = 450) {
+  const s = SKIN_SOUNDS[itemId];
+  if (s) setTimeout(() => playSfx(s), delay);
+}
 
 // Hudba: v celé hře hraje hlavní skladba („Chill Night", Pixabay), v lobby
 // vlastní skladba sfx/lobby-music.mp3. Dokud lobby skladba chybí, hraje

@@ -172,7 +172,6 @@ function renderProfileScreen() {
           </label>
           ${getAvatar() ? `<button type="button" class="edit-avatar-remove" id="profile-avatar-remove" aria-label="Remove photo">${icon('close')}</button>` : ''}
         </div>
-        <div class="avatar-now-chip">${icon('camera')} Right now</div>
         <div class="profile-hero-name" id="profile-name-slot">
           <button type="button" class="edit-name-btn" id="profile-name-tap" aria-label="Change name">${styledNameHtml('No name')}<span class="edit-badge">${icon('pencil')}</span></button>
         </div>

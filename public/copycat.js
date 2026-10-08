@@ -160,7 +160,7 @@ function buildCopyPickView(state) {
         el.classList.remove('disabled');
         el.classList.add('selected');
         send({ type: 'pick_copy', authorId: el.getAttribute('data-id') });
-        playSfx('vote');
+        playSfx('pick');
       };
     });
   }

@@ -96,6 +96,7 @@ function galleryStep(d) {
   if (!document.getElementById('gal-view')) return;
   const n = galleryItems.length;
   galleryIndex = (galleryIndex + d + n) % n;
+  playSfx('swipe');
   galleryShow(d);
 }
 

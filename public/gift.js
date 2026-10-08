@@ -20,22 +20,60 @@ function takeGiftParam() {
   } catch { return null; }
 }
 
-function handleGiftLink() {
-  const code = takeGiftParam();
-  if (code === null) return;
+// Společné vyzvednutí dárku (z odkazu i z kódu zadaného v obchodě).
+// Vrací 'ok' | 'dev' | 'invalid' | 'claimed'.
+function claimGift(rawCode) {
+  const code = String(rawCode || '').trim().toLowerCase().replace(/\s+/g, '');
   // dev režim: dev klíč může být v adrese poprvé, takže stačí, že existuje klíč
-  if (isDevMode() || devKey()) { showToast("Gift links don't work in dev mode."); return; }
-  if (!Object.prototype.hasOwnProperty.call(GIFTS, code)) return;
+  if (isDevMode() || devKey()) return 'dev';
+  if (!code || !Object.prototype.hasOwnProperty.call(GIFTS, code)) return 'invalid';
   const gift = GIFTS[code];
   const d = shopLoad();
   d.gifts = d.gifts || [];
-  if (d.gifts.includes(code)) { showToast('You already claimed this gift.'); return; }
+  if (d.gifts.includes(code)) return 'claimed';
   d.gifts.push(code);
   d.coins = (d.coins || 0) + gift.coins;
   d.owned = d.owned || [];
   for (const id of gift.items) if (!d.owned.includes(id)) d.owned.push(id);
   shopSave(d);
   showGiftReveal(gift);
+  return 'ok';
+}
+
+function handleGiftLink() {
+  const code = takeGiftParam();
+  if (code === null) return;
+  const res = claimGift(code);
+  if (res === 'dev') showToast("Gift links don't work in dev mode.");
+  else if (res === 'claimed') showToast('You already claimed this gift.');
+}
+
+// Karta „Enter code“ v obchodě (záložka Free): hráč opíše kód, který od tebe dostal.
+function redeemCodeCardHtml() {
+  return `
+    <div class="redeem-card">
+      <div class="redeem-title">${icon('gift')} Got a code?</div>
+      <div class="redeem-row">
+        <input id="redeem-input" class="redeem-input" maxlength="30" placeholder="Enter code" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button type="button" class="btn btn-primary" id="redeem-btn">Redeem</button>
+      </div>
+    </div>`;
+}
+
+function wireRedeemCode() {
+  const input = document.getElementById('redeem-input');
+  const btn = document.getElementById('redeem-btn');
+  if (!input || !btn) return;
+  const submit = () => {
+    if (!input.value.trim()) { showError('Enter a code first.'); return; }
+    const res = claimGift(input.value);
+    if (res === 'invalid') showError("That code doesn't work.");
+    else if (res === 'claimed') showToast('You already claimed this code.');
+    else if (res === 'dev') showToast("Codes don't work in dev mode.");
+    else input.value = '';
+  };
+  btn.onclick = submit;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
 }
 
 function showGiftReveal(gift) {
@@ -43,8 +81,9 @@ function showGiftReveal(gift) {
   const rarity = RARITIES[items[0].rarity];
   const mythic = items[0].rarity === 'mythic';
   closeCaseOverlay();
-  playSfx('reveal-legendary');
-  setTimeout(() => playSfx('coins'), 450);
+  playSfx('gift-reveal');
+  setTimeout(() => playSfx('payout'), 450);
+  items.forEach((it) => playSkinSfx(it.id, 1200));
   // jeden skin = původní vzhled; víc skinů = pod sebou náhled + název + druh každého
   const itemsHtml = items.map((item) => `
           <div class="reveal-preview">${shopItemPreview(sectionOf(item), item)}</div>
@@ -68,7 +107,11 @@ function showGiftReveal(gift) {
     </div>`;
   document.body.appendChild(overlay);
   document.body.classList.add('no-scroll');
-  const done = () => { closeCaseOverlay(); if (typeof lastState === 'undefined' || !lastState) renderStartScreen(); };
+  const done = () => {
+    closeCaseOverlay();
+    if (typeof mountedKey !== 'undefined' && mountedKey === 'shop') renderShopScreen(); // vyzvednuto v obchodě → obnov ho (mince, skiny)
+    else if (typeof lastState === 'undefined' || !lastState) renderStartScreen();
+  };
   overlay.querySelector('#reveal-close').onclick = done;
   overlay.querySelector('#gift-equip').onclick = () => {
     const d = shopLoad();

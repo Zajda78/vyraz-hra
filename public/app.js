@@ -163,6 +163,7 @@ function hideReconnectOverlay() {
 }
 
 function showError(text) {
+  playSfx('error');
   clearTimeout(errorTimer);
   let el = document.getElementById('error-banner');
   if (!el) {
@@ -1244,6 +1245,7 @@ function buildCaptioningView(state) {
     const text = document.getElementById('caption-input').value.trim();
     if (!text) return showError('Write a caption first.');
     send({ type: 'submit_caption', text });
+    playSfx('type');
   };
 }
 
@@ -1283,7 +1285,7 @@ function buildJudgingView(state) {
         el.classList.remove('disabled');
         el.classList.add('picked');
         send({ type: 'pick_caption', authorId: el.getAttribute('data-id') });
-        playSfx('vote');
+        playSfx('pick');
       };
     });
   }
@@ -1520,7 +1522,7 @@ function wireLikes(state) {
       const targetId = b.getAttribute('data-like');
       const on = !b.classList.contains('on');
       send({ type: 'like_photo', targetId, on });
-      playSfx('vote');
+      if (on) playSfx('like'); // jemný „pluck“ při zapnutí palce
       const cur = new Set([...document.querySelectorAll('.like-btn.on')].map((x) => x.getAttribute('data-like')));
       if (on) { cur.clear(); cur.add(targetId); } else cur.delete(targetId); // jen jeden like — nový přesune starý
       applyLikes([...cur], on ? targetId : null);
@@ -1906,7 +1908,10 @@ function playPhaseSounds(prev, state) {
   if (prev.phase === 'lobby' && state.phase === 'lobby' && state.players.length > prev.players.length) playSfx('player-join');
   if ((state.joinRequests || []).length > (prev.joinRequests || []).length) playSfx('player-join');
   if (prev.phase === 'lobby' && state.phase !== 'lobby') playSfx('game-start');
-  if (state.phase === 'results' && prev.phase !== 'results') playSfx('round-results');
+  if (state.phase === 'results' && prev.phase !== 'results') {
+    // Reaction → „wow“, Main Character → smích publika, ostatní módy dál potvrzovací zvuk
+    playSfx(state.mode === 'classic' ? 'round-wow' : state.mode === 'caption' ? 'round-laugh' : 'round-results');
+  }
   if (state.phase === 'gameover' && prev.phase !== 'gameover') playSfx('win');
 }
 

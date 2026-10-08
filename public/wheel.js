@@ -216,7 +216,7 @@ function openWheel() {
     </div>`;
   document.body.appendChild(overlay);
   document.body.classList.add('no-scroll');
-  playSfx('chest-open');
+  playSfx('wheel-spin'); // cvakání zpomalujícího kola
 
   // cíl: střed vylosovaného políčka nahoře pod šipkou + pár celých otáček
   // a malá náhodná odchylka, ať to nekončí pokaždé přesně uprostřed
@@ -326,6 +326,8 @@ function showWheelReveal(result) {
   }
   if (prize.jackpot) label = 'Jackpot!';
   playSfx(sound);
+  if (prize.jackpot) setTimeout(() => playSfx('payout'), 400); // jackpot: výplata jako v automatu
+  if (item) playSkinSfx(item.id);
   if (result.coins && (item || prize.type === 'ticket')) setTimeout(() => playSfx('coins'), 500);
 
   const extra = result.duplicate
