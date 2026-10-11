@@ -9,6 +9,8 @@ let submittedLocally = false;
 let lastSentPhoto = null; // { round, url } — vlastní odeslaná fotka, ukáže se při čekání na ostatní
 let votedLocallyFor = null;
 let drawDoneLocally = false;
+// Když vyprší čas a hráč ještě nedopsal / nedokreslil, pošle se, co má zatím (aby nezůstalo prázdné).
+let autoPartial = null; // { key: mountedKey obrazovky, fire: () => odeslání rozdělané práce, firedFor: deadlineAt }
 let errorTimer = null;
 let reconnectTimer = null;
 let reconnectAttempts = 0;
@@ -1247,6 +1249,14 @@ function buildCaptioningView(state) {
     send({ type: 'submit_caption', text });
     playSfx('type');
   };
+  // vyprší čas → odešli rozepsaný popisek (prázdný se neposílá)
+  autoPartial = {
+    key: mountedKey,
+    fire: () => {
+      const text = (document.getElementById('caption-input') || {}).value;
+      if (text && text.trim()) send({ type: 'submit_caption', text: text.trim() });
+    },
+  };
 }
 
 function patchCaptionCount(state) {
@@ -1387,6 +1397,8 @@ function buildDrawingView(state) {
 
   document.getElementById('draw-clear').onclick = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
   document.getElementById('draw-done').onclick = () => finishDrawing(img, canvas);
+  // vyprší čas → odešli, co je zatím nakresleno (fotka s dosavadními čárami)
+  autoPartial = { key: mountedKey, fire: () => finishDrawing(img, canvas) };
 }
 
 function finishDrawing(img, canvas) {
@@ -1875,6 +1887,12 @@ setInterval(() => {
   el.innerHTML = `${icon('timer')}<span>${remaining}s</span>`;
   el.classList.toggle('low', remaining <= 5);
   timerSounds(lastState.deadlineAt, remaining);
+  // ~1 s před koncem odešli rozdělanou práci (server přepne fázi přesně při vypršení času)
+  if (autoPartial && autoPartial.key === mountedKey && autoPartial.firedFor !== lastState.deadlineAt
+      && lastState.deadlineAt - Date.now() <= 1100) {
+    autoPartial.firedFor = lastState.deadlineAt;
+    try { autoPartial.fire(); } catch { /* nic */ }
+  }
 }, 250);
 
 // Tiknutí každou vteřinu v posledních 5 s a zvuk, když čas vyprší —

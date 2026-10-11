@@ -5,6 +5,16 @@ const GIFTS = {
   obzerstvi3000: { coins: 3000, items: ['frame-obzerstvi'], fx: 'legendary' },
   jezevcik3000: { coins: 3000, items: ['frame-jezevcik', 'name-jezevcik'], fx: 'mythic' },
   miku3000: { coins: 3000, items: ['frame-miku', 'name-miku'], fx: 'mythic' },
+  // Kódy jen na mince. Obyčejné jdou uplatnit jednou na zařízení, `reusable: true` kolikrát chceš.
+  kamarad1000: { coins: 1000, items: [], fx: 'legendary' },
+  parta1500: { coins: 1500, items: [], fx: 'legendary' },
+  bonus2000: { coins: 2000, items: [], fx: 'legendary' },
+  mega5000: { coins: 5000, items: [], fx: 'legendary' },
+  // opakovatelné (jen pro tebe a lidi, kterým věříš — kód je v kódu hry veřejně čitelný)
+  znovu500: { coins: 500, items: [], fx: 'legendary', reusable: true },
+  znovu1000: { coins: 1000, items: [], fx: 'legendary', reusable: true },
+  znovu2500: { coins: 2500, items: [], fx: 'legendary', reusable: true },
+  znovu10000: { coins: 10000, items: [], fx: 'legendary', reusable: true },
 };
 
 // Vrátí kód z adresy (malými písmeny) a parametr hned odstraní, ať ho reload nespustí znovu.
@@ -30,8 +40,8 @@ function claimGift(rawCode) {
   const gift = GIFTS[code];
   const d = shopLoad();
   d.gifts = d.gifts || [];
-  if (d.gifts.includes(code)) return 'claimed';
-  d.gifts.push(code);
+  if (!gift.reusable && d.gifts.includes(code)) return 'claimed';
+  if (!gift.reusable) d.gifts.push(code); // opakovatelné kódy se si nepamatují
   d.coins = (d.coins || 0) + gift.coins;
   d.owned = d.owned || [];
   for (const id of gift.items) if (!d.owned.includes(id)) d.owned.push(id);
@@ -76,7 +86,48 @@ function wireRedeemCode() {
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
 }
 
+// Dárek jen s mincemi (bez skinů): jednoduchá oslava s deštěm mincí.
+function showCoinGiftReveal(gift) {
+  closeCaseOverlay();
+  playSfx('gift-reveal');
+  setTimeout(() => playSfx('payout'), 450);
+  const overlay = document.createElement('div');
+  overlay.id = 'case-overlay';
+  overlay.className = 'case-overlay chest-overlay';
+  overlay.innerHTML = `
+    <button class="x-close case-x" id="reveal-close" aria-label="Close">${icon('close')}</button>
+    <div class="case-stage">
+      <div class="case-reveal show" id="case-reveal" style="--rc:#F0B429">
+        <div class="reveal-card rar-legendary">
+          <div class="reveal-rays"></div>
+          <h2 class="case-title gift-title">You got a gift!</h2>
+          <div class="gift-coins"><svg class="wheel-reveal-art" viewBox="0 0 64 56">${coinArt(32, 29, 17)}</svg><span class="num">+${gift.coins} coins</span></div>
+        </div>
+        <div class="reveal-actions"><button class="btn btn-primary btn-block" id="gift-ok">Nice!</button></div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.body.classList.add('no-scroll');
+  const done = () => {
+    closeCaseOverlay();
+    if (typeof mountedKey !== 'undefined' && mountedKey === 'shop') renderShopScreen();
+    else if (typeof lastState === 'undefined' || !lastState) renderStartScreen();
+  };
+  overlay.querySelector('#reveal-close').onclick = done;
+  overlay.querySelector('#gift-ok').onclick = done;
+  if (!caseReducedMotion()) {
+    const card = overlay.querySelector('.reveal-card');
+    const r = card.getBoundingClientRect();
+    const o = overlay.getBoundingClientRect();
+    const fx = CASE_FX[gift.fx];
+    caseBurst(overlay, fx.cols, fx.n, true, r.left - o.left + r.width / 2, r.top - o.top + r.height * 0.4, 3);
+    caseRays(overlay, gift.fx);
+    if (fx.coins) caseCoinRain(overlay, fx.coins);
+  }
+}
+
 function showGiftReveal(gift) {
+  if (!gift.items.length) return showCoinGiftReveal(gift);
   const items = gift.items.map((id) => ALL_ITEMS.find((i) => i.id === id));
   const rarity = RARITIES[items[0].rarity];
   const mythic = items[0].rarity === 'mythic';

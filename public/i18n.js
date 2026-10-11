@@ -336,6 +336,7 @@ const DICT_ROWS = [
   ['Edit look', 'Upravit vzhled', 'Editar aspecto'],
   ['Edit profile', 'Upravit profil', 'Editar perfil'],
   ['Right now', 'Právě teď', 'Ahora mismo'],
+  ['Nice!', 'Super!', '¡Genial!'],
   ['Got a code?', 'Máš kód?', '¿Tienes un código?'],
   ['Enter code', 'Zadej kód', 'Introduce el código'],
   ['Redeem', 'Uplatnit', 'Canjear'],
