@@ -329,7 +329,7 @@ function renderShopScreen() {
 
   app.innerHTML = `
     <div class="home-top">
-      <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>Shop</h1></div>
+      <div class="brand"><img class="mark" src="icon.png" alt=""><h1>Shop</h1></div>
       ${coinBadgeHtml(data.coins)}
     </div>
 

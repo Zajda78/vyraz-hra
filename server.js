@@ -2847,5 +2847,5 @@ function spawnBot(code, takenNames) {
 }
 
 server.listen(PORT, () => {
-  console.log(`face-it running on http://localhost:${PORT}`);
+  console.log(`Snapfam running on http://localhost:${PORT}`);
 });

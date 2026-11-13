@@ -306,7 +306,7 @@ function modeDisplayName(mode) {
 function brandHtml(state) {
   const modeName = modeDisplayName(state?.mode);
   const inGame = state && state.phase && state.phase !== 'lobby';
-  return `<div class="brand game-brand"><img class="mark" src="icon.svg" alt=""><h1>${modeName}</h1>
+  return `<div class="brand game-brand"><img class="mark" src="icon.png" alt=""><h1>${modeName}</h1>
     ${inGame ? `<button class="exit-game-btn" data-exit-game aria-label="Leave game">${icon('logout')}</button>` : ''}</div>`;
 }
 
@@ -405,7 +405,7 @@ function renderGamesScreen() {
 
   app.innerHTML = `
     <div class="home-top">
-      <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>face-it</h1>${devBadgeHtml()}</div>
+      <div class="brand"><img class="mark" src="icon.png" alt=""><h1>Snapfam</h1>${devBadgeHtml()}</div>
       <div class="home-actions">
         <button id="rules-btn" class="text-btn">Rules</button>
         <button id="settings-btn" class="icon-btn" title="Settings">${icon('gear')}</button>

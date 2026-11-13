@@ -44,9 +44,9 @@ function showMyQrModal() {
     </div>`);
   modal.querySelector('#qr-close').onclick = closeModal;
   modal.querySelector('#qr-share').onclick = async () => {
-    const text = `Add me on face-it! My friend code: ${code}`;
+    const text = `Add me on Snapfam! My friend code: ${code}`;
     if (navigator.share) {
-      try { await navigator.share({ title: 'face-it', text, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+      try { await navigator.share({ title: 'Snapfam', text, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
     }
     try { await navigator.clipboard.writeText(link); showToast('Link copied'); } catch { showToast(link); }
   };

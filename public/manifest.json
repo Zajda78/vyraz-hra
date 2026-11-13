@@ -1,6 +1,6 @@
 {
-  "name": "face-it — party game",
-  "short_name": "face-it",
+  "name": "Snapfam — party game",
+  "short_name": "Snapfam",
   "description": "A photo party game — snap your reaction, vote for the best face, open chests and play with friends.",
   "start_url": "/",
   "scope": "/",
@@ -9,6 +9,6 @@
   "background_color": "#170B2E",
   "theme_color": "#2A1252",
   "icons": [
-    { "src": "icon.svg", "sizes": "192x192 512x512", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }
   ]
 }

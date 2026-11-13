@@ -196,7 +196,7 @@ function renderFriendsScreen() {
 
   app.innerHTML = `
     <div class="home-top">
-      <div class="brand"><img class="mark" src="icon.svg" alt=""><h1>Friends</h1></div>
+      <div class="brand"><img class="mark" src="icon.png" alt=""><h1>Friends</h1></div>
     </div>
 
     <div class="screen">
