@@ -62,10 +62,10 @@ function handleGiftLink() {
 function redeemCodeCardHtml() {
   return `
     <div class="redeem-card">
-      <div class="redeem-title">${icon('gift')} Got a code?</div>
+      <label class="redeem-title" for="redeem-input">Got a code?</label>
       <div class="redeem-row">
         <input id="redeem-input" class="redeem-input" maxlength="30" placeholder="Enter code" autocomplete="off" autocapitalize="characters" spellcheck="false">
-        <button type="button" class="btn btn-primary" id="redeem-btn">Redeem</button>
+        <button type="button" class="btn btn-ghost" id="redeem-btn">Redeem</button>
       </div>
     </div>`;
 }

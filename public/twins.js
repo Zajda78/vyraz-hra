@@ -29,7 +29,7 @@ function twinPhotosHtml(state, members) {
   return `<div class="twin-photos n${members.length}">${members.map((m) => `
     <div class="twin-photo">
       ${m.missed
-        ? `<div class="missed"><span class="emoji">${icon('sad')}</span>Too slow!!</div>`
+        ? sfMissedHtml()
         : `<img src="${m.photoDataUrl}" alt="">`}
       <div class="twin-name">${playerNameHtml(m.name, looksOf(state, m.id))}</div>
     </div>`).join('')}</div>`;
@@ -46,16 +46,21 @@ function buildTwinsVotingView(state) {
     </div>`).join('');
 
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds} — vote</div>
-        <div class="prompt-text">${escapeHtml(state.prompt)}</div>
+    <div class="screen sf-g sf-vote sf-tvote">
+      <div class="sf-vote-top">
+        <span class="sf-pill">${sfRoundPill(state, 'vote')}</span>
+        <span class="sf-voted"><i></i><b class="sf-count-num num">0/${state.activeCount}</b><span>voted</span></span>
+        <button class="sf-exit" data-exit-game aria-label="Leave game">${icon('logout')}</button>
       </div>
-      <h3 class="twin-question">Which team is most in sync?</h3>
-      <div class="timer" id="timer-el">--</div>
-      <div class="twin-list">${cardsHtml}</div>
-      <p class="wait-note" id="vote-count-text"></p>
+      <div class="sf-vote-headrow">
+        <div>
+          <h1 class="sf-vote-title twin-question">Which team is most in sync?</h1>
+          <p class="sf-vote-sub prompt-text">${escapeHtml(state.prompt)}</p>
+        </div>
+        ${sfRingHtml(true)}
+      </div>
+      <div class="twin-list sf-pickable">${cardsHtml}</div>
+      <p class="sf-sr" id="vote-count-text"></p>
     </div>
   `;
   document.querySelectorAll('.twin-card[data-id]').forEach((el) => {
@@ -82,23 +87,19 @@ function renderTwinResultsScreen(state, r) {
       ${twinPhotosHtml(state, g.members)}
     </div>`).join('');
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">Round ${r.round} / ${state.totalRounds} results</div>
-        <div class="prompt-text">${escapeHtml(r.prompt)}</div>
+    <div class="screen sf-g sf-results">
+      <div class="sf-res-top">
+        <span class="sf-pill">Round ${r.round} / ${state.totalRounds} results</span>
+        <button class="sf-exit" data-exit-game aria-label="Leave game">${icon('logout')}</button>
       </div>
+      <h1 class="sf-vote-title prompt-text">${escapeHtml(r.prompt)}</h1>
       <div class="twin-list">${groupsHtml}</div>
-      <div class="card">
-        <h3 style="margin-bottom:10px;">Scoreboard</h3>
-        <div class="scoreboard">${scoreboardRowsHtml(state.players)}</div>
-      </div>
-      ${state.isHost
-        ? `<button id="next-btn" class="btn btn-primary btn-block">${state.round >= state.totalRounds ? 'Show final results' : 'Next round'}</button>`
-        : `<p class="wait-note">Waiting for the host to start the next round…</p>`}
+      ${sfScoreboardHtml(state)}
+      ${sfNextBarHtml(state)}
     </div>
   `;
-  if (state.isHost) document.getElementById('next-btn').onclick = () => send({ type: 'next_round' });
+  sfWireNext();
+  if (r.groups.some((g) => g.isWinner)) sfConfetti(document.querySelector('.sf-results .twin-card.winner'));
 }
 
 // Rozcestník pro renderApp() — vrací true, když fázi obsloužil.

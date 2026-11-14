@@ -73,39 +73,47 @@ function claimDailyCoins() {
   renderShopScreen();
 }
 
-// Karta s denními odměnami nahoře v shopu.
+// Denní odměny v obchodě (záložka Free): tři vodorovné řádky — mince, kolo štěstí, vstupenka.
 function dailyRewardsHtml() {
   const coinsReady = canClaimDailyCoins();
   const wheelReady = canSpinWheel();
+  const ticketReady = canClaimDailyTicket();
+  const wait = `<div class="daily-wait">${icon('timer')} ${timeUntilReset()}</div>`;
   return `
-    <div class="daily-grid">
-      <div class="daily-card ${coinsReady ? 'ready' : ''}">
-        <div class="daily-art daily-coins-art">${COIN_SVG}${COIN_SVG}${COIN_SVG}</div>
-        <h3>Daily Coins</h3>
+    <div class="daily-list">
+      <div class="daily-row ${coinsReady ? 'ready' : ''}">
+        <div class="daily-art daily-coins-art">${COIN_SVG}</div>
+        <div class="daily-row-text">
+          <strong>Daily Coins</strong>
+          <span>${coinsReady ? 'Free coins every day' : 'Come back tomorrow'}</span>
+        </div>
         ${coinsReady
-          ? `<button class="daily-btn" id="daily-coins-btn">Claim ${COIN_SVG}<span class="num">+${DAILY_COINS}</span></button>`
-          : `<div class="daily-wait">${icon('timer')} ${timeUntilReset()}</div>`}
+          ? `<button class="daily-btn" id="daily-coins-btn">Claim <span class="daily-amt">${COIN_SVG}<span class="num">+${DAILY_COINS}</span></span></button>`
+          : wait}
       </div>
-      <div class="daily-card ${wheelReady ? 'ready' : ''}">
-        <button class="case-info-btn" id="daily-info" title="What's on the wheel" aria-label="What's on the wheel">?</button>
+      <div class="daily-row ${wheelReady ? 'ready' : ''}">
         <div class="daily-wheel-art">${wheelSvg()}</div>
-        <h3>Lucky Wheel</h3>
+        <div class="daily-row-text">
+          <strong>Lucky Wheel</strong>
+          <span>${wheelReady ? (isDevMode() ? '1 free spin today' : 'Watch an ad for a spin') : 'Come back tomorrow'}</span>
+          <button type="button" class="daily-info-link" id="daily-info" aria-label="What's on the wheel">What's on the wheel?</button>
+        </div>
         ${wheelReady
-          ? `<button class="daily-btn ad" id="daily-chest-btn">${icon('play')} ${isDevMode() ? 'Spin' : 'Watch ad'}</button>`
-          : `<div class="daily-wait">${icon('timer')} ${timeUntilReset()}</div>`}
+          ? `<button class="daily-btn" id="daily-chest-btn">Spin</button>`
+          : wait}
       </div>
-    </div>
-    ${ownsPartyPack() ? '' : `
-      <div class="daily-ticket ${canClaimDailyTicket() ? 'ready' : ''}">
+      ${ownsPartyPack() ? '' : `
+      <div class="daily-row daily-ticket ${ticketReady ? 'ready' : ''}">
         <div class="daily-ticket-icon">${icon('ticket')}</div>
-        <div class="daily-ticket-text">
+        <div class="daily-row-text">
           <strong>Daily Ticket</strong>
           <span>1 free game of any Party Pack mode</span>
         </div>
-        ${canClaimDailyTicket()
+        ${ticketReady
           ? `<button class="daily-btn" id="daily-ticket-btn">Claim</button>`
-          : `<div class="daily-wait">${icon('timer')} ${timeUntilReset()}</div>`}
-      </div>`}`;
+          : wait}
+      </div>`}
+    </div>`;
 }
 
 function wireDailyRewards() {

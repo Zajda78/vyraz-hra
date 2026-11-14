@@ -1,16 +1,49 @@
+/* ======================================================================
+   SNAPFAM v2 TOKENS — jediný zdroj barev, rozměrů a lemů (style sheet v1).
+   Staré proměnné (--bg, --surface, --ink ...) níž ukazují na tyhle hodnoty.
+   ====================================================================== */
 :root{
-  --bg:#130A24;
-  --surface:#1C1231;
-  --surface-2:#261A40;
-  --ink:#F4F1FA;
-  --ink-dim:#A395C6;
-  --line:rgba(255,255,255,0.08);
-  --line-strong:rgba(255,255,255,0.14);
-  --accent:#8B5CF6;
+  /* povrchy + text */
+  --sf-bg:#130A24; --sf-card:#1E1338; --sf-raised:#2A1D4D; --sf-raised-press:#24183F;
+  --sf-line:#3B2B66; --sf-lip-dark:#0D0619; --sf-backdrop:rgba(8,4,16,0.72);
+  --sf-text:#F7F3FF; --sf-text-soft:#CFC3F0; --sf-text-desc:#E8DDFB; --sf-text-status:#A99BD6;
+  --sf-brand:#4B2A9B; --sf-brand-dark:#3A1F7E;
+  /* akce a význam */
+  --sf-primary:#8B5CF6; --sf-primary-lip:#5A33C2; --sf-primary-press:#7A4DE8; --sf-primary-hi:#A07BFF; --sf-primary-soft:#C9B6FF;
+  --sf-gold:#F5B82E; --sf-gold-lip:#B9801A; --sf-gold-press:#E4A61F; --sf-gold-ink:#3A2500;
+  --sf-danger:#F0483A; --sf-danger-lip:#A8261C; --sf-danger-press:#D93C2F; --sf-danger-text:#FF8A80; --sf-danger-bg:#3A1420; --sf-close-x:#FF5A4C;
+  --sf-good:#3FC97A; --sf-good-lip:#23884E; --sf-good-text:#7FE6A8; --sf-good-bg:#16302A;
+  --sf-celebrate:#FFD23F; --sf-celebrate-lip:#C79A00;
+  /* barvy módů + jejich lemy */
+  --sf-m-reaction:#D946C8; --sf-m-reaction-lip:#8E2384;
+  --sf-m-main:#FF8A3D;     --sf-m-main-lip:#B5551A;
+  --sf-m-doodle:#1FBFAA;   --sf-m-doodle-lip:#11786B;
+  --sf-m-impostor:#EF4B5F; --sf-m-impostor-lip:#A0233A;
+  --sf-m-hunt:#3E8BFF;     --sf-m-hunt-lip:#1F57B8;
+  --sf-m-copycat:#3FC46A;  --sf-m-copycat-lip:#1F7F42;
+  --sf-m-twins:linear-gradient(135deg,#F7A8D8,#9FC2FF); --sf-m-twins-lip:#7C78C9;
+  /* rarity skinů (legendary je oranžová, aby zlatá znamenala jen "placené") */
+  --sf-r-common:#A9B4C8; --sf-r-rare:#3E8BFF; --sf-r-epic:#B66BFF; --sf-r-legendary:#FF8F3A; --sf-r-mythic:#FF4F9A;
+  /* poloměry */
+  --sf-r-chip:12px; --sf-r-tile:16px; --sf-r-btn:18px; --sf-r-card:22px; --sf-r-sheet:28px;
+  /* lemy */
+  --sf-lip-btn:0 5px 0; --sf-lip-tile:0 4px 0; --sf-lip-card:0 6px 0;
+  /* pohyb */
+  --sf-spring:cubic-bezier(.2,.9,.3,1.1);
+
+  /* staré názvy → nová paleta */
+  --bg:var(--sf-bg);
+  --surface:var(--sf-card);
+  --surface-2:var(--sf-raised);
+  --ink:var(--sf-text);
+  --ink-dim:var(--sf-text-soft);
+  --line:var(--sf-line);
+  --line-strong:var(--sf-line);
+  --accent:var(--sf-primary);
   --accent-ink:#FFFFFF;
-  --danger:#F0483A;
-  --gold:#F0B429;
-  --good:#3FAE6B;
+  --danger:var(--sf-danger);
+  --gold:var(--sf-gold);
+  --good:var(--sf-good);
   --shadow: none;
 }
 
@@ -2542,9 +2575,9 @@ body.no-scroll{ overflow:hidden; }
    lem (--lip), který se při stisku zmáčkne. Žádné bílé záblesky.
    ====================================================================== */
 :root{
-  --ol:#0E0620;            /* nejtmavší obrys */
-  --ol-2:#170A30;          /* obrys panelů a dlaždic */
-  --lip-c:#0A0416;         /* barva spodního lemu panelů */
+  --ol:#0D0619;            /* nejtmavší obrys */
+  --ol-2:#0D0619;          /* obrys panelů a dlaždic */
+  --lip-c:#0D0619;         /* barva spodního lemu panelů */
   --pop:cubic-bezier(.3,1.6,.5,1);   /* pružný přestřel */
   --purple-hi:rgba(139,92,246,0.16); /* tónovaný odlesk na tmavém fialovém podkladu */
 }
@@ -3418,3 +3451,467 @@ body[class*="gm-"]:not(.home-bg) .caption-card.picked{ animation:gm-pop .28s var
 .redeem-input{ flex:1; min-width:0; font:inherit; font-weight:800; font-size:1.05rem; letter-spacing:.04em; text-transform:uppercase; padding:12px 14px; border-radius:14px; border:3px solid var(--ol-2, #170A30); background:var(--bg); color:var(--ink); }
 .redeem-input:focus{ outline:none; border-color:var(--accent); }
 .redeem-row .btn{ width:auto; flex:none; padding-left:18px; padding-right:18px; }
+
+
+/* ======================================================================
+   SNAPFAM v2 — sdílené komponenty + obrazovky (fáze 1)
+   Tahle vrstva je ZÁMĚRNĚ na konci souboru: přebíjí starší "cartoon" vrstvy.
+   Pravidla: nic pod 14 px, popisy #CFC3F0, Unbounded nikdy pod 16 px v tlačítkách,
+   lem tlačítka 5 px / dlaždice 4 px / klikací karty 6 px, stisk = sjede o 4 px.
+   Znovupoužitelné třídy: .btn(.btn-primary/-ghost/-danger/-gold) .sf-tile .sf-tiles
+   .sf-seg .sf-chip .sf-badge .sf-card .sf-mini-gold .mode-tile.mt-<mód> .modal-sheet(.is-dialog/.is-tall)
+   .x-close .toast(.toast-good/-danger/-gold) .spinner .btn.is-loading
+   ====================================================================== */
+
+/* ---------- barvy módů (jedna sada pro dlaždici, kartu, záložku pravidel) ---------- */
+.mode-card-classic, .mt-classic, .rules-tab-classic, .mc-classic{ --mc:var(--sf-m-reaction); --mc-fill:var(--sf-m-reaction); --mc-lip:var(--sf-m-reaction-lip); --mc-ink:#fff; }
+.mode-card-caption, .mt-caption, .rules-tab-caption, .mc-caption{ --mc:var(--sf-m-main); --mc-fill:var(--sf-m-main); --mc-lip:var(--sf-m-main-lip); --mc-ink:#fff; }
+.mode-card-draw, .mt-draw, .rules-tab-draw, .mc-draw{ --mc:var(--sf-m-doodle); --mc-fill:var(--sf-m-doodle); --mc-lip:var(--sf-m-doodle-lip); --mc-ink:#fff; }
+.mode-card-impostor, .mt-impostor, .rules-tab-impostor, .mc-impostor{ --mc:var(--sf-m-impostor); --mc-fill:var(--sf-m-impostor); --mc-lip:var(--sf-m-impostor-lip); --mc-ink:#fff; }
+.mode-card-hunt, .mt-hunt, .rules-tab-hunt, .mc-hunt{ --mc:var(--sf-m-hunt); --mc-fill:var(--sf-m-hunt); --mc-lip:var(--sf-m-hunt-lip); --mc-ink:#fff; }
+.mode-card-copycat, .mt-copycat, .rules-tab-copycat, .mc-copycat{ --mc:var(--sf-m-copycat); --mc-fill:var(--sf-m-copycat); --mc-lip:var(--sf-m-copycat-lip); --mc-ink:#fff; }
+.mode-card-twins, .mt-twins, .rules-tab-twins, .mc-twins{ --mc:#CBB5EB; --mc-fill:var(--sf-m-twins); --mc-lip:var(--sf-m-twins-lip); --mc-ink:#2E2160; }
+.mode-card{ --mc-bg:color-mix(in srgb, var(--mc, var(--sf-primary)) 18%, var(--sf-card)); --mc-ring:color-mix(in srgb, var(--mc, var(--sf-primary)) 55%, transparent); }
+.mode-card-twins{ --mc-bg:#2E2A55; --mc-ring:rgba(247,168,216,0.6); }
+
+/* ---------- základ ---------- */
+body{ font-weight:500; }
+.subtitle{ color:var(--sf-text-soft); font-size:15px; line-height:1.4; }
+.wait-note, .camera-status{ font-size:15px; color:var(--sf-text-soft); }
+.camera-status{ display:flex; gap:8px; align-items:flex-start; margin:10px 0 0; min-height:0; line-height:1.4; }
+.camera-status .ico{ width:18px; height:18px; margin-top:2px; }
+.camera-status.ok{ color:var(--sf-good-text); }
+.camera-status.bad{ color:var(--sf-danger-text); }
+
+/* ---------- společný pohyb: stisk sjede o 4 px, uvolnění přestřelí ---------- */
+.btn, .back-btn, .icon-btn, .text-btn, .chip-btn, .option-chip, .lang-chip, .rules-tab, .sf-tile, .mode-card, .code-box, .sf-mini-gold, .x-close, .bottom-nav-btn{
+  transition:transform .16s cubic-bezier(.3,1.5,.5,1), box-shadow .16s cubic-bezier(.3,1.5,.5,1), background-color .15s ease, color .15s ease;
+}
+.btn:active, .back-btn:active, .icon-btn:active, .text-btn:active, .option-chip:active, .lang-chip:active, .rules-tab:active, .sf-tile:active, .sf-mini-gold:active{
+  transition-duration:.09s; transition-timing-function:ease-out;
+  transform:translateY(4px) scale(.98); --lipy:1px;
+}
+.chip-btn:active, .x-close:active{ transform:scale(.9); }
+
+/* ---------- tlačítka (56 px, lem 5 px) ---------- */
+.btn{
+  --lipy:5px; --lip:var(--sf-lip-dark);
+  min-height:56px; padding:0 20px; border:0; border-radius:var(--sf-r-btn);
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  font-family:'Unbounded',sans-serif; font-weight:700; font-size:17px; line-height:20px;
+  background:var(--sf-raised); color:var(--sf-text);
+  box-shadow:0 var(--lipy) 0 var(--lip);
+}
+.btn .ico{ width:20px; height:20px; }
+.btn-block{ width:100%; }
+.btn-primary{ background:var(--sf-primary); color:#fff; --lip:var(--sf-primary-lip); border:0; box-shadow:0 var(--lipy) 0 var(--lip); }
+.btn-primary:active{ background:var(--sf-primary-press); }
+.btn-ghost{ background:var(--sf-raised); color:var(--sf-text); --lip:var(--sf-lip-dark); border:0; box-shadow:0 var(--lipy) 0 var(--lip); }
+.btn-ghost:active{ background:var(--sf-raised-press); }
+.btn-danger{ background:var(--sf-danger); color:#fff; --lip:var(--sf-danger-lip); border:0; box-shadow:0 var(--lipy) 0 var(--lip); }
+.btn-danger:active{ background:var(--sf-danger-press); }
+.btn-gold, .pack-buy, .single-game-buy{ background:var(--sf-gold); color:var(--sf-gold-ink); --lip:var(--sf-gold-lip); border:0; box-shadow:0 var(--lipy, 5px) 0 var(--lip); }
+.btn-gold:active, .pack-buy:active, .single-game-buy:active{ background:var(--sf-gold-press); }
+.pack-buy{ --lipy:5px; border-radius:var(--sf-r-btn); min-height:56px; padding:0 18px; }
+.single-game-buy{ --lipy:4px; border-radius:var(--sf-r-btn); min-height:48px; font-family:'Unbounded',sans-serif; font-weight:700; font-size:16px; }
+.pack-price{ font-weight:700; font-size:17px; }
+.pack-worth{ font-size:14px; color:rgba(58,37,0,0.7); }
+.btn:disabled, .btn-primary:disabled, .btn-ghost:disabled, .btn-danger:disabled, .btn-gold:disabled{
+  background:var(--sf-raised); color:var(--sf-text-status); opacity:1; box-shadow:none; transform:none; cursor:not-allowed;
+}
+.btn:disabled:active{ transform:none; }
+/* načítání: text zmizí, uprostřed se točí kroužek */
+.btn.is-loading{ color:transparent !important; pointer-events:none; position:relative; }
+.btn.is-loading::after{
+  content:''; position:absolute; width:22px; height:22px; border-radius:50%;
+  border:3px solid rgba(255,255,255,0.35); border-top-color:#fff; animation:spin .8s linear infinite;
+}
+.btn-gold.is-loading::after{ border-color:rgba(58,37,0,0.25); border-top-color:var(--sf-gold-ink); }
+
+/* malé kulaté / čtvercové akce */
+.back-btn, .icon-btn{
+  --lipy:4px; width:44px; height:44px; border:0; border-radius:var(--sf-r-tile);
+  background:var(--sf-raised); color:var(--sf-primary-soft); box-shadow:0 var(--lipy) 0 var(--sf-lip-dark);
+}
+.back-btn .ico, .icon-btn .ico{ width:22px; height:22px; stroke-width:2.2; }
+.text-btn{
+  --lipy:4px; height:44px; min-height:44px; padding:0 14px; border:0; border-radius:var(--sf-r-tile);
+  background:var(--sf-raised); color:var(--sf-text); box-shadow:0 var(--lipy) 0 var(--sf-lip-dark);
+  display:inline-flex; align-items:center; gap:7px;
+  font-family:'Unbounded',sans-serif; font-weight:700; font-size:14px; text-transform:none; letter-spacing:0;
+}
+.text-btn .ico{ width:18px; height:18px; color:var(--sf-primary-soft); }
+.chip-btn{
+  min-height:44px; padding:0 16px; border:0; border-radius:14px; background:var(--sf-raised); color:var(--sf-text);
+  box-shadow:none; font-size:15px; font-weight:700;
+}
+.chip-btn.chip-icon{ width:44px; padding:0; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.chip-btn .ico{ width:20px; height:20px; color:var(--sf-primary-soft); }
+.sf-mini-gold{
+  --lipy:3px; height:36px; padding:0 12px; border:0; border-radius:var(--sf-r-chip); cursor:pointer;
+  background:var(--sf-gold); color:var(--sf-gold-ink); box-shadow:0 var(--lipy) 0 var(--sf-gold-lip);
+  font:700 14px 'IBM Plex Sans',sans-serif; white-space:nowrap;
+}
+
+/* ---------- karty, štítky ---------- */
+.card, .sf-card{
+  background:var(--sf-card); border:0; border-radius:var(--sf-r-card); padding:18px;
+  box-shadow:none;
+}
+.badge, .sf-badge{
+  display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:var(--sf-r-chip);
+  background:var(--sf-primary); color:#fff; box-shadow:none; margin:0;
+  font:700 14px/1 'IBM Plex Sans',sans-serif; letter-spacing:.06em; text-transform:uppercase;
+}
+.sf-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:var(--sf-r-chip); background:var(--sf-raised); font:700 14px/1 'IBM Plex Sans',sans-serif; }
+.mode-new-tag{
+  display:inline-block; margin-left:8px; padding:6px 10px; border-radius:var(--sf-r-chip); background:#FF8A3D; color:#2A1200;
+  font:800 14px/1 'Unbounded',sans-serif; transform:rotate(-4deg); box-shadow:none; vertical-align:middle;
+}
+
+/* ---------- vstupy ---------- */
+.field{ margin-bottom:14px; }
+.field label{ font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); margin-bottom:6px; }
+.field input, .modal-sheet .field input, .add-friend input{
+  height:56px; padding:0 16px; border:0; border-radius:var(--sf-r-tile); background:var(--sf-card);
+  box-shadow:inset 0 3px 0 var(--sf-lip-dark); color:var(--sf-text); font:600 17px 'IBM Plex Sans',sans-serif;
+}
+.field input::placeholder{ color:var(--sf-text-status); }
+.field input:focus, .modal-sheet .field input:focus, .add-friend input:focus{
+  outline:none; background:var(--sf-raised); box-shadow:0 0 0 3px var(--sf-primary-hi);
+}
+
+/* ---------- dlaždice hodnot (nastavení), segmentovaný přepínač ---------- */
+.sf-tiles{ display:grid; gap:10px; }
+.sf-tiles-2{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.sf-tiles-3{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+.sf-tile, .option-chip, .lang-chip{
+  --lipy:4px; min-height:56px; border:0; border-radius:var(--sf-r-tile); cursor:pointer;
+  background:var(--sf-raised); color:var(--sf-text); box-shadow:0 var(--lipy) 0 var(--sf-lip-dark);
+  font-family:'Unbounded',sans-serif; font-weight:700; font-size:16px; text-shadow:none;
+  display:flex; align-items:center; justify-content:center; text-align:center; padding:0 8px;
+}
+.sf-tile.on, .sf-tile[aria-pressed="true"], .option-chip.active, .lang-chip.active{
+  background:var(--sf-primary); color:#fff; box-shadow:0 var(--lipy) 0 var(--sf-primary-lip), 0 0 0 3px var(--sf-primary-soft);
+  animation:sf-tile-bounce .22s ease-out;
+}
+.sf-tile:disabled{ opacity:.5; }
+@keyframes sf-tile-bounce{ 0%{ transform:scale(1); } 50%{ transform:scale(1.08); } 100%{ transform:scale(1); } }
+.option-chip{ font-size:18px; }
+.option-chip.active{ animation:none; }
+
+/* jazyk: EN / CS / ES jako dlaždice 72 px */
+.lang-picker{ display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin:0 0 20px; }
+.lang-chip{ height:72px; flex-direction:column; gap:4px; padding:0; }
+.lang-chip b{ font:800 18px/1 'Unbounded',sans-serif; }
+.lang-chip span{ font:600 14px/1 'IBM Plex Sans',sans-serif; color:inherit; }
+
+/* segmentovaný přepínač (záložky shopu apod.) */
+.sf-seg{ display:flex; gap:4px; padding:4px; border-radius:20px; background:var(--sf-card); box-shadow:inset 0 3px 0 var(--sf-lip-dark); }
+.sf-seg-btn{
+  position:relative; flex:1; min-height:48px; padding:0 8px; border:0; border-radius:16px; cursor:pointer; background:transparent;
+  color:var(--sf-text-soft); font:700 15px 'Unbounded',sans-serif; transition:background .2s var(--sf-spring), color .15s ease;
+}
+.sf-seg-btn.on, .sf-seg-btn[aria-selected="true"]{ background:var(--sf-primary); color:#fff; box-shadow:0 4px 0 var(--sf-primary-lip); }
+
+/* ---------- HOME: hlavička, profil, připojení ---------- */
+#app{ padding-top:calc(20px + env(safe-area-inset-top)); }
+.home-top{ height:48px; margin-bottom:16px; }
+.home-top .brand{ flex:1; gap:10px; margin:0; min-width:0; }
+.home-top .brand h1{ font:800 22px/1 'Unbounded',sans-serif; color:var(--sf-text); }
+.brand .mark{ width:40px; height:40px; border-radius:12px; }
+.sf-logo{ display:block; flex:none; }
+.home-actions{ gap:10px; }
+.dev-badge{ box-shadow:none; background:#FF8A3D; color:#2A1200; font:800 14px/1 'Unbounded',sans-serif; padding:6px 8px; border-radius:var(--sf-r-chip); }
+
+.profile-card{
+  display:flex; align-items:center; gap:14px; padding:12px; margin-bottom:16px; border:0; border-radius:var(--sf-r-card);
+  background:var(--sf-card); box-shadow:none; cursor:pointer;
+}
+.profile-card:active{ transform:scale(.98); }
+.profile-card-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; white-space:normal; font-size:15px; }
+.pc-label{ font:600 14px/1.2 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+.profile-card .styled-name{ font:800 20px/1.2 'Unbounded',sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pc-name-empty{ font:800 18px/1.2 'Unbounded',sans-serif; color:var(--sf-text); }
+
+.join-card{
+  display:flex; flex-direction:column; gap:14px; padding:18px; border:0; border-radius:24px;
+  background:var(--sf-card); box-shadow:inset 0 0 0 2px var(--sf-line);
+}
+.join-card-head{ display:flex; flex-direction:column; gap:4px; }
+.join-card h1, .join-card h2{ margin:0; font:800 22px/1.2 'Unbounded',sans-serif; text-shadow:none; }
+.join-card-sub{ font:500 15px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+.code-boxes{ display:flex; justify-content:space-between; gap:10px; margin:0; }
+.code-box{
+  --lipy:4px; flex:1; width:auto; max-width:72px; height:72px; border:0; border-radius:var(--sf-r-tile);
+  background:var(--sf-raised); box-shadow:0 var(--lipy) 0 var(--sf-lip-dark); color:var(--sf-text);
+  font:800 30px 'Unbounded',sans-serif; text-shadow:none;
+}
+.code-box.filled{ border:0; }
+.code-box:not(.filled):not(.active){ background:var(--sf-bg); box-shadow:inset 0 3px 0 var(--sf-lip-dark); }
+.code-box.active{ border:0; box-shadow:0 0 0 3px var(--sf-primary-hi); animation:none; }
+.code-box.active:empty::after{ content:''; width:3px; height:30px; border-radius:2px; background:var(--sf-primary-hi); animation:sf-blink 1s steps(1) infinite; }
+@keyframes sf-blink{ 50%{ opacity:0; } }
+.code-boxes.is-error .code-box{ box-shadow:0 0 0 3px var(--sf-danger); animation:sf-shake .3s ease-in-out; }
+@keyframes sf-shake{ 0%,100%{ transform:none; } 17%{ transform:translateX(-6px); } 50%{ transform:translateX(6px); } 83%{ transform:translateX(-4px); } }
+.join-card-actions{ display:flex; gap:10px; }
+.join-card-actions .btn{ font-size:16px; }
+.join-card-actions #code-paste{ flex:none; padding:0 18px; font-size:15px; }
+.join-card-actions #code-join{ flex:1; }
+
+/* ---------- HOME: skupiny a dlaždice módů ---------- */
+.mode-group-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:36px; margin-top:8px; }
+.section-eyebrow{ margin:0; font:700 14px/1 'IBM Plex Sans',sans-serif; letter-spacing:.12em; color:var(--sf-text-soft); }
+.mode-group-hint{ font:600 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-status); text-align:right; }
+.mode-grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+.mode-grid .mode-card.wide{ grid-column:1 / -1; }
+
+.mode-card{
+  --lipy:6px; position:relative; display:flex; min-height:190px; padding:14px; overflow:visible; cursor:pointer;
+  border:0; border-radius:var(--sf-r-card); background:var(--mc-bg); color:var(--sf-text);
+  box-shadow:inset 0 0 0 2px var(--mc-ring), 0 var(--lipy) 0 var(--sf-lip-dark);
+  animation:sf-card-pop .28s ease-out backwards;
+}
+.mode-card::after{ display:none; }
+.mode-card:hover{ border:0; }
+.mode-card:active{ border:0; transform:translateY(4px) scale(.98); --lipy:2px; transition-duration:.09s; transition-timing-function:ease-out; }
+.mode-grid .mode-card:nth-child(1){ animation-delay:0s; }
+.mode-grid .mode-card:nth-child(2){ animation-delay:.04s; }
+.mode-grid .mode-card:nth-child(3){ animation-delay:.08s; }
+.mode-grid .mode-card:nth-child(4){ animation-delay:.12s; }
+.mode-grid .mode-card:nth-child(5){ animation-delay:.16s; }
+@keyframes sf-card-pop{ 0%{ opacity:0; transform:scale(.92); } 60%{ opacity:1; transform:scale(1.03); } 100%{ opacity:1; transform:none; } }
+.mode-card.compact{ border-radius:var(--sf-r-card); }
+.mode-card.is-locked .mode-card-content{ opacity:1; }
+.mode-card-content{ display:flex; flex-direction:column; gap:8px; width:100%; }
+.mode-card-text{ display:flex; flex-direction:column; gap:8px; }
+.mode-card h3{ margin:0; font:700 17px/1.2 'Unbounded',sans-serif; color:var(--sf-text); text-shadow:none; }
+.mode-card p{ margin:0; max-width:none; font:500 15px/1.35 'IBM Plex Sans',sans-serif; color:var(--sf-text-desc); }
+.mode-card-foot{ margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:32px; }
+.mode-players{ display:inline; padding:0; background:none; box-shadow:none; border-radius:0; font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-desc); }
+.mode-play{ width:32px; height:32px; border-radius:16px; background:var(--mc-fill); display:flex; align-items:center; justify-content:center; flex:none; }
+.mode-badge{
+  position:absolute; top:12px; right:12px; z-index:2; min-width:32px; height:32px; padding:0; border-radius:11px;
+  display:inline-flex; align-items:center; justify-content:center; gap:4px;
+  background:var(--sf-gold); box-shadow:0 3px 0 var(--sf-gold-lip); color:var(--sf-gold-ink);
+}
+.mode-badge .ico{ width:15px; height:15px; stroke-width:3; }
+.mode-badge-ticket{ padding:0 9px; font:700 14px 'IBM Plex Sans',sans-serif; }
+.mode-badge-ticket b{ font-weight:700; }
+.mode-card.wide{ min-height:120px; padding:16px; }
+.mode-card.wide .mode-card-content{ display:grid; grid-template-columns:64px minmax(0, 1fr); column-gap:14px; row-gap:6px; align-items:center; }
+.mode-card.wide .mode-tile{ grid-row:1 / span 2; width:64px; height:64px; }
+.mode-card.wide h3{ font-size:18px; }
+.mode-card.wide .mode-card-foot{ margin-top:0; }
+
+/* ikona módu: barevný čtverec + lem, glyf v inkoustu módu */
+.mode-tile{
+  position:relative; flex:none; width:52px; height:52px; margin:0; border:0; border-radius:28%; overflow:hidden;
+  background:var(--mc-fill, var(--sf-primary)); color:var(--mc-ink, #fff);
+  box-shadow:inset 0 -5px 0 var(--mc-lip, var(--sf-primary-lip));
+  display:flex; align-items:center; justify-content:center;
+}
+.mode-tile::before{ display:none; }
+.mode-tile svg{ width:58%; height:58%; filter:none; display:block; }
+.rules-tab .mode-tile, .pack-mode .mode-tile, .single-game-card .mode-tile, .invite-mode .mode-tile{ border-radius:28%; }
+
+/* ---------- spodní lišta ---------- */
+.bottom-nav{
+  bottom:calc(10px + env(safe-area-inset-bottom)); width:calc(100% - 28px); max-width:492px; height:68px; padding:6px; gap:0;
+  border:0; border-radius:26px; background:var(--sf-card);
+  box-shadow:0 6px 0 var(--sf-lip-dark), 0 12px 30px rgba(0,0,0,0.45);
+}
+.nav-indicator{
+  top:6px; bottom:6px; border:0; border-radius:20px; background:var(--sf-primary);
+  box-shadow:0 4px 0 var(--sf-primary-lip); transition:transform .22s var(--sf-spring);
+}
+.bottom-nav-btn{ min-height:56px; border-radius:20px; color:var(--sf-text-soft); font:700 15px 'Unbounded',sans-serif; }
+.bottom-nav-btn.active{ color:#fff; }
+.bottom-nav-btn .ico{ stroke-width:2.2; }
+.nav-dot{ top:8px; right:10px; width:12px; height:12px; border:3px solid var(--sf-card); background:var(--sf-good); box-shadow:none; }
+.nav-badge{ top:6px; min-width:20px; height:20px; font-size:14px; border:3px solid var(--sf-card); box-sizing:content-box; background:var(--sf-danger); box-shadow:none; }
+
+/* ---------- okna: spodní sheet, dialog, kulaté X ---------- */
+.modal-backdrop{ background:var(--sf-backdrop); animation:sf-fade .2s ease both; }
+@keyframes sf-fade{ from{ opacity:0; } to{ opacity:1; } }
+.modal-sheet{
+  position:relative; max-height:calc(100dvh - 54px); padding:12px 18px calc(34px + env(safe-area-inset-bottom));
+  border:0; border-radius:var(--sf-r-sheet) var(--sf-r-sheet) 0 0; background:var(--sf-card);
+  box-shadow:0 -10px 40px rgba(0,0,0,0.45); color:var(--sf-text);
+  animation:sf-sheet-up .32s var(--sf-spring) both; transform-origin:50% 100%;
+}
+.modal-sheet::before{ content:''; display:block; width:44px; height:5px; border-radius:3px; margin:0 auto 14px; background:var(--sf-line); }
+@keyframes sf-sheet-up{ from{ transform:translateY(100%); } to{ transform:none; } }
+@media (min-width:560px){
+  .modal-sheet{ border-radius:var(--sf-r-sheet); box-shadow:0 8px 0 var(--sf-lip-dark), 0 20px 50px rgba(0,0,0,0.5); }
+}
+.modal-sheet > h2{
+  margin:0 0 16px; min-height:44px; padding-right:56px; display:flex; align-items:center;
+  font:800 24px/1.1 'Unbounded',sans-serif; text-shadow:none;
+}
+.modal-sheet h2{ text-shadow:none; }
+.modal-sheet.is-tall{ height:calc(100dvh - 54px); padding-left:0; padding-right:0; display:flex; flex-direction:column; overflow:hidden; }
+.modal-sheet.is-tall > h2{ padding-left:18px; padding-right:74px; flex:none; }
+.modal-sheet.is-tall .x-close-row{ position:absolute; top:31px; right:18px; height:auto; }
+
+.x-close-row{ position:sticky; top:0; z-index:5; height:0; display:flex; justify-content:flex-end; }
+.x-close, .x-close:active{
+  width:44px; height:44px; border:0; border-radius:50%; background:var(--sf-line); color:var(--sf-close-x);
+  box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; display:flex; align-items:center; justify-content:center; flex:none; cursor:pointer;
+}
+.x-close:active{ background:var(--sf-raised); transform:scale(.9); }
+.x-close .ico{ width:20px; height:20px; stroke-width:3.2; filter:none; }
+.x-close-row .x-close{ margin:0; }
+.kick-btn{ width:44px; height:44px; background:var(--sf-raised); color:var(--sf-danger); border:0; box-shadow:none; }
+
+.setting-block-title{ margin:0 0 10px; display:block; font:700 16px/1 'Unbounded',sans-serif; color:var(--sf-text); }
+.setting-block-title .ico{ display:none; }
+
+/* dialog (16a): vycentrovaný, bez úchytu, jedno velké tlačítko */
+.modal-backdrop.is-dialog{ align-items:center; padding:18px; }
+.modal-sheet.is-dialog{
+  max-width:420px; max-height:calc(100dvh - 36px); padding:22px 20px 20px; border-radius:var(--sf-r-sheet);
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  box-shadow:0 8px 0 var(--sf-lip-dark), 0 20px 50px rgba(0,0,0,0.5);
+  animation:sf-dialog-in .28s var(--sf-spring) both; transform-origin:50% 50%;
+}
+@keyframes sf-dialog-in{ from{ opacity:0; transform:scale(.9) translateY(12px); } to{ opacity:1; transform:none; } }
+.modal-sheet.is-dialog::before{ display:none; }
+.modal-sheet.is-dialog .x-close-row{ position:absolute; top:14px; right:14px; height:auto; }
+.modal-sheet.is-dialog > h2, .modal-sheet.is-dialog h2{ margin:6px 0 0; padding:0; min-height:0; justify-content:center; text-align:center; font:800 24px/1.2 'Unbounded',sans-serif; }
+.modal-sheet.is-dialog .btn{ align-self:stretch; width:100%; }
+.dialog-avatar{ margin-top:6px; display:flex; justify-content:center; }
+.dialog-text{ margin:0; text-align:center; font:500 16px/1.45 'IBM Plex Sans',sans-serif; color:var(--sf-text-desc); }
+.exit-game{ width:100%; display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:6px; }
+.exit-game h2{ margin:0 0 4px; }
+.exit-game-icon{ width:64px; height:64px; border:0; background:none; box-shadow:none; color:var(--sf-danger-text); display:flex; align-items:center; justify-content:center; }
+.exit-game-icon .ico{ width:64px; height:64px; stroke-width:2; }
+.exit-game .btn-ghost{ color:var(--sf-text); }
+
+/* ---------- posuvníky hlasitosti ---------- */
+.volume-card{ display:flex; flex-direction:column; gap:16px; padding:0; margin:0 0 20px; border:0; border-radius:0; background:none; box-shadow:none; }
+.volume-row{ display:flex; align-items:center; gap:12px; }
+.volume-label{ display:flex; align-items:center; gap:12px; margin:0; flex:none; color:var(--sf-text); }
+.volume-label .ico{ width:24px; height:24px; color:var(--sf-primary-soft); }
+.volume-label span{ flex:none; min-width:74px; font:700 16px 'Unbounded',sans-serif; }
+.volume-label b{ display:none; }
+.volume-slider{
+  -webkit-appearance:none; appearance:none; flex:1; min-width:0; height:44px; border:0; border-radius:0; background:transparent; box-shadow:none; outline:none; cursor:pointer; margin:0;
+}
+.volume-slider::-webkit-slider-runnable-track{
+  height:12px; border-radius:6px; box-shadow:inset 0 2px 0 var(--sf-lip-dark);
+  background:linear-gradient(var(--sf-primary), var(--sf-primary)) 0 0 / var(--fill, 50%) 100% no-repeat, var(--sf-bg);
+}
+.volume-slider::-webkit-slider-thumb{
+  -webkit-appearance:none; width:28px; height:28px; margin-top:-8px; border-radius:50%; border:0;
+  background:var(--sf-text); box-shadow:0 3px 0 var(--sf-text-status);
+}
+.volume-slider::-moz-range-track{ height:12px; border-radius:6px; background:var(--sf-bg); box-shadow:inset 0 2px 0 var(--sf-lip-dark); }
+.volume-slider::-moz-range-progress{ height:12px; border-radius:6px; background:var(--sf-primary); }
+.volume-slider::-moz-range-thumb{ width:28px; height:28px; border:0; border-radius:50%; background:var(--sf-text); box-shadow:0 3px 0 var(--sf-text-status); }
+.volume-slider:focus-visible::-webkit-slider-thumb{ box-shadow:0 3px 0 var(--sf-text-status), 0 0 0 3px var(--sf-primary-hi); }
+
+/* ---------- pravidla (05) ---------- */
+.rules-tabs{ display:flex; gap:10px; margin:0 0 4px; padding:4px 18px 12px; overflow-x:auto; flex:none; scrollbar-width:none; }
+.rules-tabs::-webkit-scrollbar{ display:none; }
+.rules-tab{
+  --lipy:4px; flex:none; width:96px; height:96px; padding:0; border:0; border-radius:var(--sf-r-btn); cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  background:var(--sf-raised); color:var(--sf-text); box-shadow:0 var(--lipy) 0 var(--sf-lip-dark);
+}
+.rules-tab .mode-tile{ width:40px; height:40px; opacity:1; margin:0; }
+.rules-tab span{ font:700 14px/1.1 'IBM Plex Sans',sans-serif; text-align:center; }
+.rules-tab:last-child:nth-child(odd){ grid-column:auto; }
+.rules-tab.active{
+  background:color-mix(in srgb, var(--mc) 22%, var(--sf-raised));
+  box-shadow:0 var(--lipy) 0 var(--mc-lip), 0 0 0 3px var(--mc); animation:sf-tile-bounce .22s ease-out;
+}
+.rules-list{ list-style:none; margin:0; padding:10px 18px 6px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; flex:1; min-height:0; scrollbar-width:none; }
+.rules-list::-webkit-scrollbar{ display:none; }
+.rules-list .item{
+  display:flex; align-items:center; gap:14px; padding:10px 12px 10px 10px; border-radius:var(--sf-r-btn);
+  background:var(--sf-raised); font-size:16px; line-height:1.35;
+}
+.rule-ico{
+  position:relative; flex:none; width:48px; height:48px; border-radius:var(--sf-r-tile);
+  display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--mc, var(--sf-primary)) 20%, var(--sf-card)); color:color-mix(in srgb, var(--mc, var(--sf-primary)) 45%, #fff);
+}
+.rule-ico .ico{ width:26px; height:26px; }
+.rules-list .num{
+  position:absolute; left:-8px; top:-8px; width:26px; height:26px; border:0; border-radius:50%; box-shadow:none;
+  background:var(--mc-fill, var(--sf-primary)); color:var(--mc-ink, #fff); font:800 14px/1 'Unbounded',sans-serif;
+  display:flex; align-items:center; justify-content:center;
+}
+.rule-text{ flex:1; min-width:0; font:600 16px/1.35 'IBM Plex Sans',sans-serif; color:var(--sf-text); }
+
+/* ---------- toasty, chybový pruh, překryv ztraceného spojení ---------- */
+.toast, .error-banner{
+  position:fixed; z-index:999; top:calc(12px + env(safe-area-inset-top)); bottom:auto; left:50%;
+  width:calc(100% - 36px); max-width:339px; display:flex; align-items:center; gap:12px; padding:12px 16px;
+  border:0; border-radius:var(--sf-r-btn); background:var(--sf-raised); color:var(--sf-text); text-align:left; text-shadow:none;
+  font:600 16px/1.35 'IBM Plex Sans',sans-serif; box-shadow:inset 0 0 0 2px var(--sf-primary), 0 10px 24px rgba(0,0,0,0.35);
+}
+.toast{ opacity:0; pointer-events:none; transform:translate(-50%, -140%); transition:transform .32s var(--sf-spring), opacity .2s ease; }
+.toast.show{ opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
+.toast span, .error-banner span{ flex:1; min-width:0; }
+.toast .ico, .error-banner .ico{ width:24px; height:24px; flex:none; stroke-width:2.6; }
+.toast-good{ background:var(--sf-good-bg); box-shadow:inset 0 0 0 2px var(--sf-good), 0 10px 24px rgba(0,0,0,0.35); }
+.toast-good .ico{ color:var(--sf-good-text); }
+.toast-danger, .error-banner{ background:var(--sf-danger-bg); box-shadow:inset 0 0 0 2px var(--sf-danger), 0 10px 24px rgba(0,0,0,0.35); }
+.toast-danger .ico, .error-banner .ico{ color:var(--sf-danger-text); }
+.toast-gold{ box-shadow:inset 0 0 0 2px var(--sf-gold), 0 10px 24px rgba(0,0,0,0.35); }
+.error-banner{ transform:translateX(-50%); animation:sf-drop .32s var(--sf-spring) both; }
+@keyframes sf-drop{ from{ opacity:0; transform:translate(-50%, -140%); } to{ opacity:1; transform:translate(-50%, 0); } }
+
+.reconnect-overlay{ background:var(--sf-backdrop); backdrop-filter:none; }
+.reconnect-box{
+  max-width:320px; padding:28px 24px; border:0; border-radius:var(--sf-r-sheet); background:var(--sf-card);
+  box-shadow:0 8px 0 var(--sf-lip-dark), 0 20px 50px rgba(0,0,0,0.5);
+}
+.reconnect-box p{ font:600 17px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text); }
+.spinner{ width:36px; height:36px; border:4px solid var(--sf-line); border-top-color:var(--sf-primary-hi); }
+
+/* čekání na hostitele (join-pending) — barvy nové palety */
+.join-pending .code-display{ border:0; background:var(--sf-raised); box-shadow:0 4px 0 var(--sf-lip-dark); text-shadow:none; border-radius:var(--sf-r-tile); }
+.join-pending h2{ font:800 24px/1.2 'Unbounded',sans-serif; }
+.join-pending-host{ font:500 17px/1.45 'IBM Plex Sans',sans-serif; color:var(--sf-text-desc); }
+
+/* ---------- SPLASH (17) ---------- */
+.sf-splash{
+  position:fixed; inset:0; z-index:2000; display:flex; flex-direction:column; align-items:center; overflow:hidden;
+  background:var(--sf-brand); color:var(--sf-text); transition:opacity .32s ease;
+}
+.sf-splash.is-hiding{ opacity:0; pointer-events:none; }
+.sf-splash-blob{ position:absolute; border-radius:50%; background:#5A35B3; }
+.sf-splash-blob-a{ left:-60px; top:120px; width:220px; height:220px; }
+.sf-splash-blob-b{ right:-80px; top:40px; width:200px; height:200px; }
+.sf-splash-main{ position:relative; margin-top:min(200px, 22vh); display:flex; flex-direction:column; align-items:center; gap:22px; }
+.sf-splash-word{ font:800 44px/1 'Unbounded',sans-serif; letter-spacing:-.01em; }
+.sf-splash-tag{ font:700 18px/1.3 'Unbounded',sans-serif; color:var(--sf-celebrate); text-align:center; }
+.sf-splash-wait{ position:relative; margin-top:56px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+.sf-splash-dots{ display:flex; gap:10px; }
+.sf-splash-dots span{ width:14px; height:14px; border-radius:7px; animation:sf-hop .9s ease-in-out infinite; }
+.sf-splash-msg{ font:600 16px/1.4 'IBM Plex Sans',sans-serif; color:#EDE6FF; text-align:center; }
+.sf-splash-crew{ position:absolute; left:0; right:0; bottom:0; height:150px; }
+.sf-splash-crew svg{ position:absolute; animation:sf-peek 2.4s ease-in-out infinite; }
+@keyframes sf-hop{ 0%,100%{ transform:translateY(0); } 40%{ transform:translateY(-10px); } }
+@keyframes sf-peek{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+@media (max-width:360px), (max-height:700px){
+  .sf-splash-main{ margin-top:12vh; gap:16px; }
+  .sf-splash-main svg{ width:104px; height:104px; }
+  .sf-splash-wait{ margin-top:36px; }
+}
+
+/* ---------- omezený pohyb ---------- */
+@media (prefers-reduced-motion: reduce){
+  .mode-card, .modal-sheet, .modal-backdrop, .sf-tile.on, .option-chip.active, .lang-chip.active, .rules-tab.active,
+  .code-box.active:empty::after, .code-boxes.is-error .code-box, .error-banner, .sf-splash-dots span, .sf-splash-crew svg,
+  .btn.is-loading::after{ animation:none !important; }
+  .btn, .back-btn, .icon-btn, .text-btn, .sf-tile, .mode-card, .toast, .nav-indicator, .x-close, .sf-seg-btn{ transition:none !important; }
+  .btn:active, .mode-card:active, .sf-tile:active{ transform:none; }
+  .sf-splash{ transition:none; }
+}
+
+/* avatar: rámeček v barvě rarity (výchozí = Common), uvnitř zvednutý povrch */
+.framed-avatar-inner{ background:var(--sf-raised); color:var(--sf-text); }

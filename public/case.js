@@ -110,7 +110,7 @@ function caseIsFree(caseDef, data = shopLoad()) {
 
 // Cena na tlačítku: „FREE“, nebo mince s cenou
 function casePriceHtml(caseDef, data) {
-  return caseIsFree(caseDef, data) ? '<span class="num">FREE</span>' : `${COIN_SVG}<span class="num">${caseDef.price}</span>`;
+  return caseIsFree(caseDef, data) ? '<span>Open free</span>' : `${COIN_SVG}<span class="num">${caseDef.price}</span>`;
 }
 
 function caseById(id) {
@@ -128,9 +128,9 @@ function isCaseAvailable(caseDef) {
 function caseTimeLeft(caseDef) {
   const mins = Math.max(1, Math.round((caseDef.endsAt - Date.now()) / 60000));
   const days = Math.floor(mins / 1440);
-  if (days >= 2) return `${days} days left`;
-  const h = Math.floor(mins / 60);
-  return h ? `${h}h ${mins % 60}m left` : `${mins}m left`;
+  const hours = Math.floor((mins % 1440) / 60);
+  if (days >= 1) return `Ends in ${days}d ${hours}h`;
+  return hours ? `Ends in ${hours}h ${mins % 60}m` : `Ends in ${mins}m`;
 }
 
 function casePool(caseDef) {
@@ -156,181 +156,45 @@ function casePool(caseDef) {
   }
 })();
 
-// Kreslená (cartoon) truhla: tlustý tmavý obrys ve stejném odstínu, ploché
-// barvy, jeden cel-shade pruh a obarvený (ne bílý) odlesk — stejný styl jako
-// kolo štěstí. Každá truhla je rozdělená na spodek (base) a víko (lid), ať
-// víko při otevření může odskočit. Obrys = tmavý konec barvy těla (c.line).
-
-// pásek (kování / stuha) — plochá barva + obrys + cel-shade
-function chestBand(c, x, y, w, h) {
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${c.trim[0]}" stroke-width="2.5"/>
-    <rect x="${x + w * 0.6}" y="${y + 1.2}" width="${w * 0.4 - 1.2}" height="${h - 2.4}" fill="${c.trim[1]}" opacity="0.5" stroke="none"/>`;
-}
-
-// spodek truhly: tělo, cel-shade u dna, tmavý otvor pod víkem
-function chestBody(c, rx = 9) {
-  return `<rect x="14" y="44" width="92" height="50" rx="${rx}" fill="${c.body[0]}"/>
-    <path d="M14 78 H106 V85 Q106 94 97 94 H23 Q14 94 14 85 Z" fill="${c.body[1]}" opacity="0.55" stroke="none"/>
-    <rect x="14" y="44" width="92" height="50" rx="${rx}" fill="none"/>
-    <rect x="21" y="42" width="78" height="10" rx="4" fill="${c.body[1]}" stroke="none"/>
-    <path d="M22 60 V70" stroke="${c.trim[0]}" stroke-opacity="0.45" stroke-width="3" stroke-linecap="round"/>`;
-}
-
-// víko: kopule, cel-shade pruh dole, tmavší lem a barevný odlesk nahoře
-function chestLid(c, top = 17, lip = true) {
-  const mid = top + 16;
-  return `<path d="M9 47 V${mid} Q9 ${top} 26 ${top} H94 Q111 ${top} 111 ${mid} V47 Z" fill="${c.lid[0]}"/>
-    <path d="M9 38 H111 V47 H9 Z" fill="${c.lid[1]}" opacity="0.55" stroke="none"/>
-    <path d="M9 47 V${mid} Q9 ${top} 26 ${top} H94 Q111 ${top} 111 ${mid} V47 Z" fill="none"/>
-    ${lip ? `<rect x="7" y="43" width="106" height="7" rx="3.5" fill="${c.lid[1]}"/>` : ''}
-    <path d="M20 ${top + 9} Q22 ${top + 4} 32 ${top + 4} H50" stroke="${c.trim[0]}" stroke-opacity="0.65" stroke-width="3.4" fill="none" stroke-linecap="round"/>`;
-}
-
-// kulatý zámek s hvězdou (na těle truhly)
-function chestStarLock(c, cy = 62) {
-  return `<circle cx="60" cy="${cy}" r="11.5" fill="${c.trim[0]}" stroke-width="2.6"/>
-    <path d="M60 ${cy - 6.5} L62.3 ${cy - 1.8} L67.4 ${cy - 1.2} L63.6 ${cy + 2.2} L64.6 ${cy + 7} L60 ${cy + 4.6} L55.4 ${cy + 7} L56.4 ${cy + 2.2} L52.6 ${cy - 1.2} L57.7 ${cy - 1.8} Z" fill="${c.body[1]}" stroke="none" opacity="0.7"/>`;
-}
-
-// Každý styl vrací { base, lid } (SVG řetězce bez obalu).
-const CHEST_STYLES = {
-  // Party — fialová truhla se zlatou stuhou, mašlí a konfetami
-  party: (k, c) => ({
-    base: `${chestBody(c)}
-      ${chestBand(c, 25, 44, 11, 50)}${chestBand(c, 84, 44, 11, 50)}
-      ${chestStarLock(c)}`,
-    lid: `${chestLid(c)}
-      ${chestBand(c, 25, 17, 11, 32)}${chestBand(c, 84, 17, 11, 32)}
-      <path d="M60 18 C50 2 34 4 40 14 C43 20 52 19 60 18 Z" fill="#F472B6" stroke="#9D174D" stroke-width="2.4"/>
-      <path d="M60 18 C70 2 86 4 80 14 C77 20 68 19 60 18 Z" fill="#F472B6" stroke="#9D174D" stroke-width="2.4"/>
-      <path d="M45 8 Q49 5 53 10" stroke="#FBCFE8" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <circle cx="60" cy="18" r="5" fill="#EC4899" stroke="#9D174D" stroke-width="2.4"/>
-      <g stroke="none"><rect x="13" y="24" width="6" height="3" rx="1.5" fill="#34D399" transform="rotate(-30 16 25)"/>
-      <rect x="99" y="26" width="6" height="3" rx="1.5" fill="#FBBF24" transform="rotate(35 102 27)"/>
-      <circle cx="46" cy="30" r="2.2" fill="#60A5FA"/><circle cx="76" cy="28" r="2" fill="#F472B6"/><circle cx="68" cy="36" r="1.8" fill="#34D399"/></g>`,
-  }),
-
-  // Frame — kovová bedna: rovné víko, rohová kování a nýty
-  frames: (k, c) => ({
-    base: `${chestBody(c, 6)}
-      ${chestBand(c, 14, 62, 92, 9)}
-      <g fill="${c.trim[0]}" stroke-width="2.2"><path d="M14 52 V44 H28 V49 H19 V52 Z"/><path d="M106 52 V44 H92 V49 H101 V52 Z"/>
-      <path d="M14 82 V94 H28 V89 H19 V82 Z"/><path d="M106 82 V94 H92 V89 H101 V82 Z"/></g>
-      <rect x="47" y="55" width="26" height="24" rx="5" fill="${c.trim[0]}" stroke-width="2.6"/>
-      <path d="M53 55 V50 Q53 44 60 44 Q67 44 67 50 V55" fill="none" stroke-width="3"/>
-      <circle cx="60" cy="65" r="3.2" fill="${c.body[1]}" stroke="none"/><rect x="58.6" y="66" width="2.8" height="7" rx="1.2" fill="${c.body[1]}" stroke="none"/>`,
-    lid: `<path d="M9 47 V28 Q9 20 17 20 H103 Q111 20 111 28 V47 Z" fill="${c.lid[0]}"/>
-      <path d="M9 38 H111 V47 H9 Z" fill="${c.lid[1]}" opacity="0.55" stroke="none"/>
-      <path d="M9 47 V28 Q9 20 17 20 H103 Q111 20 111 28 V47 Z" fill="none"/>
-      <rect x="7" y="43" width="106" height="7" rx="3.5" fill="${c.lid[1]}"/>
-      ${chestBand(c, 22, 20, 12, 27)}${chestBand(c, 86, 20, 12, 27)}
-      <path d="M40 26 H70" stroke="${c.trim[0]}" stroke-opacity="0.65" stroke-width="3.4" stroke-linecap="round"/>
-      <g fill="${c.trim[1]}" stroke="${c.body[1]}" stroke-width="1.6"><circle cx="16" cy="30" r="2.4"/><circle cx="104" cy="30" r="2.4"/><circle cx="60" cy="33" r="2.4"/></g>`,
-  }),
-
-  // Name — dřevěná truhla s prkny, zlatými pásy a štítem s písmenem A
-  names: (k, c) => ({
-    base: `${chestBody(c)}
-      <path d="M14 61 H106 M14 77 H106" stroke-opacity="0.55" stroke-width="2"/>
-      ${chestBand(c, 19, 44, 9, 50)}${chestBand(c, 92, 44, 9, 50)}
-      <path d="M46 50 H74 V66 Q74 76 60 82 Q46 76 46 66 Z" fill="${c.trim[0]}" stroke-width="2.6"/>
-      <path d="M60 50 H74 V66 Q74 76 60 82 Z" fill="${c.trim[1]}" opacity="0.45" stroke="none"/>
-      <text x="60" y="71" text-anchor="middle" font-family="Unbounded, sans-serif" font-weight="800" font-size="17" fill="${c.body[1]}" stroke="none">A</text>`,
-    lid: `${chestLid(c)}
-      <path d="M9 31 H111" stroke-opacity="0.45" stroke-width="2"/>
-      ${chestBand(c, 19, 17, 9, 32)}${chestBand(c, 92, 17, 9, 32)}`,
-  }),
-
-  // Legendary — vysoké klenuté víko, zlaté kování, drahokam a koruna
-  legend: (k, c) => ({
-    base: `${chestBody(c)}
-      <g fill="${c.trim[0]}" stroke-width="2.4"><path d="M14 94 V76 L32 94 Z"/><path d="M106 94 V76 L88 94 Z"/></g>
-      ${chestBand(c, 21, 44, 9, 50)}${chestBand(c, 90, 44, 9, 50)}
-      ${chestStarLock(c, 66)}`,
-    lid: `<path d="M9 47 V34 Q9 10 60 8 Q111 10 111 34 V47 Z" fill="${c.lid[0]}"/>
-      <path d="M9 38 H111 V47 H9 Z" fill="${c.lid[1]}" opacity="0.6" stroke="none"/>
-      <path d="M9 47 V34 Q9 10 60 8 Q111 10 111 34 V47 Z" fill="none"/>
-      <rect x="7" y="43" width="106" height="7" rx="3.5" fill="${c.trim[0]}"/>
-      <path d="M20 22 Q28 14 46 13" stroke="${c.trim[0]}" stroke-opacity="0.7" stroke-width="3.4" fill="none" stroke-linecap="round"/>
-      ${chestBand(c, 21, 12, 9, 35)}${chestBand(c, 90, 12, 9, 35)}
-      <path d="M60 20 L74 33 L60 48 L46 33 Z" fill="#A855F7" stroke="${c.trim[0]}" stroke-width="3.2"/>
-      <path d="M60 20 L74 33 L60 33 Z" fill="#7E22CE" opacity="0.6" stroke="none"/>
-      <path d="M52 28 L57 24" stroke="#E9D5FF" stroke-width="2.4" stroke-linecap="round"/>
-      <path d="M42 10 L44 -3 L52 4 L60 -7 L68 4 L76 -3 L78 10 Z" fill="${c.trim[0]}" stroke="#92400E" stroke-width="2.4"/>
-      <path d="M44 6 H76" stroke="#92400E" stroke-width="2.4"/>
-      <circle cx="60" cy="1" r="2.2" fill="#EF4444" stroke="none"/><circle cx="46" cy="0" r="1.6" fill="#38BDF8" stroke="none"/><circle cx="74" cy="0" r="1.6" fill="#34D399" stroke="none"/>`,
-  }),
-
-  // Spooky — dýňový zámek, sliz stékající z víka a prasklina
-  spooky: (k, c) => ({
-    base: `${chestBody(c)}
-      <path d="M14 61 H106 M14 77 H106" stroke-opacity="0.5" stroke-width="2"/>
-      ${chestBand(c, 25, 44, 9, 50)}${chestBand(c, 86, 44, 9, 50)}
-      <ellipse cx="60" cy="64" rx="14" ry="12.5" fill="#F97316" stroke="#7C2D12" stroke-width="2.6"/>
-      <path d="M52 54 Q47 64 52 74 M68 54 Q73 64 68 74" stroke="#C2410C" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <path d="M60 52 q1 -7 7 -7" stroke="#4D7C0F" stroke-width="3.4" stroke-linecap="round" fill="none"/>
-      <path d="M52.5 62 l3.5 -6 l3.5 6 Z M60.5 62 l3.5 -6 l3.5 6 Z" fill="#FDE047" stroke="#7C2D12" stroke-width="1.4"/>
-      <path d="M52 66 q8 8 16 0 l-3 3 l-2.5 -2 l-2.5 2.4 l-2.5 -2.4 l-2.5 2 Z" fill="#FDE047" stroke="#7C2D12" stroke-width="1.4"/>`,
-    lid: `${chestLid(c)}
-      ${chestBand(c, 25, 17, 9, 32)}${chestBand(c, 86, 17, 9, 32)}
-      <path d="M72 18 L68 27 L74 31 L70 41" stroke-opacity="0.6" stroke-width="2.4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
-      <path d="M8 47 H112 V52 Q108 52 107 60 Q106 65 103 60 Q102 52 94 52 H46 Q42 52 41 63 Q40 69 37 63 Q36 52 30 52 H18 Q15 52 14 57 Q13 61 11 56 Z" fill="#84CC16" stroke="#3F6212" stroke-width="2.4"/>
-      <path d="M16 49 H40" stroke="#BEF264" stroke-width="2.4" stroke-linecap="round" stroke-opacity="0.8"/>`,
-  }),
-
-  // Dragon — rudá truhla s dračími šupinami, hřebínkem na víku a zlatým dračím okem
-  dragon: (k, c) => ({
-    base: `${chestBody(c)}
-      <path d="M22 60 q4.5 5 9 0 q4.5 5 9 0 M80 60 q4.5 5 9 0 q4.5 5 9 0 M22 78 q4.5 5 9 0 q4.5 5 9 0 M80 78 q4.5 5 9 0 q4.5 5 9 0 M31 69 q4.5 5 9 0 M71 69 q4.5 5 9 0" stroke-opacity="0.5" stroke-width="2" fill="none"/>
-      <g fill="${c.trim[0]}" stroke-width="2.4"><path d="M14 94 V76 L32 94 Z"/><path d="M106 94 V76 L88 94 Z"/></g>
-      <circle cx="60" cy="66" r="14" fill="${c.trim[0]}" stroke-width="2.6"/>
-      <ellipse cx="60" cy="66" rx="9.5" ry="6.5" fill="#F97316" stroke="#7C2D12" stroke-width="1.8"/>
-      <ellipse cx="60" cy="66" rx="2.2" ry="5.6" fill="#3B0A0A" stroke="none"/>
-      <ellipse cx="56.4" cy="63.4" rx="1.8" ry="1" fill="#FDE047" stroke="none" transform="rotate(-30 56.4 63.4)"/>`,
-    lid: `<path d="M26 22 L19 3 L38 17 Z" fill="#F97316" stroke-width="2.4"/>
-      <path d="M94 22 L101 3 L82 17 Z" fill="#F97316" stroke-width="2.4"/>
-      <path d="M50 17 L60 -5 L70 17 Z" fill="#F97316" stroke-width="2.4"/>
-      ${chestLid(c)}
-      <path d="M28 32 q4.5 5 9 0 q4.5 5 9 0 M74 32 q4.5 5 9 0 q4.5 5 9 0 M51 28 q4.5 5 9 0 q4.5 5 9 0" stroke-opacity="0.5" stroke-width="2" fill="none"/>
-      ${chestBand(c, 21, 17, 9, 32)}${chestBand(c, 90, 17, 9, 32)}`,
-  }),
-
-  // Daily — dárková krabice s mašlí (zdarma za reklamu)
-  daily: (k, c) => ({
-    base: `<rect x="16" y="46" width="88" height="48" rx="7" fill="${c.body[0]}"/>
-      <path d="M16 78 H104 V87 Q104 94 97 94 H23 Q16 94 16 87 Z" fill="${c.body[1]}" opacity="0.55" stroke="none"/>
-      <rect x="16" y="46" width="88" height="48" rx="7" fill="none"/>
-      ${chestBand(c, 52, 46, 16, 48)}`,
-    lid: `<rect x="10" y="28" width="100" height="20" rx="6" fill="${c.lid[0]}"/>
-      <path d="M10 41 H110 V42 Q110 48 104 48 H16 Q10 48 10 42 Z" fill="${c.lid[1]}" opacity="0.55" stroke="none"/>
-      <rect x="10" y="28" width="100" height="20" rx="6" fill="none"/>
-      ${chestBand(c, 52, 28, 16, 20)}
-      <path d="M60 27 C48 8 30 11 38 22 C42 28 52 27 60 27 Z" fill="${c.trim[0]}" stroke-width="2.4"/>
-      <path d="M60 27 C72 8 90 11 82 22 C78 28 68 27 60 27 Z" fill="${c.trim[0]}" stroke-width="2.4"/>
-      <circle cx="60" cy="26" r="5" fill="${c.trim[1]}" stroke-width="2.4"/>`,
-  }),
+// Truhla ze style sheetu (part-chest-art): plochá barva + jeden tmavý obrys ve stejném odstínu.
+// Je rozdělená na spodek (.chest-base) a víko (.chest-lid), ať víko při otevření může odskočit.
+// Barvy podle druhu: dragon, party, frame, color, mythic (+ spooky v oranžové).
+const SF_CHEST_COLORS = {
+  dragon: { lid: '#E0453A', body: '#C9352B', line: '#6E150F', trim: '#FFD23F', gem: '#3FC97A', spikes: true },
+  party:  { lid: '#A57BFF', body: '#8B5CF6', line: '#3F2389', trim: '#FFD23F', gem: '#FF7FC0', bow: true },
+  frame:  { lid: '#55C3F5', body: '#3EA8E0', line: '#145A85', trim: '#E9F7FF', gem: '#3E8BFF' },
+  color:  { lid: '#55D383', body: '#3FC46A', line: '#1A6634', trim: '#FFD23F', gem: '#FF8A3D' },
+  mythic: { lid: '#FF6FAE', body: '#F0438E', line: '#7E0F45', trim: '#FFE38C', gem: '#B66BFF' },
+  spooky: { lid: '#FF9F43', body: '#7A3FC4', line: '#2F1659', trim: '#D9F99D', gem: '#FF8A3D' },
 };
+const SF_CHEST_KIND = { dragon: 'dragon', party: 'party', frames: 'frame', names: 'color', legend: 'mythic', spooky: 'spooky' };
 
 function caseSvg(caseDef) {
   const k = `case-${caseDef.id}`;
-  const c = caseDef.colors;
-  const line = c.body[1];
-  const draw = (CHEST_STYLES[caseDef.id] || CHEST_STYLES.party)(k, c);
-  // Truhla (.case-chest) a stín pod ní (.case-shadow) jsou zvlášť, ať se
-  // můžou animovat proti sobě. Víko (.chest-lid) a spodek (.chest-base) se
-  // hýbou zvlášť při otevření; .chest-glow/.chest-beam je barevné světlo
-  // z truhly (barva zlatého kování, nikdy bílá). viewBox začíná nad nulou,
-  // aby se vešly ozdoby nad víkem (mašle, koruna).
-  return `<svg viewBox="0 -8 120 124" aria-hidden="true">
-    <defs>
-      <radialGradient id="${k}-shadow"><stop offset="0" stop-color="${line}" stop-opacity="0.55"/><stop offset="1" stop-color="${line}" stop-opacity="0"/></radialGradient>
-    </defs>
-    <ellipse class="case-shadow" cx="60" cy="104" rx="50" ry="7" fill="url(#${k}-shadow)"/>
+  const c = SF_CHEST_COLORS[SF_CHEST_KIND[caseDef.id]] || SF_CHEST_COLORS.party;
+  // Truhla (.case-chest) a stín pod ní (.case-shadow) jsou zvlášť, ať se můžou animovat proti sobě.
+  // .chest-glow / .chest-beam je barevné světlo z truhly (barva kování, nikdy bílá).
+  return `<svg viewBox="0 0 200 170" aria-hidden="true" stroke-linejoin="round">
+    <ellipse class="case-shadow" cx="100" cy="158" rx="70" ry="8" fill="#000" opacity=".28"/>
     <g class="case-chest">
-      <g class="chest-base" stroke="${line}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${draw.base}</g>
-      <path class="chest-beam" d="M24 47 L96 47 L120 -60 L0 -60 Z" fill="${c.trim[0]}"/>
-      <ellipse class="chest-glow" cx="60" cy="47" rx="38" ry="7" fill="${c.trim[0]}"/>
-      <g class="chest-lid" stroke="${line}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${draw.lid}</g>
+      <g class="chest-base">
+        <rect x="30" y="80" width="140" height="70" rx="12" fill="${c.body}" stroke="${c.line}" stroke-width="6"/>
+        <path d="M30 96 H170" stroke="${c.line}" stroke-width="6"/>
+        <rect x="52" y="82" width="16" height="68" rx="4" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
+        <rect x="132" y="82" width="16" height="68" rx="4" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
+        <rect x="84" y="84" width="32" height="32" rx="9" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
+        <circle cx="100" cy="99" r="7" fill="${c.gem}" stroke="${c.line}" stroke-width="4"/>
+      </g>
+      <path class="chest-beam" d="M40 80 L160 80 L210 -90 L-10 -90 Z" fill="${c.trim}"/>
+      <ellipse class="chest-glow" cx="100" cy="80" rx="62" ry="10" fill="${c.trim}"/>
+      <g class="chest-lid">
+        ${c.spikes ? `<g fill="${c.trim}" stroke="${c.line}" stroke-width="5"><path d="M58 46 64 18 76 40z"/><path d="M92 34 100 4 108 34z"/><path d="M124 40 136 18 142 46z"/></g>` : ''}
+        <path d="M36 82 V66 C 36 40, 60 30, 100 30 C 140 30, 164 40, 164 66 V82 Z" fill="${c.lid}" stroke="${c.line}" stroke-width="6"/>
+        <rect x="52" y="30" width="16" height="52" rx="4" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
+        <rect x="132" y="30" width="16" height="52" rx="4" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
+        ${c.bow ? `<g fill="#FF7FC0" stroke="#A3236A" stroke-width="5"><path d="M100 30 C 84 10, 66 18, 76 32 Z"/><path d="M100 30 C 116 10, 134 18, 124 32 Z"/><circle cx="100" cy="30" r="7"/></g>` : ''}
+        <path d="M46 52 C 54 44, 66 40, 80 39" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="5" fill="none" stroke-linecap="round"/>
+      </g>
     </g>
   </svg>`;
 }
@@ -355,11 +219,26 @@ function rollItem(caseDef) {
   return from[Math.floor(randomFloat() * from.length)];
 }
 
-// ------------------------------------------------ co může padnout ---
+// ------------------------------------------------ nákupní okno truhly (16b) ---
+// Okno se otevře po ťuknutí na truhlu: popis, vzácnosti (slovem), zůstatek mincí a jedno velké tlačítko.
+// "See drop odds" rozbalí šance a všechno, co v truhle může padnout.
+
+function caseDescription(caseDef) {
+  const sections = new Set(casePool(caseDef).map((i) => i.section));
+  const what = sections.size > 1 ? 'One random photo frame or name color.' : sections.has('frame') ? 'One random photo frame.' : 'One random name color.';
+  return `${what} Duplicates turn into coins.`;
+}
 
 function showCaseContents(caseId) {
   const caseDef = caseById(caseId);
   const data = shopLoad();
+  const free = caseIsFree(caseDef, data);
+  const dev = isDevMode();
+  const afford = free || dev || data.coins >= caseDef.price;
+  const after = dev ? data.coins : data.coins - caseDef.price;
+
+  const chipsHtml = RARITY_ORDER.map((r) => `
+    <span class="sf-chip rar-chip" style="--rc:${RARITIES[r].color}"><i></i>${RARITIES[r].label}</span>`).join('');
 
   const oddsHtml = RARITY_ORDER.map((r) => `
     <span class="odds-chip" style="--rc:${RARITIES[r].color}"><i></i>${RARITIES[r].label} ${caseDef.odds[r]} %</span>
@@ -374,28 +253,56 @@ function showCaseContents(caseId) {
         <div class="drop-item ${owned ? 'is-owned' : ''}" style="--rc:${RARITIES[item.rarity].color}">
           ${shopItemPreview(sectionOf(item), item)}
           <div class="drop-item-name">${item.name}</div>
+          <div class="drop-item-rar">${RARITIES[item.rarity].label}</div>
           ${owned ? `<span class="drop-owned">${icon('check')}</span>` : ''}
         </div>`;
     }).join('');
 
   const modal = openModal(`
     <div class="x-close-row"><button class="x-close" id="contents-close" aria-label="Close">${icon('close')}</button></div>
-    <div class="case-contents-head" style="--case-glow:${caseDef.glow}">
-      <div class="case-art small">${caseSvg(caseDef)}</div>
-      <h2>${caseDef.name}</h2>
+    <div class="buy-sheet">
+      <div class="buy-art" style="--case-glow:${caseDef.glow}">${caseSvg(caseDef)}</div>
+      <h2 class="buy-title">${caseDef.name}</h2>
+      <p class="buy-desc">${caseDescription(caseDef)}</p>
+      <div class="buy-chips">${chipsHtml}</div>
+      <button type="button" class="buy-odds-link" id="contents-odds-btn" aria-expanded="false" aria-controls="contents-odds">See drop odds</button>
+      <div class="buy-odds" id="contents-odds" hidden>
+        <div class="odds-row">${oddsHtml}</div>
+        <div class="drop-grid">${dropsHtml}</div>
+      </div>
+      ${free ? '' : `<div class="buy-balance"><span>Your coins</span><span class="num"><b>${data.coins}</b> → <b class="${afford ? '' : 'is-short'}">${afford ? after : data.coins}</b></span></div>`}
+      ${afford
+        ? (free
+          ? '<button class="btn btn-primary buy-cta" id="contents-open">Open free</button>'
+          : `<button class="btn btn-gold buy-cta" id="contents-open">Open for ${COIN_SVG}<span class="num">${caseDef.price}</span></button>`)
+        : `<button class="btn buy-cta" id="contents-open" disabled>Not enough coins</button>
+           <button class="btn btn-ghost buy-more" id="contents-more">Get coins</button>`}
     </div>
-    <div class="odds-row">${oddsHtml}</div>
-    <div class="drop-grid">${dropsHtml}</div>
-    <button class="case-open-btn wide" id="contents-open">Open ${casePriceHtml(caseDef, shopLoad())}</button>
   `);
+  modal.querySelector('#contents-close').onclick = closeModal;
+  const oddsBtn = modal.querySelector('#contents-odds-btn');
+  oddsBtn.onclick = () => {
+    const box = modal.querySelector('#contents-odds');
+    box.hidden = !box.hidden;
+    oddsBtn.setAttribute('aria-expanded', String(!box.hidden));
+    oddsBtn.textContent = box.hidden ? 'See drop odds' : 'Hide drop odds';
+    if (!box.hidden) box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  };
   const openBtn = modal.querySelector('#contents-open');
-  if (openBtn) {
+  if (openBtn && !openBtn.disabled) {
     openBtn.onclick = () => {
       closeModal();
       openCase(caseId);
     };
   }
-  modal.querySelector('#contents-close').onclick = closeModal;
+  const more = modal.querySelector('#contents-more');
+  if (more) {
+    more.onclick = () => {
+      closeModal();
+      shopTab = 'packs';
+      if (mountedKey === 'shop') renderShopScreen();
+    };
+  }
 }
 
 // ----------------------------------------------------------- zvuky ---
@@ -409,12 +316,12 @@ function revealSound(rarity, duplicate) {
 
 // ------------------------------------------------------- otevírání ---
 
-const STRIP_CARD = 112;
-const STRIP_GAP = 8;
+const STRIP_CARD = 98;
+const STRIP_GAP = 10;
 const STRIP_STEP = STRIP_CARD + STRIP_GAP;
-const STRIP_LENGTH = 60;
-const STRIP_WIN_INDEX = 52;
-const SPIN_MS = 6500;
+const STRIP_LENGTH = 48;
+const STRIP_WIN_INDEX = 40;
+const SPIN_MS = 4500; // style sheet: 4,5 s, cubic-bezier(.1,.7,.1,1)
 
 // Oslava podle vzácnosti — vždy barevná (žádná bílá), počet částic je omezený
 // kvůli telefonům. rays = velké otáčivé paprsky za kartou, coins = zlatý déšť.
@@ -470,20 +377,36 @@ function caseRays(overlay, rarityKey) {
 }
 
 function stripCardHtml(item, extraClass = '') {
+  const frame = item.section === 'frame';
   return `
     <div class="strip-card ${extraClass}" style="--rc:${RARITIES[item.rarity].color}">
-      ${shopItemPreview(sectionOf(item), item)}
-      <div class="strip-card-name">${item.name}</div>
+      ${frame ? shopItemPreview(sectionOf(item), item) : `<span class="strip-aa" style="${nameStyleFor(item)}">Aa</span>`}
+      <div class="strip-card-name">${RARITIES[item.rarity].label}</div>
     </div>`;
 }
 
-// Chunky zlatý ukazatel (jako u kola) — shora i zdola, při cvaknutí poskočí.
-const STRIP_POINTER_SVG = `<svg viewBox="0 0 44 56" aria-hidden="true">
-  <path d="M6 4 H38 Q42 4 40 9 L26 46 Q22 54 18 46 L4 9 Q2 4 6 4 Z" fill="#F0B429" stroke="#7C2D12" stroke-width="4" stroke-linejoin="round"/>
-  <path d="M22 4 H38 Q42 4 40 9 L26 46 Q24 50 22 50 Z" fill="#D97706" opacity="0.55"/>
-  <path d="M10 9 L16 9 L22 24" stroke="#FDE68A" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.8"/>
-  <circle cx="22" cy="17" r="3.4" fill="#FB923C" stroke="#7C2D12" stroke-width="2"/>
-</svg>`;
+// Ukazatel (žlutý trojúhelník) — shora i zdola, při cvaknutí poskočí.
+const STRIP_POINTER_SVG = `<svg viewBox="0 0 28 22" aria-hidden="true"><path d="M2 2h24L14 20z" fill="#FFD23F" stroke="#A37A00" stroke-width="3" stroke-linejoin="round"/></svg>`;
+
+// cubic-bezier(x1, y1, x2, y2) jako funkce času (0–1) → pokrok (0–1); stejná křivka jako v CSS
+function cubicBezierEase(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const X = (t) => ((ax * t + bx) * t + cx) * t;
+  const Y = (t) => ((ay * t + by) * t + cy) * t;
+  return (x) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let lo = 0;
+    let hi = 1;
+    for (let i = 0; i < 24; i++) {
+      const mid = (lo + hi) / 2;
+      if (X(mid) < x) lo = mid; else hi = mid;
+    }
+    return Y((lo + hi) / 2);
+  };
+}
+const ROULETTE_EASE = cubicBezierEase(0.1, 0.7, 0.1, 1);
 
 function openCase(caseId, { free = false } = {}) {
   const caseDef = caseById(caseId);
@@ -519,115 +442,106 @@ function showCaseOverlay(caseDef, won, duplicate, refund) {
   overlay.innerHTML = `
     <button class="x-close case-x" id="reveal-close" aria-label="Close" hidden>${icon('close')}</button>
     <div class="case-stage">
-      <h2 class="case-title">${caseDef.name}</h2>
-      <div class="chest-stage" id="chest-stage">
+      <div class="roul-head">
+        <span class="roul-eyebrow">OPENING</span>
+        <h2 class="case-title">${caseDef.name}</h2>
+      </div>
+      <div class="chest-stage ${reduced ? '' : 'shake'}" id="chest-stage">
         <div class="chest-rays"></div>
         ${caseSvg(caseDef)}
       </div>
-      <div class="strip-window" id="strip-window" hidden>
+      <div class="strip-window" id="strip-window">
         <div class="strip-marker"><i class="strip-line"></i><span class="strip-pointer top">${STRIP_POINTER_SVG}</span><span class="strip-pointer bottom">${STRIP_POINTER_SVG}</span></div>
         <div class="strip" id="strip">${strip.map((item, i) => stripCardHtml(item, i === STRIP_WIN_INDEX ? 'is-win' : '')).join('')}</div>
       </div>
+      <button type="button" class="roul-skip" id="case-skip">Tap to skip</button>
       <div class="case-reveal" id="case-reveal"></div>
     </div>`;
   document.body.appendChild(overlay);
   document.body.classList.add('no-scroll');
 
   const chestStage = overlay.querySelector('#chest-stage');
+  const skipBtn = overlay.querySelector('#case-skip');
   const alive = () => overlay.isConnected;
-  let spinStarted = false;
+  const win = overlay.querySelector('#strip-window');
+  const stripEl = overlay.querySelector('#strip');
+  const pointers = overlay.querySelectorAll('.strip-pointer');
+  let done = false;
+  let skipped = false;
 
-  // --- 2) pás s věcmi: roztočí se a zpomalí na výhře pod ukazatelem
-  function startSpin() {
-    if (spinStarted || !alive()) return;
-    spinStarted = true;
-    chestStage.hidden = true;
-    const win = overlay.querySelector('#strip-window');
-    win.hidden = false;
-    if (!reduced) win.classList.add('enter');
-    const stripEl = overlay.querySelector('#strip');
-    const pointers = overlay.querySelectorAll('.strip-pointer');
-    const windowWidth = win.clientWidth;
-    // náhodný posun v rámci výherní karty, ať to nekončí pokaždé přesně na středu
-    const jitter = (randomFloat() - 0.5) * STRIP_CARD * 0.7;
-    const target = STRIP_WIN_INDEX * STRIP_STEP + STRIP_CARD / 2 - windowWidth / 2 + jitter;
-
-    if (reduced) {
-      // bez animace: rovnou na výhře a výsledek
-      stripEl.style.transform = `translateX(${-target}px)`;
-      setTimeout(() => showReveal(caseDef, won, duplicate, refund), 250);
-      return;
+  // pás zastaví pod ukazatelem, truhla otevře víko a po chvíli se ukáže výhra
+  function finish() {
+    if (done || !alive()) return;
+    done = true;
+    skipBtn.hidden = true;
+    chestStage.classList.remove('shake');
+    if (!reduced) {
+      chestStage.classList.add('pop');
+      const r = chestStage.getBoundingClientRect();
+      const o = overlay.getBoundingClientRect();
+      const trim = SF_CHEST_COLORS[SF_CHEST_KIND[caseDef.id]] || SF_CHEST_COLORS.party;
+      caseBurst(overlay, [trim.trim, trim.lid, '#F472B6', '#60A5FA', '#34D399', '#FB923C'], 22, true,
+        r.left - o.left + r.width / 2, r.top - o.top + r.height * 0.4, 4);
     }
-
-    // plynulé zpomalení s lehkým přejetím za cíl a zpětným usazením
-    const OVER = 16; // px přejetí
-    const MAIN = 0.9; // podíl času na hlavní dojezd
-    const easeOut = (t) => 1 - Math.pow(1 - t, 4);
-    const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
-    const posAt = (t) => (t < MAIN
-      ? (target + OVER) * easeOut(t / MAIN)
-      : target + OVER * (1 - easeInOut((t - MAIN) / (1 - MAIN))));
-
-    const start = performance.now();
-    let lastTick = -1;
-    let lastBump = 0;
-    function frame(now) {
-      if (!alive()) return;
-      const t = Math.min(1, (now - start) / SPIN_MS);
-      const x = posAt(t);
-      stripEl.style.transform = `translate3d(${-x}px,0,0)`;
-      // cvaknutí pokaždé, když pod ukazatelem projede další karta
-      const under = Math.floor((x + windowWidth / 2) / STRIP_STEP);
-      if (under !== lastTick) {
-        if (lastTick !== -1) {
-          playSfx('chest-tick');
-          // ukazatel poskočí (při rychlém průjezdu max ~každých 45 ms)
-          if (now - lastBump > 45) {
-            lastBump = now;
-            pointers.forEach((p) => p.animate(
-              [{ transform: 'translateX(-50%) rotate(0deg) scale(1)' },
-               { transform: 'translateX(-50%) rotate(-16deg) scale(1.1,0.9)', offset: 0.35 },
-               { transform: 'translateX(-50%) rotate(5deg) scale(0.97,1.05)', offset: 0.7 },
-               { transform: 'translateX(-50%) rotate(0deg) scale(1)' }],
-              { duration: 170, easing: 'ease-out' }));
-          }
-        }
-        lastTick = under;
-      }
-      if (t < 1) requestAnimationFrame(frame);
-      else setTimeout(() => showReveal(caseDef, won, duplicate, refund), 450);
-    }
-    requestAnimationFrame(frame);
+    setTimeout(() => { if (alive()) showReveal(caseDef, won, duplicate, refund); }, reduced ? 250 : 750);
   }
 
-  if (reduced) { startSpin(); return; }
+  const windowWidth = win.clientWidth;
+  // náhodný posun v rámci výherní karty, ať to nekončí pokaždé přesně na středu
+  const jitter = (randomFloat() - 0.5) * STRIP_CARD * 0.6;
+  const target = STRIP_WIN_INDEX * STRIP_STEP + STRIP_CARD / 2 - windowWidth / 2 + jitter;
 
-  // --- 1) truhla: nakrčení + vrtění (čím dál silnější), pak víko vyskočí
-  const sched = (fn, ms) => setTimeout(() => { if (alive()) fn(); }, ms);
-  chestStage.classList.add('windup');
-  sched(() => playSfx('chest-tick'), 350);
-  sched(() => playSfx('chest-tick'), 750);
-  sched(() => playSfx('chest-tick'), 1050);
-  sched(() => {
-    chestStage.classList.remove('windup');
-    chestStage.classList.add('pop');
-    // barevné světlo a konfety v barvách truhly (zlatá/trim), žádná bílá
-    const r = chestStage.getBoundingClientRect();
-    const o = overlay.getBoundingClientRect();
-    const trim = caseDef.colors.trim;
-    caseBurst(overlay, [trim[0], trim[1], '#F472B6', '#60A5FA', '#34D399', '#FB923C'], 26, true,
-      r.left - o.left + r.width / 2, r.top - o.top + r.height * 0.38, 4);
-  }, 1300);
-  sched(() => chestStage.classList.add('leave'), 2150);
-  sched(startSpin, 2500);
-  // ťuknutí přeskočí úvod
-  chestStage.onclick = startSpin;
+  skipBtn.onclick = () => {
+    if (done || skipped) return;
+    skipped = true;
+    stripEl.style.transform = `translate3d(${-target}px,0,0)`;
+    finish();
+  };
+
+  if (reduced) {
+    // bez animace: rovnou na výhře a výsledek
+    stripEl.style.transform = `translate3d(${-target}px,0,0)`;
+    finish();
+    return;
+  }
+
+  // 4,5 s, zpomalení cubic-bezier(.1,.7,.1,1), dojede přesně pod žlutou značku
+  const start = performance.now() + 350; // krátká pauza, ať truhla chvíli zavrčí
+  let lastTick = -1;
+  let lastBump = 0;
+  function frame(now) {
+    if (!alive() || skipped) return;
+    const t = Math.min(1, Math.max(0, (now - start) / SPIN_MS));
+    const x = target * ROULETTE_EASE(t);
+    stripEl.style.transform = `translate3d(${-x}px,0,0)`;
+    // cvaknutí pokaždé, když pod ukazatelem projede další karta
+    const under = Math.floor((x + windowWidth / 2) / STRIP_STEP);
+    if (under !== lastTick) {
+      if (lastTick !== -1) {
+        playSfx('chest-tick');
+        // ukazatel poskočí (při rychlém průjezdu max ~každých 45 ms)
+        if (now - lastBump > 45) {
+          lastBump = now;
+          pointers.forEach((p) => p.animate(
+            [{ transform: 'translateX(-50%) rotate(0deg) scale(1)' },
+             { transform: 'translateX(-50%) rotate(-12deg) scale(1.1,0.9)', offset: 0.35 },
+             { transform: 'translateX(-50%) rotate(4deg) scale(0.97,1.05)', offset: 0.7 },
+             { transform: 'translateX(-50%) rotate(0deg) scale(1)' }],
+            { duration: 170, easing: 'ease-out' }));
+        }
+      }
+      lastTick = under;
+    }
+    if (t < 1) requestAnimationFrame(frame);
+    else finish();
+  }
+  requestAnimationFrame(frame);
 }
 
 function showReveal(caseDef, won, duplicate, refund) {
   const overlay = document.getElementById('case-overlay');
   if (!overlay) return;
-  overlay.querySelector('.strip-card.is-win').classList.add('highlight');
+  overlay.classList.add('is-revealed');
   revealSound(won.rarity, duplicate);
   playSkinSfx(won.id); // kočka / dino / drak mají vlastní zvuk
 
@@ -636,22 +550,28 @@ function showReveal(caseDef, won, duplicate, refund) {
   const coins = shopLoad().coins;
   const reveal = document.getElementById('case-reveal');
   reveal.style.setProperty('--rc', rarity.color);
+  const kind = won.section === 'frame' ? 'Photo frame' : 'Name color';
   reveal.innerHTML = `
+    ${duplicate ? '<span class="reveal-banner">Already in your collection</span>' : '<span class="reveal-new">NEW!</span>'}
     <div class="reveal-card rar-${won.rarity} ${won.rarity === 'mythic' ? 'is-mythic' : ''}">
       <div class="reveal-rays"></div>
-      <div class="reveal-rarity">${rarity.label}</div>
+      <div class="reveal-rarity"><i></i>${rarity.label}</div>
       <div class="reveal-preview">${shopItemPreview(sectionOf(won), won)}</div>
-      <div class="reveal-name">${won.name}</div>
-      <div class="reveal-kind">${sectionOf(won).title}</div>
-      ${duplicate
-        ? `<div class="reveal-dup">Duplicate — you get ${COIN_SVG}<span class="num">+${refund}</span></div>`
-        : `<div class="reveal-new">New!</div>`}
+      <div class="reveal-title">
+        <div class="reveal-name">${won.name}</div>
+        <div class="reveal-kind">${kind}</div>
+      </div>
+      ${duplicate ? '<span class="reveal-x2" aria-hidden="true">×2</span>' : ''}
     </div>
+    ${duplicate ? `<div class="reveal-dup">${COIN_SVG}<span class="reveal-dup-text"><b class="num">+${refund} coins</b><small>Duplicate turned into coins</small></span></div>` : ''}
     <div class="reveal-actions">
-      ${duplicate ? '' : `<button class="btn btn-primary btn-block" id="reveal-equip">Equip</button>`}
-      <button class="btn ${duplicate ? 'btn-primary' : 'btn-ghost'} btn-block" id="reveal-again" ${coins < caseDef.price ? 'disabled' : ''}>
+      ${duplicate
+        ? '<button class="btn btn-primary btn-block reveal-main" id="reveal-collect">Collect</button>'
+        : '<button class="btn btn-primary btn-block reveal-main" id="reveal-equip">Equip now</button>'}
+      <button class="btn btn-ghost btn-block" id="reveal-again" ${coins < caseDef.price ? 'disabled' : ''}>
         Open another ${COIN_SVG}<span class="num">${caseDef.price}</span>
       </button>
+      ${duplicate ? '' : '<button class="btn btn-ghost btn-block" id="reveal-back">Back to shop</button>'}
     </div>`;
   reveal.classList.add('show');
   document.getElementById('reveal-close').hidden = false;
@@ -685,10 +605,15 @@ function showReveal(caseDef, won, duplicate, refund) {
       openCase(caseDef.id);
     };
   }
-  document.getElementById('reveal-close').onclick = () => {
+  const closeAll = () => {
     closeCaseOverlay();
     renderShopScreen();
   };
+  document.getElementById('reveal-close').onclick = closeAll;
+  ['reveal-back', 'reveal-collect'].forEach((id) => {
+    const b = document.getElementById(id);
+    if (b) b.onclick = closeAll;
+  });
 }
 
 function closeCaseOverlay() {

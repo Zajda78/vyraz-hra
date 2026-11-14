@@ -81,7 +81,7 @@ function avatarHtml(name, looks, size) {
   // profilovka jen z data URL obrázku — nic jiného se do src nepustí
   const avatar = looks && typeof looks.avatar === 'string' && looks.avatar.startsWith('data:image/') ? looks.avatar : null;
   return `
-    <div class="framed-avatar" style="width:${size}px; height:${size}px; padding:${pad}px; border-radius:${Math.round(size * 0.24)}px; background:${frame ? frame.style : 'rgba(255,255,255,0.14)'}">
+    <div class="framed-avatar" style="width:${size}px; height:${size}px; padding:${pad}px; border-radius:${Math.round(size * 0.24)}px; background:${frame ? frame.style : 'var(--sf-r-common)'}">
       <div class="framed-avatar-inner" style="border-radius:${Math.round(size * 0.19)}px; font-size:${Math.round(size * 0.4)}px">${avatar ? `<img class="avatar-img" src="${avatar}" alt="">` : letter}</div>
       ${frameDecorHtml(frame)}
     </div>`;
@@ -119,9 +119,9 @@ function styledNameHtml(fallback = 'Name') {
 function profileCardHtml() {
   return `
     <div class="profile-card" id="profile-card" role="button" tabindex="0">
-      ${framedAvatarHtml(48)}
+      ${framedAvatarHtml(56)}
       <div class="profile-card-text">
-        ${getSavedName() ? `Your name is ${styledNameHtml()}` : 'Set your name'}
+        ${getSavedName() ? `<span class="pc-label">Playing as</span>${styledNameHtml()}` : '<span class="pc-name-empty">Set your name</span>'}
       </div>
       <button id="change-name-btn" class="chip-btn chip-icon" title="Profile" aria-label="Open profile">${icon('pencil')}</button>
     </div>`;
@@ -155,37 +155,32 @@ function renderProfileScreen() {
   const data = shopLoad();
   const totalItems = SHOP_SECTIONS.reduce((n, s) => n + s.items.length, 0);
   const pct = Math.round((data.owned.length / totalItems) * 100);
+  const frame = equippedItem(data, 'frame');
+  const frameLine = frame ? `${frame.name} · <span style="color:${RARITIES[frame.rarity].color}">${RARITIES[frame.rarity].label}</span>` : 'Default';
 
   app.innerHTML = `
-    <div class="lobby-top">
-      <button id="profile-back" class="back-btn" title="Back">${icon('back')}</button>
+    <div class="lobby-top sf-page-top">
+      <button id="profile-back" class="back-btn" title="Back" aria-label="Back">${icon('back')}</button>
       <div class="brand"><h1>Profile</h1></div>
     </div>
 
-    <div class="screen">
+    <div class="screen sf-profile">
       <div class="profile-hero">
         <div class="profile-avatar-wrap">
           <label class="edit-avatar-tap" aria-label="Change profile photo">
-            ${framedAvatarHtml(128)}
+            ${framedAvatarHtml(112)}
             <span class="edit-badge">${icon('camera')}</span>
             <input type="file" accept="image/*" capture="user" id="profile-avatar-file" hidden>
           </label>
           ${getAvatar() ? `<button type="button" class="edit-avatar-remove" id="profile-avatar-remove" aria-label="Remove photo">${icon('close')}</button>` : ''}
         </div>
-        <div class="profile-hero-name" id="profile-name-slot">
-          <button type="button" class="edit-name-btn" id="profile-name-tap" aria-label="Change name">${styledNameHtml('No name')}<span class="edit-badge">${icon('pencil')}</span></button>
-        </div>
-      </div>
-
-      <div class="profile-stats">
-        <div class="profile-stat">
-          <div class="profile-stat-value">${COIN_SVG}<span class="num">${data.coins}</span></div>
-          <div class="profile-stat-label">Coins</div>
-        </div>
-        <div class="profile-stat">
-          <div class="profile-stat-value">${icon('hanger')}<span class="num">${data.owned.length} / ${totalItems}</span></div>
-          <div class="profile-stat-label">Collection</div>
-          <div class="profile-progress"><div style="width:${pct}%"></div></div>
+        <div class="profile-hero-info">
+          <div class="profile-hero-name" id="profile-name-slot">
+            <button type="button" class="edit-name-btn" id="profile-name-tap" aria-label="Change name">${styledNameHtml('No name')}<span class="edit-badge">${icon('pencil')}</span></button>
+          </div>
+          <div class="looks-frame-line">Frame: ${frameLine}</div>
+          <div class="looks-progress"><span class="num">${data.owned.length} of ${totalItems} skins</span><div class="profile-progress"><div style="width:${pct}%"></div></div></div>
+          <span class="sf-chip profile-coins">${COIN_SVG}<span class="num">${data.coins}</span></span>
         </div>
       </div>
 

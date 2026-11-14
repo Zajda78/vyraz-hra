@@ -84,26 +84,21 @@ function buyPartyPack() {
 function partyPackCardHtml({ compact = false } = {}) {
   const owned = ownsPartyPack();
   const modesHtml = PARTY_PACK.modes.map((m) => `
-    <div class="pack-mode">${modeTile(m)}<span>${modeDisplayName(m)}</span></div>
+    <div class="pack-mode" title="${modeDisplayName(m)}" aria-label="${modeDisplayName(m)}">${modeTile(m)}</div>
   `).join('');
   return `
-    <div class="pack-card ${compact ? 'compact' : ''}">
-      <div class="pack-shine"></div>
+    <div class="pack-card pack-card-party ${compact ? 'compact' : ''}">
       ${owned ? '' : `<div class="pack-discount">−${PARTY_PACK.discount} %</div>`}
-      <div class="pack-title">${PARTY_PACK.name}</div>
-      <div class="pack-modes">
-        ${modesHtml}
-        <div class="pack-mode">${`<div class="pack-plus">+</div>`}<span>More new modes</span></div>
+      <div class="pack-head">
+        <h2 class="pack-title">${PARTY_PACK.name}</h2>
+        <span class="pack-sub">5 modes forever. Everyone in your lobby plays free.</span>
       </div>
+      <div class="pack-modes">${modesHtml}</div>
       <div class="pack-coins">${COIN_SVG}<span class="num">+${PARTY_PACK.coins}</span> bonus coins</div>
-      <ul class="pack-perks">
-        <li>${icon('check')} Modes unlocked forever</li>
-        <li>${icon('check')} Everyone in your lobby plays free</li>
-      </ul>
       ${owned
         ? `<div class="pack-owned">${icon('checkCircle')} Owned</div>`
         : `<button class="pack-buy" data-buy-pack>
-             <span class="pack-price">Buy for ${formatEur(PARTY_PACK.priceEur)}</span>
+             <span class="pack-price">Buy ${formatEur(PARTY_PACK.priceEur)}</span>
              <span class="pack-worth">${formatEur(PARTY_PACK.worthEur)}</span>
            </button>`}
     </div>`;
@@ -177,7 +172,7 @@ function questionPacksCardHtml({ compact = false } = {}) {
       ${owned
         ? `<div class="pack-owned">${icon('checkCircle')} Owned</div>`
         : `<button class="pack-buy" data-buy-qpacks>
-             <span class="pack-price">Buy for ${formatEur(QUESTION_PACKS.priceEur)}</span>
+             <span class="pack-price">Buy ${formatEur(QUESTION_PACKS.priceEur)}</span>
              <span class="pack-worth">${formatEur(QUESTION_PACKS.worthEur)}</span>
            </button>`}
     </div>`;

@@ -33,22 +33,28 @@ function buildImpostorVotingView(state) {
   const cardsHtml = state.cards.map((c) => {
     const looks = looksOf(state, c.id);
     const photo = c.missed
-      ? `<div class="missed"><span class="emoji">${icon('sad')}</span>Too slow!!</div>`
+      ? sfMissedHtml()
       : `<img src="${c.photoDataUrl}">`;
     return `
-      <div class="ivote-card ${c.isOwn ? 'own' : ''} ${fellowIds.includes(c.id) ? 'fellow' : ''}" ${c.isOwn ? '' : `data-id="${c.id}"`}>
+      <div class="ivote-card ${c.isOwn ? 'own' : ''} ${fellowIds.includes(c.id) ? 'fellow' : ''}" ${c.isOwn ? '' : `data-id="${c.id}" role="button" tabindex="0" aria-pressed="false"`}>
         <div class="ivote-photo">${photo}${!c.isOwn && !c.missed ? likeBtnHtml(c.id) : ''}</div>
-        <div class="ivote-name">${playerNameHtml(c.name, looks)}${c.isOwn ? ' (you)' : ''}</div>
+        <div class="ivote-name">${playerNameHtml(c.name, looks)}${c.isOwn ? ' <span class="sf-you">(you)</span>' : ''}</div>
       </div>`;
   }).join('');
 
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds} — who's the impostor?</div>
-        ${state.isImpostor ? '' : roleBadgeHtml(state)}
-        ${state.isImpostor ? '' : `<div class="prompt-text">${escapeHtml(state.prompt)}</div>`}
+    <div class="screen sf-g sf-vote sf-ivote">
+      <div class="sf-vote-top">
+        <span class="sf-pill">${sfRoundPill(state, "who's the impostor?")}</span>
+        <span class="sf-voted"><i></i><b class="sf-count-num num">0/${state.activeCount}</b><span>voted</span></span>
+        <button class="sf-exit" data-exit-game aria-label="Leave game">${icon('logout')}</button>
+      </div>
+      <div class="sf-vote-headrow">
+        <div>
+          <h1 class="sf-vote-title">Who's the impostor?</h1>
+          ${state.isImpostor ? '' : `<p class="sf-vote-sub">${roleBadgeHtml(state)}<span class="prompt-text">${escapeHtml(state.prompt)}</span></p>`}
+        </div>
+        ${sfRingHtml(true)}
       </div>
       ${state.isImpostor ? `
       <div class="impostor-banner">
@@ -59,10 +65,9 @@ function buildImpostorVotingView(state) {
         </div>
       </div>` : ''}
       ${fellowHtml}
-      <div class="timer" id="timer-el">--</div>
       ${state.dualVote ? `<div class="pick-two-note">${tr('Pick 2 people — you can change your picks', getLang())}</div>` : ''}
-      <div class="grid" id="ivote-grid">${cardsHtml}</div>
-      <p class="wait-note" id="ivote-count"></p>
+      <div class="grid sf-pickable" id="ivote-grid">${cardsHtml}</div>
+      <p class="sf-sr" id="ivote-count"></p>
     </div>
   `;
 
@@ -93,9 +98,11 @@ function markImpostorVote(targetId) {
     c.classList.toggle('selected', on);
     const photo = c.querySelector('.ivote-photo');
     const chk = c.querySelector('.ivote-check');
+    c.setAttribute('aria-pressed', String(on));
     if (on && !chk && photo) photo.insertAdjacentHTML('beforeend', `<div class="ivote-check">${icon('check')}</div>`);
     if (!on && chk) chk.remove();
   });
+  document.querySelectorAll('.sf-pickable').forEach((g) => g.classList.toggle('has-pick', sel.size > 0 && ![...sel].every((x) => !x)));
 }
 
 function patchImpostorVoting(state) {
@@ -108,6 +115,7 @@ function patchImpostorVoting(state) {
     : (state.dualVote && (state.yourVotes || []).length === 1
       ? `Pick 1 more person… ${state.votedCount} / ${state.activeCount} voted…`
       : `${state.votedCount} / ${state.activeCount} voted…`);
+  sfSetCount(state.votedCount || 0, state.activeCount || 0);
 }
 
 // ------------------------------------------------------------ výsledky ---
@@ -163,7 +171,7 @@ function renderImpostorResults(state, r) {
   const othersHtml = others.map((c) => `
     <div class="result-card">
       ${c.missed
-        ? `<div class="missed"><span class="emoji">${icon('sad')}</span>Too slow!!</div>`
+        ? sfMissedHtml()
         : resultPhotoHtml(c.photoDataUrl, looksOf(state, c.id))}
       <div class="meta">
         <div class="name">${playerNameHtml(c.name, looksOf(state, c.id))}</div>
@@ -173,8 +181,11 @@ function renderImpostorResults(state, r) {
   `).join('');
 
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
+    <div class="screen sf-g sf-results sf-iresults">
+      <div class="sf-res-top">
+        <span class="sf-pill">Round ${r.round} / ${state.totalRounds} results</span>
+        <button class="sf-exit" data-exit-game aria-label="Leave game">${icon('logout')}</button>
+      </div>
       <div class="impostor-outcome ${r.caught ? 'caught' : 'escaped'}">
         <div class="impostor-outcome-title">${outcomeTitle}</div>
         <div class="impostor-outcome-sub">${youImpostor
@@ -194,17 +205,11 @@ function renderImpostorResults(state, r) {
 
       <div class="grid">${othersHtml}</div>
 
-      <div class="card">
-        <h3 style="margin-bottom:10px;">Scoreboard</h3>
-        <div class="scoreboard">${scoreboardRowsHtml(state.players)}</div>
-      </div>
-      ${state.isHost
-        ? `<button id="next-btn" class="btn btn-primary btn-block">${state.round >= state.totalRounds ? 'Show final results' : 'Next round'}</button>`
-        : `<p class="wait-note">Waiting for the host to start the next round…</p>`}
+      ${sfScoreboardHtml(state)}
+      ${sfNextBarHtml(state)}
     </div>
   `;
 
-  if (state.isHost) {
-    document.getElementById('next-btn').onclick = () => send({ type: 'next_round' });
-  }
+  sfWireNext();
+  sfConfetti(document.querySelector('.impostor-outcome.caught'));
 }

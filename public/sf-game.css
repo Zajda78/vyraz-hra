@@ -1,0 +1,537 @@
+/* ======================================================================
+   SNAPFAM v2 — herní obrazovky (fáze 2): lobby, čekání, foťák, kreslení, hlasování,
+   výsledky, konec hry. Načítá se PO style.css; všechna pravidla jsou pod #app,
+   aby přebila starší "cartoon" vrstvy bez !important. Nic pod 14 px.
+   ====================================================================== */
+
+/* ---------- barva módu (jedna sada pro celou hru; body.gm-<mód> nastavuje renderApp) ---------- */
+body.gm-classic{ --mc:var(--sf-m-reaction); --mc-fill:var(--sf-m-reaction); --mc-lip:var(--sf-m-reaction-lip); --mc-ink:#fff; }
+body.gm-caption{ --mc:var(--sf-m-main); --mc-fill:var(--sf-m-main); --mc-lip:var(--sf-m-main-lip); --mc-ink:#2A1200; }
+body.gm-draw{ --mc:var(--sf-m-doodle); --mc-fill:var(--sf-m-doodle); --mc-lip:var(--sf-m-doodle-lip); --mc-ink:#06302A; }
+body.gm-impostor, body.gm-impostor.imp-role{ --mc:var(--sf-m-impostor); --mc-fill:var(--sf-m-impostor); --mc-lip:var(--sf-m-impostor-lip); --mc-ink:#fff; }
+body.gm-hunt{ --mc:var(--sf-m-hunt); --mc-fill:var(--sf-m-hunt); --mc-lip:var(--sf-m-hunt-lip); --mc-ink:#fff; }
+body.gm-copycat{ --mc:var(--sf-m-copycat); --mc-fill:var(--sf-m-copycat); --mc-lip:var(--sf-m-copycat-lip); --mc-ink:#06260F; }
+body.gm-twins{ --mc:#CBB5EB; --mc-fill:var(--sf-m-twins); --mc-lip:var(--sf-m-twins-lip); --mc-ink:#2E2160; }
+
+/* ---------- společné ---------- */
+#app .sf-g{ gap:14px; }
+#app .sf-g > *{ animation:sf-g-in .28s var(--sf-spring) both; }
+@keyframes sf-g-in{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.sf-sr{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+#app .sf-h3{ margin:0; font:700 18px/1.2 'Unbounded',sans-serif; text-shadow:none; color:var(--sf-text); }
+#app .sf-label{ font:700 14px/1 'IBM Plex Sans',sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--sf-text-soft); }
+#app .sf-card{ background:var(--sf-card); border:0; border-radius:24px; padding:16px; box-shadow:none; animation:none; }
+#app .sf-you{ display:block; font:600 14px/1.2 'IBM Plex Sans',sans-serif; color:var(--sf-text-status); }
+#app .sf-sb .scoreboard .sf-you, #app .sb-player .sf-you{ display:inline; margin-left:6px; }
+
+/* tečky "čeká se" */
+.sf-dots{ display:inline-flex; gap:4px; }
+.sf-dots i{ width:7px; height:7px; border-radius:4px; background:var(--mc, var(--sf-primary)); animation:sf-hop .9s ease-in-out infinite; }
+.sf-dots i:nth-child(2){ animation-delay:.15s; }
+.sf-dots i:nth-child(3){ animation-delay:.3s; }
+
+/* ---------- hlavička kola ---------- */
+#app .sf-head{ display:flex; flex-direction:column; gap:8px; }
+#app .sf-head-top{ display:flex; align-items:center; gap:8px; min-height:30px; }
+#app .sf-head-top .spicy-badge{ margin:0; padding:6px 10px; border-radius:var(--sf-r-chip); font:700 14px/1 'IBM Plex Sans',sans-serif; letter-spacing:.04em; }
+#app .sf-pill{
+  display:inline-block; align-self:flex-start; padding:6px 10px; border-radius:10px;
+  background:color-mix(in srgb, var(--mc, var(--sf-primary)) 24%, var(--sf-bg)); color:color-mix(in srgb, var(--mc, var(--sf-primary)) 45%, #fff);
+  font:700 14px/1.15 'IBM Plex Sans',sans-serif; letter-spacing:.06em; text-transform:uppercase;
+}
+#app .sf-exit{
+  margin-left:auto; flex:none; width:44px; height:44px; border:0; border-radius:50%; cursor:pointer;
+  background:var(--sf-line); color:var(--sf-text-soft); display:flex; align-items:center; justify-content:center;
+}
+#app .sf-exit .ico{ width:20px; height:20px; }
+#app .sf-exit:active{ transform:scale(.9); background:var(--sf-raised); }
+#app .sf-head-main{ display:flex; align-items:center; gap:12px; }
+#app .sf-head-title{ flex:1; min-width:0; font:800 21px/1.2 'Unbounded',sans-serif; color:var(--sf-text); overflow-wrap:anywhere; }
+#app .sf-head-title.is-small{ font:700 17px/1.3 'Unbounded',sans-serif; color:var(--sf-text-desc); }
+#app .sf-head-title:empty{ display:none; }
+#app .sf-head-title .prompt-text{ font:inherit; text-shadow:none; }
+#app .sf-head-title .player-name{ color:var(--sf-text); }
+
+/* kruhový odpočet */
+#app .sf-ring{ position:relative; width:68px; height:68px; flex:none; }
+#app .sf-ring.sm{ width:56px; height:56px; }
+#app .sf-ring svg{ display:block; width:100%; height:100%; }
+#app .sf-ring-bg{ fill:var(--sf-card); stroke:var(--sf-line); stroke-width:8; }
+#app .sf-ring-fg{ fill:none; stroke:var(--mc, var(--sf-primary)); stroke-width:8; stroke-linecap:round; transition:stroke-dashoffset .3s linear, stroke .2s ease; }
+#app .sf-ring-num{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font:800 22px 'Unbounded',sans-serif; color:var(--sf-text); }
+#app .sf-ring.sm .sf-ring-num{ font-size:18px; }
+#app .sf-ring.low .sf-ring-fg{ stroke:var(--sf-danger); }
+#app .sf-ring.low .sf-ring-num{ color:var(--sf-danger-text); animation:sf-pulse 1s ease-in-out infinite; }
+@keyframes sf-pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.12); } }
+
+/* ---------- LOBBY (06) ---------- */
+#app .sf-lobby-head{ display:flex; align-items:center; gap:12px; min-height:48px; margin-bottom:14px; }
+#app .sf-lobby-head .mode-tile{ width:36px; height:36px; }
+#app .sf-lobby-mode{ flex:1; min-width:0; font:800 20px/1 'Unbounded',sans-serif; color:var(--sf-text); }
+#app .sf-code-card{
+  display:flex; flex-direction:column; align-items:center; gap:12px; padding:18px; border-radius:24px;
+  background:var(--sf-card); box-shadow:inset 0 0 0 2px var(--sf-line);
+}
+#app .sf-code{ font:800 44px/1 'Unbounded',sans-serif; letter-spacing:.18em; padding-left:.18em; color:var(--sf-text); }
+#app .sf-code.is-pending{ display:flex; gap:10px; padding:14px 0; letter-spacing:0; }
+#app .sf-code.is-pending span{ width:14px; height:14px; border-radius:50%; background:var(--sf-primary-hi); animation:code-dot .8s ease-in-out infinite; }
+#app .sf-code.is-pending span:nth-child(2){ animation-delay:.12s; }
+#app .sf-code.is-pending span:nth-child(3){ animation-delay:.24s; }
+#app .sf-code.is-pending span:nth-child(4){ animation-delay:.36s; }
+#app .sf-code-actions{ display:flex; gap:10px; width:100%; }
+#app .sf-code-actions .btn{ min-height:52px; padding:0 12px; font-size:15px; flex:1; }
+#app .sf-code-actions .invite-btn{ flex:1.6; }
+#app .sf-code-actions .ico{ color:var(--sf-primary-soft); }
+
+#app .sf-sec-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+#app .sf-sec-meta{ font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-status); }
+#app .sf-players .player-list{ gap:10px; }
+#app .player-row{
+  min-height:68px; padding:10px; gap:10px; border-radius:18px; background:var(--sf-raised); box-shadow:none; border:0; animation:none;
+}
+#app .player-row .name{ flex:1; min-width:0; gap:12px; }
+#app .sf-avatar-wrap{ position:relative; flex:none; display:block; }
+#app .sf-avatar-wrap .dot{ position:absolute; right:-3px; bottom:-3px; width:14px; height:14px; border-radius:50%; background:var(--sf-good); box-shadow:0 0 0 3px var(--sf-raised); }
+#app .sf-avatar-wrap .dot.off{ background:var(--sf-text-status); }
+#app .sf-name-col{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+#app .sf-name-col .player-name{ font:700 16px/1.2 'Unbounded',sans-serif; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#app .player-row.is-off .name{ opacity:.65; }
+#app .player-row-actions{ gap:8px; flex:none; }
+#app .badge{ padding:6px 10px; border-radius:10px; font:700 14px/1 'IBM Plex Sans',sans-serif; letter-spacing:.06em; }
+#app .add-friend-mini{ width:44px; height:44px; border-radius:50%; background:var(--sf-line); color:var(--sf-primary-soft); border:0; box-shadow:none; }
+#app .add-friend-mini .ico{ width:20px; height:20px; }
+#app .rename-bot-btn{ width:44px; height:44px; }
+#app .kick-btn{ width:44px; height:44px; border-radius:50%; background:var(--sf-line); color:var(--sf-close-x); border:0; box-shadow:none; display:flex; align-items:center; justify-content:center; }
+#app .kick-btn .ico{ width:20px; height:20px; stroke-width:3.2; }
+#app .sf-empty-row{ padding:14px; border-radius:18px; border:2px dashed var(--sf-line); font:500 15px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+
+/* žádost o připojení — zelená karta nad hráči */
+#app .sf-join-req{ display:flex; flex-direction:column; gap:8px; padding:0; border:0; background:none; box-shadow:none; }
+#app .sf-join-row{ display:flex; align-items:center; gap:12px; padding:12px; border-radius:20px; background:#1B2E2A; box-shadow:inset 0 0 0 2px var(--sf-good); }
+#app .sf-join-text{ flex:1; min-width:0; font:600 16px/1.3 'IBM Plex Sans',sans-serif; }
+#app .sf-join-text .player-name{ font:700 15px 'Unbounded',sans-serif; }
+#app .req-btn{ flex:none; width:44px; height:44px; border:0; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+#app .req-btn .ico{ width:22px; height:22px; stroke-width:3.2; }
+#app .req-yes{ background:var(--sf-good); color:#fff; box-shadow:0 4px 0 var(--sf-good-lip); }
+#app .req-no{ background:var(--sf-line); color:var(--sf-close-x); box-shadow:none; }
+#app .req-btn:active{ transform:translateY(3px) scale(.96); }
+
+/* nastavení v lobby */
+#app .setting-card{ text-align:left; display:flex; flex-direction:column; gap:12px; padding:16px; border-radius:24px; border:0; box-shadow:none; background:var(--sf-card); }
+#app .setting-card .setting-title{ margin:0; display:block; font:700 18px/1.1 'Unbounded',sans-serif; color:var(--sf-text); text-shadow:none; }
+#app .setting-card .setting-title .ico{ display:none; }
+#app .option-picker{ display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:8px; }
+#app .option-picker .option-chip{ min-height:56px; padding:0; font-size:18px; }
+#app .pack-picker{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+#app .pack-chip{
+  --lipy:4px; position:relative; min-height:72px; padding:12px; border:0; border-radius:16px; cursor:pointer;
+  display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:10px; text-align:left;
+  background:var(--sf-raised); color:var(--sf-text); box-shadow:0 var(--lipy) 0 var(--sf-lip-dark); font:700 16px/1.2 'Unbounded',sans-serif; opacity:1;
+}
+#app .pack-chip.active{ background:var(--sf-primary); color:#fff; box-shadow:0 var(--lipy) 0 var(--sf-primary-lip), 0 0 0 3px var(--sf-primary-soft); }
+#app .pack-chip.locked{ opacity:1; }
+#app .pack-chip-label{ min-width:0; overflow-wrap:anywhere; }
+#app .pack-chip-lock{ position:absolute; top:-8px; right:-8px; width:30px; height:30px; border-radius:10px; background:var(--sf-gold); color:var(--sf-gold-ink); box-shadow:0 3px 0 var(--sf-gold-lip); display:flex; align-items:center; justify-content:center; }
+#app .pack-chip-lock .ico{ width:15px; height:15px; stroke-width:3; }
+
+/* přilepená dolní lišta (Start / Další kolo / Play again) */
+#app .sf-start-bar{
+  position:sticky; bottom:0; z-index:5; margin:auto -18px calc(-32px - env(safe-area-inset-bottom));
+  padding:22px 18px calc(24px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:12px;
+  background:linear-gradient(180deg, rgba(19,10,36,0), var(--sf-bg) 34%); animation:none;
+}
+#app .sf-start{ min-height:60px; border-radius:20px; font:800 18px/1.2 'Unbounded',sans-serif; }
+#app .sf-start .ico{ width:20px; height:20px; fill:currentColor; }
+#app .sf-start:disabled{ background:var(--sf-raised); color:var(--sf-text-soft); font:700 16px/1.2 'Unbounded',sans-serif; box-shadow:none; }
+#app .sf-start.is-sent:disabled{ background:var(--sf-good-bg); color:var(--sf-good-text); box-shadow:inset 0 0 0 2px var(--sf-good); }
+#app .sf-g .sf-start:not(:disabled){ background:var(--sf-primary); color:#fff; --lip:var(--sf-primary-lip); box-shadow:0 var(--lipy) 0 var(--sf-primary-lip); }
+#app .sf-vote .sf-start:not(:disabled), #app .sf-draw .sf-start:not(:disabled), #app .sf-judge .sf-start:not(:disabled){
+  background:var(--mc-fill); color:var(--mc-ink); --lip:var(--mc-lip); box-shadow:0 var(--lipy) 0 var(--mc-lip);
+}
+#app .sf-wait-host{ margin:0; display:flex; align-items:center; justify-content:center; gap:10px; min-height:60px; text-align:center; font:600 16px/1.35 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .sf-wait-host .sf-dots i{ background:var(--sf-primary-hi); }
+#app .sf-over-bar{ gap:12px; }
+
+/* ---------- čekání na hostitele (07) ---------- */
+#app .join-pending{ position:relative; gap:18px; padding-top:20px; justify-content:flex-start; }
+#app .sf-code-boxes{ display:flex; gap:8px; margin-top:20px; }
+#app .sf-code-boxes span{ width:52px; height:60px; border-radius:14px; background:var(--sf-raised); box-shadow:0 4px 0 var(--sf-lip-dark); display:flex; align-items:center; justify-content:center; font:800 26px 'Unbounded',sans-serif; }
+#app .sf-knock{ position:relative; width:240px; height:250px; margin-top:10px; }
+#app .sf-door{ position:absolute; left:28px; top:0; width:130px; height:230px; border-radius:20px 20px 6px 6px; background:var(--sf-raised); box-shadow:inset 0 0 0 5px var(--sf-line); }
+#app .sf-door span{ position:absolute; right:16px; top:118px; width:14px; height:14px; border-radius:7px; background:var(--sf-celebrate); }
+#app .sf-knocker{ position:absolute; right:0; bottom:0; animation:sf-knock 1.8s ease-in-out infinite; transform-origin:50% 90%; }
+@keyframes sf-knock{ 0%,60%,100%{ transform:rotate(0); } 70%{ transform:rotate(-10deg); } 80%{ transform:rotate(6deg); } 90%{ transform:rotate(-6deg); } }
+#app .sf-knock-text{ display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
+#app .join-pending h2{ font:800 24px/1.2 'Unbounded',sans-serif; margin:0; }
+#app .join-pending-host{ max-width:290px; margin:0; font:500 17px/1.45 'IBM Plex Sans',sans-serif; color:var(--sf-text-desc); }
+#app .sf-host-name{ color:#FFB46B; }
+#app .join-pending > .btn{ margin-top:auto; }
+
+/* ---------- FOŤÁK (08) ---------- */
+#app .sf-cam{ gap:14px; }
+#app .sf-stage, #app .camera-wrap.sf-stage{
+  position:relative; flex:1; min-height:260px; aspect-ratio:auto; border:0; border-radius:28px; overflow:hidden; background:#000;
+  box-shadow:0 0 0 3px var(--mc, var(--sf-primary));
+}
+#app .sf-stage video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+/* místo bílého záblesku krátká vinětace v barvě módu */
+#app .camera-wrap .flash{ background:radial-gradient(ellipse at center, transparent 35%, var(--mc, var(--sf-primary)) 135%); opacity:0; }
+#app .camera-wrap .flash.on{ animation:sf-vignette .24s ease-out; }
+@keyframes sf-vignette{ 0%{ opacity:0; } 40%{ opacity:.85; } 100%{ opacity:0; } }
+#app .sf-chip-over{
+  position:absolute; z-index:3; display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border-radius:12px;
+  background:rgba(19,10,36,.78); color:var(--sf-text); font:700 14px/1 'IBM Plex Sans',sans-serif;
+}
+#app .sf-live{ top:14px; left:14px; }
+#app .sf-live i{ width:9px; height:9px; border-radius:5px; background:var(--sf-danger); animation:sf-live 1.4s ease-in-out infinite; }
+@keyframes sf-live{ 50%{ opacity:.35; } }
+#app .sf-snapped{ top:14px; right:14px; }
+#app .sf-stage .missed.camera-error{ position:absolute; inset:0; background:var(--sf-raised); padding:20px; text-align:center; gap:12px; }
+#app .sf-stage .camera-help{ font-size:14px; color:var(--sf-text-soft); }
+#app .sf-shutter-row{ height:104px; display:flex; align-items:center; justify-content:space-between; padding:0 10px; flex:none; }
+#app .sf-sp{ width:56px; }
+#app .sf-shutter-row .flip-cam-btn{
+  position:static; transform:none; width:56px; height:56px; border:0; border-radius:50%; cursor:pointer;
+  background:var(--sf-raised); color:var(--sf-text); box-shadow:0 4px 0 var(--sf-lip-dark); display:flex; align-items:center; justify-content:center;
+}
+#app .sf-shutter-row .flip-cam-btn .ico{ width:26px; height:26px; }
+#app .sf-shutter-row .flip-cam-btn:active{ transform:translateY(3px) scale(.96); }
+#app .shutter{
+  width:92px; height:92px; padding:0; border:0; outline:0; border-radius:50%; cursor:pointer; flex:none;
+  background:var(--sf-text); animation:none;
+  box-shadow:0 6px 0 var(--mc-lip, var(--sf-primary-lip)), 0 0 28px color-mix(in srgb, var(--mc, var(--sf-primary)) 45%, transparent);
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .12s ease-out, box-shadow .12s ease-out;
+}
+#app .shutter span{ width:72px; height:72px; border-radius:50%; background:var(--mc-fill, var(--sf-primary)); box-shadow:inset 0 -5px 0 var(--mc-lip, var(--sf-primary-lip)); pointer-events:none; }
+#app .shutter:active{ transform:scale(.9); box-shadow:0 2px 0 var(--mc-lip, var(--sf-primary-lip)); }
+#app .shutter:disabled{ opacity:.4; box-shadow:none; }
+
+/* role (impostor), tým dvojčat nad foťákem */
+#app .role-badge{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:14px; background:var(--sf-card); border:0; box-shadow:none; font:600 14px/1.35 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); text-align:left; }
+#app .role-badge .ico{ width:20px; height:20px; flex:none; color:var(--mc); }
+#app .twin-banner{ border:0; box-shadow:inset 0 0 0 2px var(--tc, var(--sf-line)); background:var(--sf-card); border-radius:20px; }
+#app .twin-label, #app .twin-hint, #app .twin-own, #app .team-badge{ font-size:14px; }
+
+/* ---------- FOTKA ODESLÁNA (08b) ---------- */
+#app .sf-waiting{ gap:16px; }
+#app .sf-sent{ position:relative; align-self:center; width:min(268px, 62vw); aspect-ratio:268/340; margin-top:6px; flex:none; }
+#app .sf-sent-photo{
+  position:absolute; inset:0; border-radius:26px; overflow:hidden; transform:rotate(-2deg);
+  box-shadow:0 0 0 5px var(--mc, var(--sf-primary)), 0 8px 0 5px var(--sf-lip-dark); background:var(--sf-raised);
+  display:flex; align-items:center; justify-content:center;
+}
+#app .sf-sent-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+#app .sf-sent-photo.is-empty .ico{ width:72px; height:72px; color:var(--sf-text-status); }
+#app .sf-sent-check{
+  position:absolute; right:-14px; top:-14px; width:60px; height:60px; border-radius:50%; background:var(--sf-good); box-shadow:0 5px 0 var(--sf-good-lip);
+  display:flex; align-items:center; justify-content:center; color:#fff; animation:sf-check-pop .36s ease-out both;
+}
+#app .sf-sent-check .ico{ width:32px; height:32px; stroke-width:3.4; }
+@keyframes sf-check-pop{ 0%{ transform:scale(.4); } 70%{ transform:scale(1.15); } 100%{ transform:scale(1); } }
+#app .sf-nice{ display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; }
+#app .sf-nice b{ font:800 24px/1.2 'Unbounded',sans-serif; }
+#app .sf-nice span{ font:500 16px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .sf-wait-card{ margin-top:auto; display:flex; flex-direction:column; gap:14px; padding:16px; border-radius:24px; background:var(--sf-card); }
+#app .sf-wait-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+#app .sf-wait-label{ display:flex; align-items:center; gap:10px; font:700 17px/1.2 'Unbounded',sans-serif; }
+#app .sf-wait-card .sf-count-num{ font:800 18px 'Unbounded',sans-serif; color:color-mix(in srgb, var(--mc, var(--sf-primary)) 45%, #fff); }
+#app .sf-pips{ display:flex; flex-wrap:wrap; gap:8px; }
+#app .sf-pips i{ width:14px; height:14px; border-radius:7px; background:var(--sf-line); transition:background .2s ease, transform .2s var(--sf-spring); }
+#app .sf-pips i.on{ background:var(--sf-good); transform:scale(1.1); }
+#app .sf-pips:empty{ display:none; }
+
+/* stavová obrazovka (čekání na focení, kreslení, originál…) */
+#app .sf-status-mid{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; text-align:center; }
+#app .sf-art{
+  width:180px; height:180px; border-radius:40px; background:var(--sf-raised); box-shadow:0 8px 0 var(--sf-lip-dark); color:var(--mc, var(--sf-primary-hi));
+  display:flex; align-items:center; justify-content:center; animation:sf-wob 1.6s ease-in-out infinite;
+}
+#app .sf-art .ico{ width:84px; height:84px; stroke-width:1.8; }
+#app .sf-art.is-avatar{ width:120px; height:120px; border-radius:32px; }
+@keyframes sf-wob{ 0%,100%{ transform:rotate(-4deg); } 50%{ transform:rotate(4deg); } }
+#app .sf-status-h{ margin:0; max-width:300px; font:800 24px/1.25 'Unbounded',sans-serif; overflow-wrap:anywhere; }
+#app .sf-status-h .player-name{ font:inherit; }
+#app .sf-status-h > span{ font-weight:700; }
+#app .sf-status-sub{ margin:0; max-width:300px; font:500 16px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+
+/* ---------- POPISKY (13a) ---------- */
+#app .sf-cap-photo{ position:relative; align-self:center; width:min(100%, 44vh); aspect-ratio:1/1; flex:none; }
+#app .sf-cap-photo.is-small{ width:min(100%, 220px); }
+#app .sf-cap-photo .photo-frame{ height:100%; margin:0 !important; max-width:none !important; width:100% !important; }
+#app .sf-cap-photo .photo-frame:not(.has-frame){ padding:5px; border-radius:26px; background:var(--mc-fill, var(--sf-primary)); box-shadow:0 6px 0 var(--mc-lip, var(--sf-primary-lip)); }
+#app .sf-cap-photo .camera-wrap{ aspect-ratio:auto; height:100%; border:0; border-radius:21px; box-shadow:none; }
+#app .sf-cap-photo .photo-frame.has-frame{ border-radius:26px; }
+#app .sf-cap-count{ left:16px; bottom:16px; }
+#app .sf-cap-count:empty{ display:none; }
+#app .sf-cap-form{ display:flex; flex-direction:column; gap:8px; margin-top:auto; }
+#app .sf-cap-form label{ font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .sf-cap-row{ display:flex; gap:10px; align-items:stretch; }
+#app .sf-cap-row textarea{
+  flex:1; min-width:0; min-height:56px; resize:none; border:0; border-radius:18px; background:var(--sf-raised); box-shadow:0 0 0 3px var(--mc, var(--sf-primary));
+  padding:14px 16px; color:var(--sf-text); font:600 16px/1.35 'IBM Plex Sans',sans-serif;
+}
+#app .sf-cap-row textarea:focus{ outline:none; }
+#app .sf-cap-row textarea::placeholder{ color:var(--sf-text-status); }
+#app .btn.sf-send{ width:56px; min-height:56px; padding:0; flex:none; align-self:flex-end; background:var(--mc-fill); color:var(--mc-ink); --lip:var(--mc-lip); box-shadow:0 var(--lipy) 0 var(--mc-lip); }
+#app .btn.sf-send .ico{ width:24px; height:24px; stroke-width:2.6; }
+#app .sf-cap-len{ align-self:flex-end; font:600 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-status); }
+
+/* vyhodnocení popisků (13b) a výběr kopie */
+#app .sf-judge-top{ position:relative; display:flex; gap:14px; align-items:center; padding-right:50px; }
+#app .sf-judge-top .sf-exit{ position:absolute; top:0; right:0; }
+#app .sf-judge-photo{ width:110px; flex:none; }
+#app .sf-judge-photo .photo-frame{ margin:0 !important; width:100% !important; max-width:none !important; }
+#app .sf-judge-photo .photo-frame:not(.has-frame){ padding:4px; border-radius:20px; background:var(--mc-fill); box-shadow:0 5px 0 var(--mc-lip); }
+#app .sf-judge-photo .camera-wrap{ aspect-ratio:4/5; border:0; border-radius:16px; box-shadow:none; }
+#app .sf-judge-text{ display:flex; flex-direction:column; gap:8px; min-width:0; }
+#app .sf-judge-text h1{ margin:0; font:800 20px/1.25 'Unbounded',sans-serif; overflow-wrap:anywhere; }
+#app .sf-judge-text h1 .player-name{ font:inherit; }
+#app .sf-judge-text h1 span:not(.player-name){ font-weight:700; color:var(--sf-text-desc); }
+#app .sf-judge-text p{ margin:0; font:500 15px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .caption-list{ display:flex; flex-direction:column; gap:12px; }
+#app .caption-card{
+  position:relative; min-height:84px; padding:16px 56px 16px 16px; border:0; border-radius:20px; background:var(--sf-raised);
+  box-shadow:0 4px 0 var(--sf-lip-dark); color:var(--sf-text); text-align:left; cursor:pointer; opacity:1; animation:none;
+}
+#app .caption-card p{ margin:0; padding:0; font:600 17px/1.4 'IBM Plex Sans',sans-serif; overflow-wrap:anywhere; }
+#app .caption-card.readonly{ cursor:default; }
+#app .caption-card.disabled{ opacity:.7; }
+#app .caption-card .sf-radio{ position:absolute; right:14px; top:50%; margin-top:-14px; width:28px; height:28px; border-radius:50%; border:3px solid var(--sf-line); display:flex; align-items:center; justify-content:center; color:transparent; }
+#app .caption-card .sf-radio .ico{ width:16px; height:16px; stroke-width:4; }
+#app .caption-card.picked{ background:color-mix(in srgb, var(--mc) 22%, var(--sf-raised)); box-shadow:0 4px 0 var(--mc-lip), 0 0 0 3px var(--mc); animation:none; }
+#app .caption-card.picked .sf-radio{ background:var(--mc-fill); border-color:var(--mc-fill); color:var(--mc-ink); }
+#app .caption-card.readonly .sf-radio{ display:none; }
+#app .caption-card.winner{ background:color-mix(in srgb, var(--sf-celebrate) 14%, var(--sf-raised)); box-shadow:0 4px 0 var(--sf-celebrate-lip), 0 0 0 3px var(--sf-celebrate); }
+#app .caption-card .crown{ position:absolute; right:12px; top:10px; }
+#app .caption-card .crown .ico{ width:28px; height:28px; }
+#app .caption-author{ margin-top:8px; font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .caption-card .sf-radio:only-child{ display:none; }
+
+/* ---------- KRESLENÍ (09) ---------- */
+#app .sf-draw{ gap:12px; }
+#app .draw-on-banner{ margin:0; font:700 16px/1.2 'Unbounded',sans-serif; text-align:left; color:var(--sf-text-soft); }
+#app .sf-draw .draw-stage{ flex:none; width:100%; aspect-ratio:1/1; min-height:0; }
+#app .draw-stage img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+#app .sf-tools{ display:flex; flex-direction:column; gap:12px; padding:12px; border-radius:22px; background:var(--sf-card); }
+#app .swatches{ display:flex; gap:8px; justify-content:space-between; }
+#app .swatch{ width:44px; height:44px; padding:0; border-radius:50%; border:3px solid transparent; box-shadow:0 0 0 2px var(--sf-line); cursor:pointer; flex:none; transform:none; }
+#app .swatch.active{ border-color:var(--sf-bg); box-shadow:0 0 0 3px var(--sf-text); transform:scale(1.08); }
+#app .sf-tools-row{ display:flex; gap:8px; align-items:center; }
+#app .sf-size{ flex:1; height:48px; border:0; border-radius:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; background:var(--sf-raised); box-shadow:0 4px 0 var(--sf-lip-dark); }
+#app .sf-size i{ display:block; border-radius:50%; background:var(--sf-text); }
+#app .sf-size.on{ background:var(--sf-primary); box-shadow:0 4px 0 var(--sf-primary-lip), 0 0 0 3px var(--sf-primary-soft); }
+#app .sf-tool-btn{ min-width:56px; height:48px; padding:0 12px; border:0; border-radius:14px; cursor:pointer; background:var(--sf-raised); color:var(--sf-text); box-shadow:0 4px 0 var(--sf-lip-dark); display:flex; align-items:center; justify-content:center; font:700 15px 'Unbounded',sans-serif; }
+#app .sf-tool-btn .ico{ width:22px; height:22px; stroke-width:2.6; }
+#app .sf-tool-btn:active, #app .sf-size:active{ transform:translateY(3px); box-shadow:none; }
+#app .sf-draw .sf-start{ margin-top:auto; }
+
+/* ---------- HLASOVÁNÍ (10, 10b) ---------- */
+#app .sf-vote-top, #app .sf-res-top{ display:flex; align-items:center; gap:10px; }
+#app .sf-vote-top .sf-pill, #app .sf-res-top .sf-pill{ align-self:center; }
+#app .sf-voted{ margin-left:auto; display:inline-flex; align-items:center; gap:6px; font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-status); white-space:nowrap; }
+#app .sf-voted i{ width:8px; height:8px; border-radius:4px; background:var(--sf-good); }
+#app .sf-voted b{ font:700 14px 'IBM Plex Sans',sans-serif; }
+#app .sf-vote-top .sf-exit, #app .sf-res-top .sf-exit{ margin-left:0; }
+#app .sf-res-top .sf-exit{ margin-left:auto; }
+#app .sf-vote-headrow{ display:flex; align-items:flex-start; gap:12px; }
+#app .sf-vote-headrow > div:first-child{ flex:1; min-width:0; }
+#app .sf-vote-title{ margin:0; font:800 21px/1.25 'Unbounded',sans-serif; color:var(--sf-text); overflow-wrap:anywhere; }
+#app .sf-vote-title .player-name{ font:inherit; }
+#app .sf-vote-sub{ margin:6px 0 0; font:500 15px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .sf-vote-sub .prompt-text{ font:inherit; color:var(--sf-text); }
+#app .sf-vote-sub .role-badge{ display:none; }
+#app .sf-ivote .sf-vote-sub .role-badge{ display:inline; padding:0; background:none; color:inherit; font:inherit; }
+#app .sf-vote .grid, #app .sf-judge .grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
+#app .vote-card{
+  position:relative; height:206px; aspect-ratio:auto; padding:0; border:0; border-radius:22px; overflow:visible; background:var(--sf-card); box-shadow:none;
+  cursor:pointer; opacity:1; transition:transform .22s var(--sf-spring), opacity .2s ease, box-shadow .2s ease; animation:none; -webkit-user-select:none;
+}
+#app .vote-card img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:22px; display:block; }
+#app .vote-card.disabled{ cursor:default; }
+#app .vote-card.own{ opacity:.7; cursor:default; box-shadow:none; }
+#app .vote-card .tag{ position:absolute; left:10px; bottom:10px; right:auto; padding:6px 10px; border-radius:10px; background:rgba(19,10,36,.85); color:var(--sf-text); font:700 14px/1 'IBM Plex Sans',sans-serif; }
+#app .sf-pickable.has-pick .vote-card:not(.selected), #app .sf-pickable.has-pick .ivote-card:not(.selected), #app .sf-pickable.has-pick .twin-card:not(.selected){ opacity:.7; }
+#app .sf-pickable .vote-card.selected{ transform:scale(1.03); box-shadow:0 0 0 4px var(--mc), 0 0 24px color-mix(in srgb, var(--mc) 40%, transparent); animation:none; opacity:1; }
+#app .vote-card .check{ position:absolute; top:-10px; right:-10px; left:auto; bottom:auto; width:40px; height:40px; border:0; border-radius:50%; background:var(--mc-fill); color:var(--mc-ink); box-shadow:0 4px 0 var(--mc-lip); display:flex; align-items:center; justify-content:center; animation:sf-check-pop .3s ease-out both; z-index:3; }
+#app .vote-card .check .ico{ width:22px; height:22px; stroke-width:3.4; }
+#app .like-btn{ position:absolute; right:8px; bottom:8px; z-index:2; width:44px; height:44px; border:0; border-radius:50%; background:rgba(19,10,36,.78); box-shadow:none; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+#app .like-btn .heart-ico{ width:22px; height:22px; fill:transparent; stroke:var(--sf-text); stroke-width:2.2; filter:none; }
+#app .like-btn.on{ background:var(--sf-celebrate); box-shadow:none; }
+#app .like-btn.on .heart-ico{ fill:var(--sf-gold-ink); stroke:var(--sf-gold-ink); }
+#app .twin-card-head .like-btn{ position:static; }
+
+/* "Too slow!!" */
+#app .sf-missed{ position:absolute; inset:0; border-radius:inherit; background:var(--sf-raised); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); text-align:center; }
+#app .sf-missed .sf-sad{ animation:sf-wob 1.6s ease-in-out infinite; }
+#app .result-card .sf-missed, #app .twin-photo .sf-missed, #app .ivote-photo .sf-missed{ position:relative; inset:auto; width:100%; aspect-ratio:1/1; border-radius:14px; }
+#app .sf-hero-photo .sf-missed{ position:relative; aspect-ratio:206/250; border-radius:19px; }
+#app .sf-slow{ display:flex; align-items:center; gap:12px; padding:12px; border-radius:20px; background:var(--sf-card); box-shadow:inset 0 0 0 2px var(--sf-danger-lip); }
+#app .sf-slow .sf-sad{ flex:none; animation:sf-wob 1.6s ease-in-out infinite; }
+#app .sf-slow b{ display:block; font:800 20px/1.2 'Unbounded',sans-serif; color:var(--sf-m-reaction); transform:rotate(-2deg); transform-origin:left; margin-bottom:4px; }
+#app .sf-slow span{ font:500 15px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-desc); }
+
+/* impostor hlasování */
+#app .ivote-card{
+  position:relative; border:0; border-radius:22px; background:var(--sf-card); box-shadow:none; overflow:visible; cursor:pointer; padding:0; opacity:1; animation:none;
+  transition:transform .22s var(--sf-spring), opacity .2s ease, box-shadow .2s ease;
+}
+#app .ivote-card:active{ transform:scale(.98); }
+#app .ivote-card.own{ opacity:.7; cursor:default; }
+#app .ivote-photo{ position:relative; aspect-ratio:1/1; border-radius:22px 22px 14px 14px; overflow:hidden; background:var(--sf-raised); }
+#app .ivote-name{ padding:10px 12px 12px; font:700 15px/1.2 'Unbounded',sans-serif; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+#app .ivote-name .player-name{ font:inherit; }
+#app .sf-pickable .ivote-card.selected{ transform:scale(1.03); box-shadow:0 0 0 4px var(--mc), 0 0 24px color-mix(in srgb, var(--mc) 40%, transparent); opacity:1; }
+#app .ivote-card.fellow{ box-shadow:0 0 0 3px var(--sf-celebrate); }
+#app .ivote-check{ position:absolute; top:8px; right:8px; width:40px; height:40px; border-radius:50%; background:var(--mc-fill); color:var(--mc-ink); box-shadow:0 4px 0 var(--mc-lip); display:flex; align-items:center; justify-content:center; animation:sf-check-pop .3s ease-out both; }
+#app .ivote-check .ico{ width:22px; height:22px; stroke-width:3.4; }
+#app .pick-two-note{ font:700 15px 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); text-align:center; }
+#app .impostor-banner{ border:0; border-radius:20px; background:var(--sf-danger-bg); box-shadow:inset 0 0 0 2px var(--sf-m-impostor); padding:14px; }
+#app .impostor-banner-title{ font:800 16px/1.3 'Unbounded',sans-serif; color:var(--sf-text); }
+#app .fellow-banner{ background:var(--sf-card); box-shadow:inset 0 0 0 2px var(--sf-celebrate); }
+#app .impostor-prompts{ gap:10px; }
+#app .impostor-prompts > div{ border:0; border-radius:16px; background:var(--sf-raised); box-shadow:none; padding:12px; font:600 15px/1.35 'IBM Plex Sans',sans-serif; color:var(--sf-text); }
+#app .impostor-prompts > div.imp{ box-shadow:inset 0 0 0 2px var(--sf-m-impostor); }
+#app .impostor-prompts span{ font:700 14px/1 'IBM Plex Sans',sans-serif; letter-spacing:.06em; color:var(--sf-text-soft); }
+#app .impostor-prompts > div.imp span{ color:var(--sf-danger-text); }
+
+/* ---------- VÝSLEDKY KOLA (11) ---------- */
+#app .sf-results{ gap:14px; }
+#app .sf-hero{ position:relative; display:flex; justify-content:center; gap:14px; margin-top:34px; }
+#app .sf-hero-card{ position:relative; width:206px; max-width:100%; display:flex; flex-direction:column; align-items:center; gap:4px; }
+#app .sf-hero.many .sf-hero-card{ width:calc(50% - 7px); }
+#app .sf-hero-photo{
+  width:100%; padding:6px; border-radius:24px; background:var(--mc-fill); box-shadow:0 8px 0 var(--mc-lip), 0 0 40px color-mix(in srgb, var(--mc) 35%, transparent);
+  animation:sf-zoom .38s cubic-bezier(.3,1.4,.5,1) both;
+}
+#app .sf-hero-photo .photo{ display:block; width:100%; aspect-ratio:206/250; object-fit:cover; border-radius:19px; background:#000; }
+#app .sf-hero-photo .result-photo-frame{ margin:0; }
+@keyframes sf-zoom{ 0%{ transform:scale(.6); opacity:0; } 70%{ transform:scale(1.05); opacity:1; } 100%{ transform:scale(1); } }
+#app .sf-crown{ position:absolute; left:50%; top:-38px; margin-left:-37px; z-index:4; animation:sf-drop-in .24s ease-out .2s both; }
+@keyframes sf-drop-in{ from{ transform:translateY(-30px); opacity:0; } to{ transform:none; opacity:1; } }
+#app .sf-hero-name{ margin-top:10px; font:800 28px/1.1 'Unbounded',sans-serif; text-align:center; }
+#app .sf-hero.many .sf-hero-name{ font-size:20px; }
+#app .sf-hero-name .player-name{ font:inherit; }
+#app .sf-hero-sub{ font:700 16px/1.3 'IBM Plex Sans',sans-serif; color:var(--sf-text); text-align:center; }
+#app .sf-hero-sub b{ color:var(--sf-celebrate); font-weight:700; }
+#app .sf-rest{ display:flex; gap:10px; overflow-x:auto; padding:2px 2px 6px; scrollbar-width:none; }
+#app .sf-rest::-webkit-scrollbar{ display:none; }
+#app .sf-rest.is-all{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); overflow:visible; gap:12px; }
+#app .result-card{ position:relative; flex:none; width:112px; padding:6px 6px 8px; border:0; border-radius:18px; background:var(--sf-card); box-shadow:none; overflow:visible; animation:none; }
+#app .sf-rest.is-all .result-card{ width:auto; }
+#app .result-card .photo{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:13px; display:block; }
+#app .result-card > .photo, #app .result-card > .missed{ border-radius:13px; }
+#app .result-card .result-photo-frame{ margin:0; border-radius:15px; }
+#app .result-card .meta{ padding:8px 4px 0; }
+#app .result-card .meta .name{ font:700 14px/1.2 'Unbounded',sans-serif; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#app .result-card .meta .name .player-name{ font:inherit; }
+#app .result-card .meta .votes{ margin-top:2px; font:600 14px/1.3 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .result-card.winner{ background:color-mix(in srgb, var(--sf-celebrate) 12%, var(--sf-card)); box-shadow:0 0 0 3px var(--sf-celebrate); }
+#app .result-card .crown{ position:absolute; top:-14px; left:50%; margin-left:-16px; z-index:4; }
+#app .result-card .crown .ico{ width:32px; height:32px; }
+#app .sf-sb{ gap:8px; display:flex; flex-direction:column; padding:12px; }
+#app .sf-sb .sf-h3{ padding:4px 6px; }
+#app .scoreboard{ display:flex; flex-direction:column; gap:6px; }
+#app .scoreboard .row{ height:auto; min-height:44px; padding:0 10px; gap:12px; border:0; border-radius:14px; background:none; box-shadow:none; animation:none; display:flex; align-items:center; justify-content:space-between; }
+#app .scoreboard .row.first{ background:color-mix(in srgb, var(--sf-good) 16%, var(--sf-card)); }
+#app .scoreboard .row.you{ outline:0; box-shadow:inset 0 0 0 2px var(--mc, var(--sf-primary)); }
+#app .scoreboard .sb-player{ display:flex; align-items:center; gap:12px; min-width:0; flex:1; font:700 16px 'Unbounded',sans-serif; }
+#app .scoreboard .sb-player .player-name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#app .scoreboard .rank{ width:20px; flex:none; font:800 16px 'Unbounded',sans-serif; color:var(--sf-text-soft); }
+#app .scoreboard .row.first .rank{ color:var(--sf-celebrate); }
+#app .scoreboard .sb-score{ min-width:44px; text-align:right; font:800 16px 'Unbounded',sans-serif; color:var(--sf-text) !important; }
+#app .sf-results .subtitle{ margin:0; }
+
+/* konfety */
+.sf-confetti{ position:absolute; inset:-40px 0 0; overflow:visible; pointer-events:none; z-index:6; }
+.sf-confetti span{ position:absolute; top:0; opacity:0; animation:sf-fall 1.2s ease-in both; }
+@keyframes sf-fall{ 0%{ opacity:1; transform:translate(0,-20px) rotate(0); } 100%{ opacity:0; transform:translate(var(--dx),360px) rotate(var(--rot)); } }
+#app .sf-hero, #app .podium, #app .caption-card.winner, #app .twin-card.winner, #app .result-card.winner, #app .impostor-outcome{ position:relative; }
+
+/* ---------- KONEC HRY (12) ---------- */
+#app .sf-over{ gap:16px; }
+#app .sf-over-head{ display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; }
+#app .sf-over-head h1{ margin:0; font:800 28px/1.15 'Unbounded',sans-serif; }
+#app .sf-over-sub{ font:500 15px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .podium{ position:relative; display:flex; align-items:flex-end; justify-content:center; gap:8px; margin-top:34px; }
+#app .podium-spot{ position:relative; flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; animation:sf-rise .45s var(--sf-spring) both; }
+#app .podium-spot.place-1{ flex:1.15; animation-delay:0s; }
+#app .podium-spot.place-2{ animation-delay:.12s; }
+#app .podium-spot.place-3{ animation-delay:.24s; }
+@keyframes sf-rise{ from{ opacity:0; transform:translateY(30px); } to{ opacity:1; transform:none; } }
+#app .podium-crown{ line-height:0; margin-bottom:-2px; animation:sf-drop-in .3s ease-out .4s both; }
+#app .podium-crown svg{ width:48px; height:34px; }
+#app .podium-avatars{ display:flex; gap:4px; justify-content:center; flex-wrap:wrap; margin:0; }
+#app .podium-spot.place-1 .podium-avatars .framed-avatar{ box-shadow:0 0 0 3px var(--mc), 0 0 28px color-mix(in srgb, var(--mc) 40%, transparent); }
+#app .podium-names{ max-width:100%; font:700 15px/1.2 'Unbounded',sans-serif; text-align:center; overflow-wrap:anywhere; }
+#app .podium-spot.place-1 .podium-names{ font-size:16px; font-weight:800; }
+#app .podium-bar{
+  width:100%; border:0; border-radius:16px 16px 6px 6px; background:var(--sf-raised); box-shadow:inset 0 -5px 0 var(--sf-lip-dark); animation:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; height:84px; transform:none;
+}
+#app .podium-spot.place-1 .podium-bar{ height:118px; background:var(--sf-primary); box-shadow:inset 0 -5px 0 var(--sf-primary-lip); }
+#app .podium-spot.place-3 .podium-bar{ height:62px; }
+#app .podium-bar-label{ font:800 30px/1 'Unbounded',sans-serif; color:#D6DEEA; }
+#app .podium-spot.place-1 .podium-bar-label{ font-size:36px; color:var(--sf-celebrate); }
+#app .podium-spot.place-3 .podium-bar-label{ font-size:26px; color:#FFB07A; }
+#app .podium-score{ margin:0; font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .podium-spot.place-1 .podium-score{ color:#fff; }
+
+#app .sf-reward{
+  display:flex; flex-direction:column; gap:10px; padding:14px 16px; border:0; border-radius:22px; background:var(--sf-card);
+  box-shadow:inset 0 0 0 2px rgba(245,184,46,.45); animation:none; width:100%;
+}
+#app .sf-reward-head{ display:flex; align-items:center; justify-content:space-between; font:700 17px 'Unbounded',sans-serif; }
+#app .sf-reward .reward-total{ display:flex; align-items:center; gap:8px; font:800 24px 'Unbounded',sans-serif; color:var(--sf-gold); }
+#app .sf-reward .reward-total .coin{ width:28px; height:28px; }
+#app .sf-reward .reward-rows{ display:flex; flex-direction:column; gap:6px; font:600 15px 'IBM Plex Sans',sans-serif; color:var(--sf-text-desc); }
+#app .sf-reward .reward-rows > div{ display:flex; justify-content:space-between; }
+
+/* galerie TOP 3 */
+#app .gal-sec{ width:100%; }
+#app .gal-title{ margin:6px 0 12px; font:700 18px 'Unbounded',sans-serif; text-align:left; text-shadow:none; }
+#app .gal-card{ border:0; border-radius:22px; background:var(--sf-card); box-shadow:0 4px 0 var(--sf-lip-dark); }
+#app .gal-name{ font-size:15px; }
+#app .gal-label, #app .gal-round, #app .gal-meta .gal-round{ font-size:14px; }
+.gal-label, .gal-round, .gal-note, .gal-count{ font-size:14px; }
+
+/* ---------- ostatní módy: výsledky, dvojčata, kopie ---------- */
+#app .twin-list{ display:flex; flex-direction:column; gap:12px; }
+#app .twin-card{ border:0; border-radius:22px; background:var(--sf-card); box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--tc, var(--sf-line)) 55%, transparent); padding:12px; animation:none; transition:transform .22s var(--sf-spring), opacity .2s ease, box-shadow .2s ease; }
+#app .sf-pickable .twin-card.selected{ transform:scale(1.02); box-shadow:0 0 0 4px var(--tc, var(--mc)); opacity:1; }
+#app .twin-card.winner{ box-shadow:0 0 0 3px var(--sf-celebrate); }
+#app .twin-card.own{ opacity:.8; }
+#app .twin-card .crown{ position:absolute; top:-14px; right:12px; z-index:3; }
+#app .twin-card .crown .ico{ width:30px; height:30px; }
+#app .twin-pts{ font:700 14px 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); }
+#app .team-badge{ display:inline-flex; padding:6px 10px; border-radius:var(--sf-r-chip); font:700 14px/1 'IBM Plex Sans',sans-serif; letter-spacing:.06em; text-transform:uppercase; background:color-mix(in srgb, var(--tc) 28%, var(--sf-bg)); color:color-mix(in srgb, var(--tc) 45%, #fff); border:0; box-shadow:none; }
+#app .twin-name{ font:700 14px 'Unbounded',sans-serif; }
+#app .twin-photo img{ border-radius:14px; }
+#app .twin-question{ font-size:21px; text-align:left; }
+#app .sf-peek{ align-items:center; text-align:center; }
+#app .sf-peek-photo{ width:min(100%, 340px); }
+#app .sf-peek-photo .photo-frame{ margin:0 !important; width:100% !important; max-width:none !important; }
+#app .copy-count{ font:800 88px/1 'Unbounded',sans-serif; color:var(--mc); text-shadow:none; }
+#app .impostor-outcome{ border:0; border-radius:22px; padding:16px; text-align:center; box-shadow:none; background:var(--sf-card); }
+#app .impostor-outcome.caught{ background:var(--sf-good-bg); box-shadow:inset 0 0 0 2px var(--sf-good); }
+#app .impostor-outcome.escaped{ background:var(--sf-danger-bg); box-shadow:inset 0 0 0 2px var(--sf-danger); }
+#app .impostor-outcome-title{ font:800 22px/1.2 'Unbounded',sans-serif; }
+#app .impostor-outcome-sub{ font:600 15px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-desc); }
+#app .impostor-gain{ font:800 18px 'Unbounded',sans-serif; color:var(--sf-gold); box-shadow:none; }
+#app .impostor-reveal{ border:0; border-radius:22px; background:var(--sf-card); box-shadow:inset 0 0 0 2px var(--sf-m-impostor); }
+#app .impostor-reveal-label{ box-shadow:none; background:var(--sf-m-impostor); color:#fff; font:700 14px/1 'IBM Plex Sans',sans-serif; letter-spacing:.06em; padding:6px 10px; border-radius:var(--sf-r-chip); }
+#app .impostor-reveal-votes{ font-size:14px; color:var(--sf-text-soft); }
+#app .impostor-reveal-pts{ color:var(--sf-celebrate); font-size:16px; }
+#app .wait-note{ font-size:15px; color:var(--sf-text-soft); }
+
+/* ---------- omezený pohyb ---------- */
+@media (prefers-reduced-motion: reduce){
+  #app .sf-g > *, #app .sf-ring.low .sf-ring-num, #app .sf-knocker, #app .sf-art, #app .sf-sent-check, #app .sf-hero-photo, #app .sf-crown,
+  #app .podium-spot, #app .podium-crown, #app .sf-dots i, #app .sf-live i, #app .sf-missed .sf-sad, #app .sf-slow .sf-sad,
+  #app .vote-card .check, #app .ivote-check, #app .camera-wrap .flash.on, #app .sf-code.is-pending span{ animation:none !important; }
+  #app .sf-ring-fg, #app .vote-card, #app .ivote-card, #app .twin-card, #app .shutter, #app .sf-pips i{ transition:none !important; }
+  .sf-confetti{ display:none; }
+}
+
+#app .sf-reward{ align-items:stretch; justify-content:flex-start; }
+#app .sf-reward-head{ width:100%; }

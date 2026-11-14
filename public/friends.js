@@ -166,6 +166,11 @@ function friendStatusLabel(st) {
   return { text: `Playing · ${mode}`, cls: 'playing' };
 }
 
+const QR_ICON = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM17 17h4v4h-4"/></svg>';
+const SCAN_ICON = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg>';
+// Sam z prázdných stavů (zelený)
+const SAM_SVG = '<svg class="sf-sway" viewBox="0 0 96 96" width="110" height="110" aria-hidden="true"><circle cx="48" cy="54" r="34" fill="#3FC46A" stroke="#1D6B39" stroke-width="4"/><circle cx="38" cy="50" r="4" fill="#12301D"/><circle cx="58" cy="50" r="4" fill="#12301D"/><path d="M38 66q10-6 20 0" stroke="#12301D" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M70 22l4-10M80 30l10-4M76 40l10 2" stroke="#FFD23F" stroke-width="4" stroke-linecap="round"/></svg>';
+
 function friendRowHtml(f) {
   const st = friendStatuses[f.code];
   const label = friendStatusLabel(st);
@@ -173,7 +178,7 @@ function friendRowHtml(f) {
   return `
     <div class="friend-row" data-code="${f.code}">
       <div class="friend-open" data-profile="${f.code}" role="button" tabindex="0" aria-label="View profile">
-        <div class="friend-avatar">${avatarHtml(f.name || '?', f.looks, 44)}<span class="presence-dot ${label.cls}"></span></div>
+        <div class="friend-avatar">${avatarHtml(f.name || '?', f.looks, 48)}<span class="presence-dot ${label.cls}"></span></div>
         <div class="friend-info">
           ${playerNameHtml(f.name || f.code, f.looks)}
           <span class="friend-status ${label.cls}">${label.text}</span>
@@ -195,25 +200,28 @@ function renderFriendsScreen() {
   const sent = getSentRequests();
 
   app.innerHTML = `
-    <div class="home-top">
-      <div class="brand"><img class="mark" src="icon.png" alt=""><h1>Friends</h1></div>
+    <div class="home-top sf-page-top">
+      <div class="brand"><h1>Friends</h1></div>
     </div>
 
-    <div class="screen">
+    <div class="screen sf-friends">
       <div class="my-code-card">
-        <div class="my-code-label">Your friend code</div>
-        <div class="my-code">${getFriendCode()}</div>
+        <div class="my-code-main">
+          <div class="my-code-label">Your friend code</div>
+          <div class="my-code">${getFriendCode()}</div>
+        </div>
         <button class="chip-btn" id="copy-code">${icon('copy')} Copy</button>
       </div>
 
       <div class="qr-btn-row">
-        <button class="btn btn-ghost" id="my-qr-btn">My QR code</button>
-        <button class="btn btn-ghost" id="scan-qr-btn">Scan QR</button>
+        <button class="btn btn-ghost" id="my-qr-btn">${QR_ICON}My QR</button>
+        <button class="btn btn-ghost" id="scan-qr-btn">${SCAN_ICON}Scan QR</button>
       </div>
 
       <div class="add-friend">
-        <input id="add-friend-input" maxlength="6" placeholder="Friend code" autocomplete="off" autocapitalize="characters">
-        <button class="btn btn-primary" id="add-friend-btn">${icon('plus')} Add</button>
+        <label for="add-friend-input" class="sr-only">Friend code</label>
+        <input id="add-friend-input" maxlength="6" placeholder="Add by friend code" autocomplete="off" autocapitalize="characters">
+        <button class="btn btn-primary" id="add-friend-btn">Add</button>
       </div>
 
       ${requests.length ? `
@@ -228,7 +236,7 @@ function renderFriendsScreen() {
             </div>`).join('')}
         </div>` : ''}
 
-      <div class="section-eyebrow">FRIENDS</div>
+      <div class="section-eyebrow" id="friends-count">FRIENDS · ${getFriends().length}</div>
       <div class="friend-list" id="friend-list"></div>
 
       ${sent.length ? `
@@ -290,7 +298,20 @@ function patchFriendsList() {
   friends.sort((a, b) => rank(a) - rank(b));
   el.innerHTML = friends.length
     ? friends.map(friendRowHtml).join('')
-    : `<div class="friends-empty">${icon('users')}<span>No friends yet. Send a friend your code, or add them from a lobby.</span></div>`;
+    : `<div class="friends-empty">${SAM_SVG}<strong>Sam is lonely</strong><span>Send someone your code, or add the people you play with from a lobby.</span><button class="btn btn-ghost" id="share-code-btn">Share my code</button></div>`;
+  const cnt = document.getElementById('friends-count');
+  if (cnt) cnt.textContent = `FRIENDS · ${friends.length}`;
+  const share = document.getElementById('share-code-btn');
+  if (share) {
+    share.onclick = async () => {
+      const code = getFriendCode();
+      const text = `Add me on Snapfam! My friend code: ${code}`;
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Snapfam', text, url: friendLinkFor(code) }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+      }
+      try { await navigator.clipboard.writeText(code); showToast('Code copied'); } catch { showToast(`Your code: ${code}`); }
+    };
+  }
 
   el.querySelectorAll('[data-join]').forEach((b) => { b.onclick = () => joinFriend(b.dataset.join); });
   el.querySelectorAll('[data-profile]').forEach((b) => {

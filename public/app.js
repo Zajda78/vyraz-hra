@@ -111,6 +111,7 @@ function connect(onOpen) {
     ws = socket;
     reconnectAttempts = 0;
     hideReconnectOverlay();
+    hideSplash();
     sendHello();
     onOpen && onOpen();
   });
@@ -172,15 +173,14 @@ function showError(text) {
     el = document.createElement('div');
     el.id = 'error-banner';
     el.className = 'error-banner';
-    el.style.position = 'fixed';
-    el.style.left = '16px';
-    el.style.right = '16px';
-    el.style.bottom = '16px';
-    el.style.zIndex = '999';
     document.body.appendChild(el);
   }
-  el.textContent = text;
-  el.style.display = 'block';
+  el.innerHTML = `${icon('alert')}<span></span>`;
+  el.lastElementChild.textContent = text;
+  el.style.display = 'flex';
+  // špatný kód: políčka se zčervenají a zatřesou
+  const cb = document.getElementById('code-boxes');
+  if (cb && joinCode.length === CODE_LEN) { cb.classList.remove('is-error'); void cb.offsetWidth; cb.classList.add('is-error'); }
   errorTimer = setTimeout(() => { el.style.display = 'none'; }, 3200);
 }
 
@@ -248,41 +248,63 @@ const MODE_MENU = [
   {
     title: 'FREE GAMES',
     modes: [
-      { id: 'classic', name: 'Reaction', tagline: 'React to the prompt — best face wins', players: 3, bg: () => MODE_ICON_CAMERA },
-      { id: 'caption', name: 'Main Character', tagline: 'One photo, everyone captions it', players: 3, bg: () => MODE_ICON_SPEECH },
+      { id: 'classic', name: 'Reaction', tagline: 'React to the prompt. Best face wins.', players: 3, bg: () => MODE_ICON_CAMERA },
+      { id: 'caption', name: 'Main Character', tagline: 'One photo, everyone captions it.', players: 3, bg: () => MODE_ICON_SPEECH },
     ],
   },
   {
     title: 'PARTY PACK',
     partyPack: true, // placené módy — zlaté štítky u zamčených
     modes: [
-      { id: 'draw', name: 'Doodle', tagline: 'Snap a selfie, doodle on it, vote', players: 3, bg: () => MODE_ICON_PALETTE },
-      { id: 'impostor', name: 'Impostor', tagline: 'One player got a different prompt', players: 3, bg: () => MODE_ICON_SPY },
-      { id: 'hunt', name: 'Snap Hunt', tagline: 'Find the thing, snap it, vote', players: 3, bg: () => MODE_ICON_LOUPE },
-      { id: 'copycat', name: 'Copycat', tagline: 'Copy the face, best copy wins', players: 3, bg: () => MODE_ICON_COPY },
-      { id: 'twins', name: 'Twins', tagline: 'Two of you, one face — sync up!', players: 6, wide: true, bg: () => MODE_ICON_TWINS },
+      { id: 'draw', name: 'Doodle', tagline: 'Snap a selfie, doodle on it, vote.', players: 3, bg: () => MODE_ICON_PALETTE },
+      { id: 'impostor', name: 'Impostor', tagline: 'One player got a different prompt.', players: 3, bg: () => MODE_ICON_SPY },
+      { id: 'hunt', name: 'Snap Hunt', tagline: 'Find the thing, snap it, vote.', players: 3, bg: () => MODE_ICON_LOUPE },
+      { id: 'copycat', name: 'Copycat', tagline: 'Copy the face. Best copy wins.', players: 3, bg: () => MODE_ICON_COPY },
+      { id: 'twins', name: 'Twins', tagline: 'Two of you, one face. Sync up!', players: 6, wide: true, bg: () => MODE_ICON_TWINS },
     ],
   },
 ];
 
+const SF_PLAY_ARROW = '<svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>';
+
+function modeCardHtml(m, group) {
+  const unlocked = isModeUnlocked(m.id);
+  const locked = group.partyPack && !unlocked;
+  const tickets = locked ? getTickets(m.id) : 0;
+  const badge = !locked ? ''
+    : tickets > 0
+      ? `<span class="mode-badge mode-badge-ticket" aria-label="${tickets} game ticket${tickets > 1 ? 's' : ''}">${icon('ticket')}<b>${tickets}×</b></span>`
+      : `<span class="mode-badge" aria-label="Party Pack">${icon('lock')}</span>`;
+  const foot = `<span class="mode-card-foot"><span class="mode-players">${m.players}+ players</span>${locked && !tickets ? '' : `<span class="mode-play" aria-hidden="true">${SF_PLAY_ARROW}</span>`}</span>`;
+  return `
+    <div class="mode-card mode-card-${m.id} ${m.wide ? 'wide' : 'compact'} ${locked ? 'is-locked' : ''}" data-mode="${m.id}" role="button" tabindex="0">
+      ${badge}
+      <div class="mode-card-content">
+        ${modeTile(m.id)}
+        <div class="mode-card-text">
+          <h3>${m.name}${m.isNew ? '<span class="mode-new-tag">NEW</span>' : ''}</h3>
+          <p>${escapeHtml(m.tagline)}</p>
+        </div>
+        ${foot}
+      </div>
+    </div>`;
+}
+
 function modeMenuHtml() {
-  return MODE_MENU.map((group) => `
+  return MODE_MENU.map((group) => {
+    const owned = group.partyPack && ownsPartyPack();
+    const head = group.partyPack && !owned
+      ? `<button class="sf-mini-gold" id="pack-unlock" type="button">Unlock all ${PARTY_PACK.modes.length} · €${PARTY_PACK.priceEur.toFixed(2)}</button>`
+      : `<span class="mode-group-hint">${group.partyPack ? 'Unlocked forever' : 'Tap to create a lobby'}</span>`;
+    return `
     <div class="mode-group-head">
-      <div class="section-eyebrow">${group.title}</div>
+      <h2 class="section-eyebrow">${group.title}</h2>
+      ${head}
     </div>
     <div class="mode-grid">
-      ${group.modes.map((m) => `
-        <div class="mode-card mode-card-${m.id} ${m.wide ? 'wide' : 'compact'} ${isModeUnlocked(m.id) ? '' : 'is-locked'}" data-mode="${m.id}">
-          <div class="mode-icon-bg">${m.bg()}</div>
-          ${group.partyPack && !isModeUnlocked(m.id) ? modeRibbonHtml(m.id, { compact: !m.wide }) : ''}
-          <div class="mode-card-content">
-            ${modeTile(m.id)}
-            <h3>${m.name}${m.isNew ? '<span class="mode-new-tag">NEW</span>' : ''}</h3>
-            <p>${escapeHtml(m.tagline)}</p>
-            <span class="mode-players">${icon('users')} ${m.players}+</span>
-          </div>
-        </div>`).join('')}
-    </div>`).join('');
+      ${group.modes.map((m) => modeCardHtml(m, group)).join('')}
+    </div>`;
+  }).join('');
 }
 
 const MODE_ICON_SPEECH = `
@@ -322,7 +344,7 @@ function showExitGameModal() {
       ${isHost ? `<button class="btn btn-ghost btn-block" id="exit-end">End game for everyone</button>` : ''}
       <button class="btn btn-ghost btn-block" id="exit-stay">Keep playing</button>
     </div>
-  `);
+  `, { dialog: true });
   modal.querySelector('#exit-close').onclick = closeModal;
   modal.querySelector('#exit-stay').onclick = closeModal;
   modal.querySelector('#exit-leave').onclick = leaveLobby;
@@ -405,23 +427,30 @@ function renderGamesScreen() {
 
   app.innerHTML = `
     <div class="home-top">
-      <div class="brand"><img class="mark" src="icon.png" alt=""><h1>Snapfam</h1>${devBadgeHtml()}</div>
+      <div class="brand">${sfLogoSvg(40)}<h1>Snapfam</h1>${devBadgeHtml()}</div>
       <div class="home-actions">
-        <button id="rules-btn" class="text-btn">Rules</button>
-        <button id="settings-btn" class="icon-btn" title="Settings">${icon('gear')}</button>
+        <button id="rules-btn" class="text-btn">${icon('book')}<span>Rules</span></button>
+        <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">${icon('gear')}</button>
       </div>
     </div>
 
     ${profileCardHtml()}
 
     <div class="screen">
-      <div class="join-card">
-        <h2>Join a game</h2>
+      <section class="join-card" aria-labelledby="join-title">
+        <div class="join-card-head">
+          <h1 id="join-title">Join a game</h1>
+          <span class="join-card-sub">Type the 4-letter code from the host.</span>
+        </div>
         <div class="code-boxes" id="code-boxes">
           ${Array.from({ length: CODE_LEN }).map((_, i) => `<div class="code-box" data-i="${i}"></div>`).join('')}
-          <input class="code-hidden-input" id="code-hidden" maxlength="${CODE_LEN}" autocomplete="off" autocapitalize="characters" inputmode="text">
+          <input class="code-hidden-input" id="code-hidden" maxlength="${CODE_LEN}" autocomplete="off" autocapitalize="characters" inputmode="text" aria-label="Game code">
         </div>
-      </div>
+        <div class="join-card-actions">
+          <button class="btn btn-ghost" id="code-paste" type="button">Paste</button>
+          <button class="btn btn-primary" id="code-join" type="button" disabled>Join</button>
+        </div>
+      </section>
 
       ${modeMenuHtml()}
 
@@ -434,26 +463,38 @@ function renderGamesScreen() {
   const hidden = document.getElementById('code-hidden');
   const boxesWrap = document.getElementById('code-boxes');
 
+  const joinBtn = document.getElementById('code-join');
+
   function renderCodeBoxes() {
     boxesWrap.querySelectorAll('.code-box').forEach((box, i) => {
       box.textContent = joinCode[i] || '';
       box.classList.toggle('filled', !!joinCode[i]);
       box.classList.toggle('active', i === joinCode.length);
     });
+    joinBtn.disabled = joinCode.length !== CODE_LEN;
   }
   renderCodeBoxes();
 
-  boxesWrap.addEventListener('click', () => hidden.focus());
-
-  hidden.addEventListener('input', () => {
-    joinCode = hidden.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LEN);
+  function setCode(raw) {
+    joinCode = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LEN);
     hidden.value = joinCode;
+    boxesWrap.classList.remove('is-error');
     renderCodeBoxes();
-    if (joinCode.length === CODE_LEN) {
-      hidden.blur();
-      attemptJoin(joinCode);
-    }
-  });
+    if (joinCode.length === CODE_LEN) hidden.blur(); // klávesnice pryč, ať je vidět tlačítko Join
+  }
+
+  boxesWrap.addEventListener('click', () => hidden.focus());
+  hidden.addEventListener('input', () => setCode(hidden.value));
+  hidden.addEventListener('keydown', (e) => { if (e.key === 'Enter' && joinCode.length === CODE_LEN) attemptJoin(joinCode); });
+  joinBtn.onclick = () => { if (joinCode.length === CODE_LEN) attemptJoin(joinCode); };
+  document.getElementById('code-paste').onclick = async () => {
+    try {
+      setCode(await navigator.clipboard.readText());
+    } catch { hidden.focus(); } // schránka zakázaná → ať kód vloží dlouhým podržením
+  };
+
+  const unlock = document.getElementById('pack-unlock');
+  if (unlock) unlock.onclick = () => showPartyPackOffer(null);
 
   document.querySelectorAll('.mode-card').forEach((card) => {
     card.onclick = () => {
@@ -468,6 +509,9 @@ function renderGamesScreen() {
     };
   });
 
+  document.querySelectorAll('.mode-card').forEach((card) => {
+    card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); } };
+  });
   document.getElementById('rules-btn').onclick = () => showRulesModal();
   document.getElementById('settings-btn').onclick = () => showSettingsModal();
   wireProfileCard();
@@ -481,16 +525,43 @@ function attemptJoin(code) {
 
 // -------------------------------------------------------------- MODALS ---
 
-function openModal(html) {
+// opts.dialog = vycentrované potvrzovací okno (16a), opts.tall = sheet přes celou výšku (pravidla).
+// Ostatní okna jsou spodní sheet: vyjede zdola, jde zavřít tažením dolů, Esc nebo ťuknutím na pozadí.
+function openModal(html, opts = {}) {
   closeModal();
   const backdrop = document.createElement('div');
-  backdrop.className = 'modal-backdrop';
+  backdrop.className = `modal-backdrop${opts.dialog ? ' is-dialog' : ''}`;
   backdrop.id = 'modal-backdrop';
-  backdrop.innerHTML = `<div class="modal-sheet">${html}</div>`;
+  backdrop.innerHTML = `<div class="modal-sheet${opts.dialog ? ' is-dialog' : ''}${opts.tall ? ' is-tall' : ''}" role="dialog" aria-modal="true">${html}</div>`;
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
   document.body.appendChild(backdrop);
+  if (!opts.dialog) wireSheetSwipe(backdrop.firstElementChild);
   return backdrop;
 }
+
+// Tažení sheetu dolů (jen když je nahoře odscrollovaný) → zavře se.
+function wireSheetSwipe(sheet) {
+  let y0 = null;
+  let dy = 0;
+  sheet.addEventListener('touchstart', (e) => {
+    y0 = sheet.scrollTop <= 0 ? e.touches[0].clientY : null;
+    dy = 0;
+  }, { passive: true });
+  sheet.addEventListener('touchmove', (e) => {
+    if (y0 === null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy > 0) { sheet.style.transition = 'none'; sheet.style.transform = `translateY(${dy}px)`; }
+  }, { passive: true });
+  sheet.addEventListener('touchend', () => {
+    if (y0 === null) return;
+    y0 = null;
+    if (dy > 90) return closeModal();
+    sheet.style.transition = 'transform .2s ease-out';
+    sheet.style.transform = '';
+  });
+}
+
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
 function closeModal() {
   const el = document.getElementById('modal-backdrop');
@@ -524,16 +595,20 @@ function showNameModal(onReady) {
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
 }
 
-// Nastavení — jen povolení kamery (jméno se mění v profilu přes tužku).
+// Nastavení — jazyk (dlaždice), dva posuvníky a stav kamery. Jméno se mění v profilu přes tužku.
 function showSettingsModal() {
   const modal = openModal(`
     <div class="x-close-row"><button class="x-close" id="modal-settings-close" aria-label="Close">${icon('close')}</button></div>
     <h2>Settings</h2>
-    <div class="setting-block-title">${icon('chat')} Language</div>
+    <div class="setting-block-title">Language</div>
     ${languagePickerHtml()}
     ${volumeSlidersHtml()}
-    <button id="modal-camera-test" class="btn btn-primary btn-block" type="button">${icon('camera')} Allow camera access</button>
-    <p class="camera-status" id="modal-camera-status"></p>
+    <div class="setting-block-title">Camera access</div>
+    <div class="sf-tiles sf-tiles-2" role="radiogroup" aria-label="Camera access">
+      <button class="sf-tile" id="modal-camera-test" type="button" role="radio" aria-checked="false">Allowed</button>
+      <button class="sf-tile on" id="modal-camera-off" type="button" role="radio" aria-checked="true">Off</button>
+    </div>
+    <p class="camera-status" id="modal-camera-status">Needed to snap photos in a game.</p>
   `);
   wireVolumeSliders(modal);
   modal.querySelectorAll('[data-lang]').forEach((b) => {
@@ -550,19 +625,36 @@ function showSettingsModal() {
   const closeSettings = closeModal;
   modal.querySelector('#modal-settings-close').onclick = closeSettings;
 
-  modal.querySelector('#modal-camera-test').onclick = async () => {
-    const statusEl = modal.querySelector('#modal-camera-status');
+  const allowBtn = modal.querySelector('#modal-camera-test');
+  const offBtn = modal.querySelector('#modal-camera-off');
+  const statusEl = modal.querySelector('#modal-camera-status');
+  const setCam = (on) => {
+    allowBtn.classList.toggle('on', on); allowBtn.setAttribute('aria-checked', String(on));
+    offBtn.classList.toggle('on', !on); offBtn.setAttribute('aria-checked', String(!on));
+  };
+  // povolení kamery se dá zjistit bez ptaní (kde to prohlížeč umí)
+  try {
+    navigator.permissions.query({ name: 'camera' }).then((r) => { if (r.state === 'granted') setCam(true); }).catch(() => {});
+  } catch { /* ignore */ }
+
+  allowBtn.onclick = async () => {
     statusEl.innerHTML = 'Asking your browser for access…';
     statusEl.className = 'camera-status';
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
       stream.getTracks().forEach((t) => t.stop());
+      setCam(true);
       statusEl.innerHTML = `${icon('checkCircle')} Camera is allowed and working.`;
       statusEl.className = 'camera-status ok';
     } catch (err) {
+      setCam(false);
       statusEl.innerHTML = `${icon('xCircle')} Couldn't access the camera. Check the camera permission for this site in your phone settings.`;
       statusEl.className = 'camera-status bad';
     }
+  };
+  offBtn.onclick = () => {
+    statusEl.innerHTML = 'To switch the camera off, change the permission for this site in your phone settings.';
+    statusEl.className = 'camera-status';
   };
 }
 
@@ -632,25 +724,42 @@ const RULES_BY_MODE = {
   ],
 };
 
+// Ikonka ke každému kroku pravidel (jména z icons.js). Pořadí odpovídá RULES_BY_MODE.
+const RULE_ICONS = {
+  classic: ['users', 'chat', 'timer', 'sad', 'check', 'star', 'chest'],
+  draw: ['users', 'chat', 'timer', 'brush', 'check', 'star', 'chest'],
+  caption: ['users', 'users', 'camera', 'pencil', 'check', 'star', 'chest'],
+  impostor: ['users', 'spy', 'camera', 'timer', 'search', 'star', 'check', 'gift'],
+  copycat: ['users', 'users', 'camera', 'timer', 'copy', 'check', 'chest'],
+  twins: ['users', 'users', 'camera', 'check', 'star', 'chest'],
+  hunt: ['users', 'search', 'camera', 'sad', 'check', 'star', 'chest'],
+};
+
 function showRulesModal(initialMode = 'classic') {
   const modes = ['classic', 'draw', 'caption', 'impostor', 'hunt', 'copycat', 'twins'];
   openModal(`
     <div class="x-close-row"><button class="x-close" id="modal-rules-close" aria-label="Close">${icon('close')}</button></div>
     <h2>How to play</h2>
-    <div class="rules-tabs">
+    <div class="rules-tabs" role="tablist" aria-label="Game mode">
       ${modes.map((m) => `
-        <button class="rules-tab rules-tab-${m}" data-mode="${m}">
+        <button class="rules-tab rules-tab-${m}" data-mode="${m}" role="tab">
           ${modeTile(m)}
           <span>${modeDisplayName(m)}</span>
         </button>`).join('')}
     </div>
-    <div class="rules-list" id="rules-list"></div>
-  `);
+    <ol class="rules-list" id="rules-list"></ol>
+  `, { tall: true });
 
   function show(mode) {
-    document.querySelectorAll('.rules-tab').forEach((t) => t.classList.toggle('active', t.dataset.mode === mode));
-    document.getElementById('rules-list').innerHTML = RULES_BY_MODE[mode]
-      .map((t, i) => `<div class="item"><span class="num">${i + 1}</span><span>${escapeHtml(t)}</span></div>`)
+    document.querySelectorAll('.rules-tab').forEach((t) => {
+      const on = t.dataset.mode === mode;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', String(on));
+    });
+    const list = document.getElementById('rules-list');
+    list.className = `rules-list mc-${mode}`;
+    list.innerHTML = RULES_BY_MODE[mode]
+      .map((t, i) => `<li class="item"><span class="rule-ico">${icon((RULE_ICONS[mode] || [])[i] || 'star')}<span class="num">${i + 1}</span></span><span class="rule-text">${escapeHtml(t)}</span></li>`)
       .join('');
   }
   document.querySelectorAll('.rules-tab').forEach((t) => { t.onclick = () => show(t.dataset.mode); });
@@ -740,25 +849,36 @@ function renderLobbyScreen(state) {
   stopCamera();
   document.body.classList.remove('home-bg', 'has-bottom-nav');
   const players = state.players;
+  const need = Math.max(0, minPlayersFor(state.mode) - players.length);
+  const hostName = players.find((p) => p.isHost)?.name || '';
   app.innerHTML = `
-    <div class="lobby-top">
-      <button id="back-btn" class="back-btn" title="Back to home">${icon('back')}</button>
-      ${brandHtml(state)}
-    </div>
-    <div class="screen ${state.pending ? 'lobby-pending' : ''}">
-      <div class="code-display ${state.pending ? 'is-pending' : ''}">${state.pending ? '<span></span><span></span><span></span><span></span>' : escapeHtml(state.code)}</div>
-      ${!state.isHost && promptPackBadge(state) ? `<div style="text-align:center">${promptPackBadge(state)}</div>` : ''}
-      <button class="btn btn-ghost btn-block invite-btn" id="invite-btn">${icon('users')} Invite friends</button>
-
+    <header class="sf-lobby-head mc-${state.mode}">
+      <button id="back-btn" class="back-btn" aria-label="Leave lobby" title="Back to home">${icon('back')}</button>
+      ${modeTile(state.mode)}
+      <span class="sf-lobby-mode">${modeDisplayName(state.mode)}</span>
+    </header>
+    <div class="screen sf-g sf-lobby ${state.pending ? 'lobby-pending' : ''}">
+      <section class="sf-code-card">
+        <span class="sf-label">Lobby code</span>
+        <div class="sf-code ${state.pending ? 'is-pending' : ''}">${state.pending ? '<span></span><span></span><span></span><span></span>' : escapeHtml(state.code)}</div>
+        ${!state.isHost && promptPackBadge(state) ? `<div>${promptPackBadge(state)}</div>` : ''}
+        <div class="sf-code-actions">
+          <button class="btn btn-ghost" id="copy-code-btn" ${state.pending ? 'disabled' : ''}>${icon('copy')}<span>Copy</span></button>
+          <button class="btn btn-ghost invite-btn" id="invite-btn">${icon('users')}<span>Invite friends</span></button>
+        </div>
+      </section>
 
       ${joinRequestsHtml(state)}
 
-      <div class="card">
-        <h3 style="margin-bottom:12px;">Players (${players.length})</h3>
+      <section class="sf-card sf-players">
+        <div class="sf-sec-head">
+          <h2 class="sf-h3">Players</h2>
+          <span class="sf-sec-meta">${players.length} ${players.length === 1 ? 'player' : 'players'}</span>
+        </div>
         <div class="player-list">
           ${players.map((p) => `
-            <div class="player-row">
-              <span class="name"><span class="dot ${p.connected ? '' : 'off'}"></span>${avatarHtml(p.name, p.looks, 34)}${playerNameHtml(p.name, p.looks)}${p.isYou ? ' (you)' : ''}</span>
+            <div class="player-row ${p.connected ? '' : 'is-off'}">
+              <span class="name"><span class="sf-avatar-wrap">${avatarHtml(p.name, p.looks, 48)}<span class="dot ${p.connected ? '' : 'off'}"></span></span><span class="sf-name-col">${playerNameHtml(p.name, p.looks)}${p.isYou ? '<span class="sf-you">(you)</span>' : ''}</span></span>
               <span class="player-row-actions">
                 ${p.isHost ? '<span class="badge">Host</span>' : ''}
                 ${!p.isYou && p.friendCode && !isFriend(p.friendCode) && !getSentRequests().some((r) => r.code === p.friendCode)
@@ -771,63 +891,69 @@ function renderLobbyScreen(state) {
               </span>
             </div>
           `).join('')}
+          ${players.length < 2 ? '<div class="sf-empty-row">Share the code. Friends show up here as soon as they join.</div>' : ''}
         </div>
-      </div>
+      </section>
 
       ${state.isHost ? `
         ${state.mode !== 'caption' && state.mode !== 'hunt' && state.mode !== 'copycat' ? `
-          <div class="card setting-card">
-            <h3 class="setting-title">${icon('chat')} Question pack</h3>
+          <section class="sf-card setting-card">
+            <h2 class="setting-title">${icon('chat')} Question pack</h2>
             ${packPickerHtml(state.promptPack)}
-          </div>
+          </section>
         ` : ''}
 
-        <div class="card setting-card">
-          <h3 class="setting-title">${icon('rounds')} Rounds</h3>
+        <section class="sf-card setting-card">
+          <h2 class="setting-title">${icon('rounds')} Rounds</h2>
           ${optionPicker('rounds', ROUND_OPTIONS, state.totalRounds)}
-        </div>
+        </section>
 
         ${state.drawEnabled ? `
-          <div class="card setting-card">
-            <h3 class="setting-title">${icon('brush')} Doodle time</h3>
+          <section class="sf-card setting-card">
+            <h2 class="setting-title">${icon('brush')} Doodle time</h2>
             ${optionPicker('draw-seconds', DRAW_SECONDS_OPTIONS, state.drawSeconds, 's')}
-          </div>
+          </section>
         ` : ''}
 
         ${state.mode === 'hunt' ? `
-          <div class="card setting-card">
-            <h3 class="setting-title">${icon('search')} What to hunt</h3>
+          <section class="sf-card setting-card">
+            <h2 class="setting-title">${icon('search')} What to hunt</h2>
             ${huntPackPickerHtml(state.huntPack)}
-          </div>
-          <div class="card setting-card">
-            <h3 class="setting-title">${icon('timer')} Hunt time</h3>
+          </section>
+          <section class="sf-card setting-card">
+            <h2 class="setting-title">${icon('timer')} Hunt time</h2>
             ${optionPicker('hunt-seconds', HUNT_SECONDS_OPTIONS, state.huntSeconds, 's')}
-          </div>
+          </section>
         ` : ''}
 
         ${state.mode === 'caption' ? `
-          <div class="card setting-card">
-            <h3 class="setting-title">${icon('timer')} Caption time</h3>
+          <section class="sf-card setting-card">
+            <h2 class="setting-title">${icon('timer')} Caption time</h2>
             ${optionPicker('caption-seconds', CAPTION_SECONDS_OPTIONS, state.captionSeconds, 's')}
-          </div>
+          </section>
         ` : ''}
 
         ${state.mode === 'copycat' ? `
-          <div class="card setting-card">
-            <h3 class="setting-title">${icon('timer')} Photo shown for</h3>
+          <section class="sf-card setting-card">
+            <h2 class="setting-title">${icon('timer')} Photo shown for</h2>
             ${optionPicker('peek-seconds', PEEK_SECONDS_OPTIONS, state.peekSeconds, 's')}
-          </div>
+          </section>
         ` : ''}
 
         ${addBotButtonHtml(state)}
-        <button id="start-btn" class="btn btn-primary btn-block" ${players.length < minPlayersFor(state.mode) ? 'disabled' : ''}>
-          ${players.length < minPlayersFor(state.mode)
-            ? `Need at least ${minPlayersFor(state.mode)} players`
-            : isModeUnlocked(state.mode) ? 'Start game' : `Start game ${icon('ticket')} 1`}
-        </button>
-      ` : `
-        <p class="subtitle" style="text-align:center;">Waiting for the host (${escapeHtml(players.find((p) => p.isHost)?.name || '')}) to start…</p>
-      `}
+      ` : ''}
+
+      <div class="sf-start-bar">
+        ${state.isHost ? `
+          <button id="start-btn" class="btn btn-primary btn-block sf-start" ${need > 0 ? 'disabled' : ''}>
+            ${need > 0
+              ? `Need ${need} more ${need === 1 ? 'player' : 'players'}`
+              : isModeUnlocked(state.mode) ? `Start game ${icon('play')}` : `Start game ${icon('ticket')} 1`}
+          </button>
+        ` : `
+          <p class="sf-wait-host"><span class="sf-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Waiting for the host (${escapeHtml(hostName)}) to start…</span></p>
+        `}
+      </div>
     </div>
   `;
 
@@ -863,6 +989,8 @@ function renderLobbyScreen(state) {
   }
   document.getElementById('back-btn').onclick = leaveLobby;
   document.getElementById('invite-btn').onclick = showInviteFriendsModal;
+  const copyBtn = document.getElementById('copy-code-btn');
+  if (copyBtn) copyBtn.onclick = () => sfCopyCode(state.code);
   wireLobbyHostControls();
   document.querySelectorAll('[data-add-friend]').forEach((b) => {
     b.onclick = () => {
@@ -897,35 +1025,37 @@ function renderJoinPendingScreen(msg) {
   mountedKey = 'join-pending';
   stopCamera();
   document.body.classList.remove('home-bg', 'has-bottom-nav');
+  const host = msg.hostName ? `<b class="sf-host-name">${escapeHtml(msg.hostName)}</b>` : '';
   app.innerHTML = `
-    <div class="screen center join-pending">
-      <div class="x-close-row"><button class="x-close" id="cancel-join" aria-label="Cancel">${icon('close')}</button></div>
-      <div class="code-display">${escapeHtml(msg.code)}</div>
-      <div class="join-pending-spinner"></div>
-      <h2>Waiting for the host</h2>
-      <p class="join-pending-host">${msg.hostName ? `${escapeHtml(msg.hostName)} has to let you in` : 'The host has to let you in'}</p>
+    <div class="screen center join-pending sf-g">
+      <div class="sf-code-boxes" aria-label="Game code ${escapeHtml(msg.code)}">${[...String(msg.code || '')].map((ch) => `<span>${escapeHtml(ch)}</span>`).join('')}</div>
+      <div class="sf-knock" aria-hidden="true">
+        <div class="sf-door"><span></span></div>
+        <svg class="sf-knocker" width="120" height="150" viewBox="0 0 96 120"><circle cx="48" cy="60" r="44" fill="#8B5CF6" stroke="#2C1670" stroke-width="5"/><path d="M14 46C18 18 78 18 82 46C70 34 26 34 14 46Z" fill="#1B1530" stroke="#2C1670" stroke-width="5"/><circle cx="34" cy="60" r="5" fill="#1B1530"/><circle cx="62" cy="60" r="5" fill="#1B1530"/><path d="M38 78q10 6 20 0" stroke="#1B1530" stroke-width="5" fill="none" stroke-linecap="round"/></svg>
+      </div>
+      <div class="sf-knock-text">
+        <h2>Knock knock!</h2>
+        <p class="join-pending-host">${msg.hostName ? `<span>Waiting for</span> ${host} <span>to let you in.</span>` : '<span>The host has to let you in</span>'}</p>
+        <span class="sf-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      </div>
+      <button class="btn btn-ghost btn-block" id="cancel-join-2">Cancel</button>
     </div>`;
-  document.getElementById('cancel-join').onclick = () => {
-    send({ type: 'cancel_join' });
-    renderStartScreen();
-  };
+  document.getElementById('cancel-join-2').onclick = () => { send({ type: 'cancel_join' }); renderStartScreen(); };
 }
 
 function joinRequestsHtml(state) {
   const reqs = state.joinRequests || [];
   if (!state.isHost || !reqs.length) return '';
   return `
-    <div class="card join-requests">
-      <h3>Wants to join (${reqs.length})</h3>
+    <section class="sf-join-req join-requests" aria-label="Join requests">
       ${reqs.map((r) => `
-        <div class="player-row">
-          <span class="name">${avatarHtml(r.name, r.looks, 34)}${playerNameHtml(r.name, r.looks)}</span>
-          <span class="player-row-actions">
-            <button class="req-btn req-yes" data-approve="${r.id}" aria-label="Let in">${icon('check')}</button>
-            <button class="req-btn req-no" data-deny="${r.id}" aria-label="Decline">${icon('close')}</button>
-          </span>
+        <div class="sf-join-row">
+          ${avatarHtml(r.name, r.looks, 44)}
+          <span class="sf-join-text">${playerNameHtml(r.name, r.looks)} <span>wants to join</span></span>
+          <button class="req-btn req-yes" data-approve="${r.id}" aria-label="Let in">${icon('check')}</button>
+          <button class="req-btn req-no" data-deny="${r.id}" aria-label="Decline">${icon('close')}</button>
         </div>`).join('')}
-    </div>`;
+    </section>`;
 }
 
 function wireLobbyHostControls() {
@@ -933,11 +1063,15 @@ function wireLobbyHostControls() {
   document.querySelectorAll('[data-deny]').forEach((b) => { b.onclick = () => send({ type: 'deny_join', id: b.dataset.deny }); });
   document.querySelectorAll('[data-kick]').forEach((b) => {
     b.onclick = () => {
+      const target = (lastState?.players || []).find((p) => p.id === b.dataset.kick);
+      const nm = escapeHtml(b.dataset.name);
       const modal = openModal(`
         <div class="x-close-row"><button class="x-close" id="kick-cancel" aria-label="Close">${icon('close')}</button></div>
-        <h2>Remove ${b.dataset.name}?</h2>
-        <button class="btn btn-danger btn-block" id="kick-yes">Remove from lobby</button>
-      `);
+        <div class="dialog-avatar">${avatarHtml(b.dataset.name, target?.looks, 76)}</div>
+        <h2>Kick ${nm}?</h2>
+        <p class="dialog-text">${nm} leaves the lobby now. They can ask to join again with the code.</p>
+        <button class="btn btn-danger btn-block" id="kick-yes">Kick ${nm}</button>
+      `, { dialog: true });
       modal.querySelector('#kick-cancel').onclick = closeModal;
       modal.querySelector('#kick-yes').onclick = () => {
         send({ type: 'kick_player', playerId: b.dataset.kick });
@@ -952,23 +1086,11 @@ function wireLobbyHostControls() {
 async function buildCameraView(state) {
   mountedKey = `submitting-camera-${state.round}`;
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds}</div>
-        ${roleBadgeHtml(state)}
-        <div class="prompt-text">${escapeHtml(state.prompt)}</div>
-      </div>
+    <div class="screen sf-g sf-cam">
+      ${sfHeadHtml(state, { pill: sfRoundPill(state), title: `<span class="prompt-text">${escapeHtml(state.prompt)}</span>` })}
+      ${roleBadgeHtml(state)}
       ${twinsBannerHtml(state)}
-      <div class="timer" id="timer-el">--</div>
-      <div class="camera-wrap">
-        <video id="cam-video" autoplay playsinline muted></video>
-        <div class="flash" id="flash-el"></div>
-      </div>
-      <div class="shutter-row">
-        <button id="shutter-btn" class="shutter" title="Take photo"></button>
-        ${state.mode === 'hunt' ? `<button id="flip-btn" class="flip-cam-btn" aria-label="Flip camera">${icon('flip')}</button>` : ''}
-      </div>
+      ${sfCameraHtml(state, state.mode === 'hunt')}
     </div>
   `;
 
@@ -1040,7 +1162,7 @@ async function showCameraError(err) {
     </div>`;
   document.getElementById('camera-retry').onclick = async () => {
     // vrať video + záblesk a zkus kameru spustit znovu (prohlížeč se zeptá na povolení)
-    wrap.innerHTML = `<video id="cam-video" autoplay playsinline muted></video><div class="flash" id="flash-el"></div>`;
+    wrap.innerHTML = sfStageInner(lastState);
     await startCameraStream();
   };
 }
@@ -1130,21 +1252,18 @@ function capturePhoto() {
 
 function buildWaitingView(state) {
   mountedKey = `submitting-waiting-${state.round}`;
+  const sent = lastSentPhoto && lastSentPhoto.round === state.round;
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen center">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds}</div>
-        ${roleBadgeHtml(state)}
-        <div class="prompt-text">${escapeHtml(state.prompt)}</div>
-      </div>
+    <div class="screen sf-g sf-waiting">
+      ${sfHeadHtml(state, { pill: sfRoundPill(state), title: `<span class="prompt-text">${escapeHtml(state.prompt)}</span>`, ring: 'small', small: true })}
       ${twinsBannerHtml(state, false)}
-      ${lastSentPhoto && lastSentPhoto.round === state.round
-        ? `<div class="sent-photo"><img src="${lastSentPhoto.url}" alt=""><span class="sent-check">${icon('check')}</span></div>`
-        : bigIcon('checkCircle', 'good')}
-      <h3>Photo sent!</h3>
-      <p class="subtitle" id="wait-count-text">Waiting for the others…</p>
-      <div class="timer" id="timer-el">--</div>
+      <div class="sf-sent">
+        ${sent ? `<div class="sf-sent-photo"><img src="${lastSentPhoto.url}" alt=""></div>` : `<div class="sf-sent-photo is-empty">${icon('camera')}</div>`}
+        <span class="sf-sent-check" role="img" aria-label="Photo saved">${icon('check')}</span>
+      </div>
+      <div class="sf-nice"><b>Nice shot!</b><span>Nobody sees it until the vote.</span></div>
+      ${sfWaitCardHtml()}
+      <p class="sf-sr" id="wait-count-text">Waiting for the others…</p>
     </div>
   `;
   patchWaitingCount(state);
@@ -1153,6 +1272,7 @@ function buildWaitingView(state) {
 function patchWaitingCount(state) {
   const el = document.getElementById('wait-count-text');
   if (el) el.textContent = `${state.submittedCount} / ${state.activeCount} players done…`;
+  sfSetCount(state.submittedCount || 0, state.activeCount || 0);
 }
 
 // ------------------------------------------------------------ POPISOVÁNKA ---
@@ -1160,19 +1280,9 @@ function patchWaitingCount(state) {
 async function buildSubjectPhotoView(state) {
   mountedKey = `subject-photo-${state.round}`;
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds}</div>
-        <div class="prompt-text">You're the main character! Snap yourself — everyone else will caption what's going on.</div>
-      </div>
-      <div class="camera-wrap">
-        <video id="cam-video" autoplay playsinline muted></video>
-        <div class="flash" id="flash-el"></div>
-      </div>
-      <div class="shutter-row">
-        <button id="shutter-btn" class="shutter" title="Vyfotit"></button>
-      </div>
+    <div class="screen sf-g sf-cam">
+      ${sfHeadHtml(state, { pill: sfRoundPill(state), title: `<span>You're the main character! Snap yourself — everyone else will caption what's going on.</span>`, ring: false, small: true })}
+      ${sfCameraHtml(state, false)}
     </div>
   `;
 
@@ -1185,13 +1295,11 @@ async function buildSubjectPhotoView(state) {
 function buildSubjectWaitView(state) {
   mountedKey = `subject-wait-${state.round}`;
   stopCamera();
-  app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen center">
-      ${bigIcon('camera')}
-      <p class="subtitle" style="text-align:center;">Waiting for ${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))} to snap a photo…</p>
-    </div>
-  `;
+  app.innerHTML = sfStatusHtml(state, {
+    pill: sfRoundPill(state),
+    art: `<div class="sf-art">${icon('camera')}</div>`,
+    h: `<span>Waiting for</span> ${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))} <span>to snap a photo…</span>`,
+  });
 }
 
 function buildCaptioningView(state) {
@@ -1200,12 +1308,12 @@ function buildCaptioningView(state) {
   if (state.isSubject) {
     mountedKey = `captioning-subject-${state.round}`;
     app.innerHTML = `
-      ${brandHtml(state)}
-      <div class="screen center">
-        ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId), 'max-width:260px; width:100%;')}
-        <p class="subtitle">Everyone is captioning your photo…</p>
-        <p class="wait-note" id="caption-count-text"></p>
-        <div class="timer" id="timer-el">--</div>
+      <div class="screen sf-g sf-cap">
+        ${sfHeadHtml(state, { pill: sfRoundPill(state), title: '<span>Everyone is captioning your photo…</span>', small: true })}
+        <div class="sf-cap-photo">
+          ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId))}
+          <span class="sf-chip-over sf-cap-count" id="caption-count-text"></span>
+        </div>
       </div>
     `;
     patchCaptionCount(state);
@@ -1215,12 +1323,12 @@ function buildCaptioningView(state) {
   if (state.youCaptioned) {
     mountedKey = `captioning-done-${state.round}`;
     app.innerHTML = `
-      ${brandHtml(state)}
-      <div class="screen center">
-        ${bigIcon('checkCircle', 'good')}
-        <p class="subtitle">Caption sent!</p>
-        <p class="wait-note" id="caption-count-text"></p>
-        <div class="timer" id="timer-el">--</div>
+      <div class="screen sf-g sf-cap">
+        ${sfHeadHtml(state, { pill: sfRoundPill(state), title: '<span>Caption sent!</span>', small: true })}
+        <div class="sf-cap-photo">
+          ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId))}
+          <span class="sf-chip-over sf-cap-count" id="caption-count-text"></span>
+        </div>
       </div>
     `;
     patchCaptionCount(state);
@@ -1229,20 +1337,24 @@ function buildCaptioningView(state) {
 
   mountedKey = `captioning-write-${state.round}`;
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds}</div>
-        <div class="prompt-text">What's going on in ${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))}'s photo? Write a caption.</div>
+    <div class="screen sf-g sf-cap">
+      ${sfHeadHtml(state, { pill: sfRoundPill(state), title: `<span>Caption the photo of</span> ${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))}` })}
+      <div class="sf-cap-photo">
+        ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId))}
+        <span class="sf-chip-over sf-cap-count" id="caption-count-text"></span>
       </div>
-      <div class="timer" id="timer-el">--</div>
-      ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId), 'max-width:260px; width:100%; margin:0 auto;')}
-      <div class="field">
-        <textarea id="caption-input" class="caption-textarea" maxlength="140" rows="3" placeholder="e.g. Just watched the bus leave without him…"></textarea>
+      <div class="sf-cap-form">
+        <label for="caption-input">Your caption</label>
+        <div class="sf-cap-row">
+          <textarea id="caption-input" class="caption-textarea" maxlength="140" rows="2" placeholder="e.g. Just watched the bus leave without him…"></textarea>
+          <button id="caption-submit" class="btn btn-primary sf-send" aria-label="Send caption">${icon('send')}</button>
+        </div>
+        <span class="sf-cap-len num" id="caption-len">0/140</span>
       </div>
-      <button id="caption-submit" class="btn btn-primary btn-block">Send caption</button>
     </div>
   `;
+  const capInput = document.getElementById('caption-input');
+  capInput.addEventListener('input', () => { document.getElementById('caption-len').textContent = `${capInput.value.length}/140`; });
   document.getElementById('caption-submit').onclick = () => {
     const text = document.getElementById('caption-input').value.trim();
     if (!text) return showError('Write a caption first.');
@@ -1269,31 +1381,38 @@ function buildJudgingView(state) {
   stopCamera();
 
   const cardsHtml = state.captionCards.map((c) => `
-    <div class="caption-card ${state.isSubject ? '' : 'readonly'}" data-id="${c.id}">
+    <div class="caption-card ${state.isSubject ? '' : 'readonly'}" data-id="${c.id}" ${state.isSubject ? 'role="radio" aria-checked="false" tabindex="0"' : ''}>
       <p>${escapeHtml(c.text)}</p>
+      <span class="sf-radio" aria-hidden="true">${icon('check')}</span>
     </div>
   `).join('');
 
+  const subj = playerNameHtml(state.subjectName, looksOf(state, state.subjectId));
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds} — pick</div>
-        <div class="prompt-text">${state.isSubject
-          ? 'Pick the best caption for your photo.'
-          : `${playerNameHtml(state.subjectName, looksOf(state, state.subjectId))} is picking the best caption…`}</div>
+    <div class="screen sf-g sf-judge">
+      <div class="sf-judge-top">
+        <div class="sf-judge-photo">${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId))}</div>
+        <div class="sf-judge-text">
+          <span class="sf-pill">${state.isSubject ? "You're the star" : sfRoundPill(state, 'pick')}</span>
+          <h1>${state.isSubject ? 'Pick the best caption' : `${subj} <span>is picking the best caption…</span>`}</h1>
+          ${state.isSubject ? '<p>Names stay hidden until you pick.</p>' : ''}
+        </div>
+        <button class="sf-exit" data-exit-game aria-label="Leave game">${icon('logout')}</button>
       </div>
-      ${framedPhotoHtml(state.subjectPhotoDataUrl, looksOf(state, state.subjectId), 'max-width:220px; width:100%; margin:0 auto 18px;')}
-      <div class="caption-list">${cardsHtml || '<p class="wait-note">Nobody wrote a caption in time.</p>'}</div>
+      <div class="caption-list" role="radiogroup" aria-label="Captions">${cardsHtml || '<p class="wait-note">Nobody wrote a caption in time.</p>'}</div>
+      ${state.isSubject && cardsHtml ? `<div class="sf-start-bar"><button class="btn btn-primary btn-block sf-start" id="judge-status" disabled>Tap a caption to pick it</button></div>` : ''}
     </div>
   `;
 
   if (state.isSubject) {
     document.querySelectorAll('.caption-card[data-id]').forEach((el) => {
       el.onclick = () => {
-        document.querySelectorAll('.caption-card').forEach((c) => c.classList.add('disabled'));
+        document.querySelectorAll('.caption-card').forEach((c) => { c.classList.add('disabled'); c.setAttribute('aria-checked', 'false'); });
         el.classList.remove('disabled');
         el.classList.add('picked');
+        el.setAttribute('aria-checked', 'true');
+        const st = document.getElementById('judge-status');
+        if (st) st.textContent = 'Caption picked!';
         send({ type: 'pick_caption', authorId: el.getAttribute('data-id') });
         playSfx('pick');
       };
@@ -1304,6 +1423,8 @@ function buildJudgingView(state) {
 // --------------------------------------------------------------- DRAWING ---
 
 const DRAW_COLORS = ['#ffffff', '#111111', '#F0483A', '#F0B429', '#3FAE6B', '#1C5D99'];
+const DRAW_COLOR_NAMES = ['White', 'Black', 'Red', 'Yellow', 'Green', 'Blue'];
+const DRAW_SIZES = [4, 8, 14];
 
 function buildDrawingView(state) {
   mountedKey = `draw-canvas-${state.round}`;
@@ -1316,25 +1437,24 @@ function buildDrawingView(state) {
   }
 
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds} — doodle time</div>
-        <div class="prompt-text">${escapeHtml(state.prompt)}</div>
-      </div>
-      ${state.photoOwnerName ? `<div class="draw-on-banner" style="text-align:center; font-size:22px; font-weight:800; margin:6px 0 10px; line-height:1.2;">Draw on ${escapeHtml(state.photoOwnerName)}'s photo</div>` : ''}
-      <div class="timer" id="timer-el">--</div>
-      <div class="camera-wrap draw-stage">
+    <div class="screen sf-g sf-draw">
+      ${sfHeadHtml(state, { pill: sfRoundPill(state, 'doodle time'), title: `<span class="prompt-text">${escapeHtml(state.prompt)}</span>`, small: true })}
+      ${state.photoOwnerName ? `<div class="draw-on-banner"><span>Draw on the photo of</span> ${escapeHtml(state.photoOwnerName)}</div>` : ''}
+      <div class="camera-wrap draw-stage sf-stage">
         <img id="draw-photo" src="${state.yourPhotoDataUrl}">
         <canvas id="draw-canvas"></canvas>
       </div>
-      <div class="swatches" id="swatches">
-        ${DRAW_COLORS.map((c, i) => `<button class="swatch ${i === 0 ? 'active' : ''}" data-color="${c}" style="background:${c}"></button>`).join('')}
+      <div class="sf-tools" role="toolbar" aria-label="Drawing tools">
+        <div class="swatches" id="swatches">
+          ${DRAW_COLORS.map((c, i) => `<button class="swatch ${i === 0 ? 'active' : ''}" data-color="${c}" style="background:${c}" aria-label="${DRAW_COLOR_NAMES[i]}" aria-pressed="${i === 0}"></button>`).join('')}
+        </div>
+        <div class="sf-tools-row">
+          ${DRAW_SIZES.map((n, i) => `<button class="sf-size ${i === 1 ? 'on' : ''}" data-size="${n}" aria-label="Brush size ${i + 1}" aria-pressed="${i === 1}"><i style="width:${n + 4}px;height:${n + 4}px"></i></button>`).join('')}
+          <button id="draw-undo" class="sf-tool-btn" aria-label="Undo">${icon('undo')}</button>
+          <button id="draw-clear" class="sf-tool-btn is-text">Clear</button>
+        </div>
       </div>
-      <div class="btn-row">
-        <button id="draw-clear" class="btn btn-ghost btn-block">Clear</button>
-        <button id="draw-done" class="btn btn-primary btn-block">Done</button>
-      </div>
+      <button id="draw-done" class="btn btn-primary btn-block sf-start">Done</button>
     </div>
   `;
 
@@ -1343,14 +1463,35 @@ function buildDrawingView(state) {
   const canvas = document.getElementById('draw-canvas');
   const ctx = canvas.getContext('2d');
   let color = DRAW_COLORS[0];
+  let size = DRAW_SIZES[1];
   let drawing = false;
   let lastX = 0;
   let lastY = 0;
+  let strokes = [];   // pro Zpět: každý tah = { color, size, pts:[[x,y]…] }
+  let cur = null;
 
   function sizeCanvas() {
     const rect = stage.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
+    redraw();
+  }
+  function seg(c, w, x0, y0, x1, y1) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = w;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  }
+  function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const st of strokes) {
+      if (st.pts.length === 1) seg(st.color, st.size, st.pts[0][0], st.pts[0][1], st.pts[0][0], st.pts[0][1]);
+      for (let i = 1; i < st.pts.length; i++) seg(st.color, st.size, st.pts[i - 1][0], st.pts[i - 1][1], st.pts[i][0], st.pts[i][1]);
+    }
   }
   sizeCanvas();
   requestAnimationFrame(sizeCanvas);
@@ -1365,23 +1506,22 @@ function buildDrawingView(state) {
     const p = posFromEvent(e);
     lastX = p.x;
     lastY = p.y;
+    cur = { color, size, pts: [[p.x, p.y]] };
+    strokes.push(cur);
   }
   function move(e) {
     if (!drawing) return;
     e.preventDefault();
     const p = posFromEvent(e);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
+    seg(color, size, lastX, lastY, p.x, p.y);
+    cur.pts.push([p.x, p.y]);
     lastX = p.x;
     lastY = p.y;
   }
-  function end() { drawing = false; }
+  function end() {
+    if (drawing && cur && cur.pts.length === 1) seg(cur.color, cur.size, cur.pts[0][0], cur.pts[0][1], cur.pts[0][0], cur.pts[0][1]); // tečka
+    drawing = false;
+  }
 
   canvas.style.touchAction = 'none';
   canvas.addEventListener('pointerdown', start);
@@ -1391,11 +1531,18 @@ function buildDrawingView(state) {
   document.querySelectorAll('.swatch').forEach((sw) => {
     sw.onclick = () => {
       color = sw.getAttribute('data-color');
-      document.querySelectorAll('.swatch').forEach((s) => s.classList.toggle('active', s === sw));
+      document.querySelectorAll('.swatch').forEach((s2) => { s2.classList.toggle('active', s2 === sw); s2.setAttribute('aria-pressed', String(s2 === sw)); });
+    };
+  });
+  document.querySelectorAll('.sf-size').forEach((b) => {
+    b.onclick = () => {
+      size = Number(b.dataset.size);
+      document.querySelectorAll('.sf-size').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
     };
   });
 
-  document.getElementById('draw-clear').onclick = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById('draw-undo').onclick = () => { strokes.pop(); redraw(); };
+  document.getElementById('draw-clear').onclick = () => { strokes = []; ctx.clearRect(0, 0, canvas.width, canvas.height); };
   document.getElementById('draw-done').onclick = () => finishDrawing(img, canvas);
   // vyprší čas → odešli, co je zatím nakresleno (fotka s dosavadními čárami)
   autoPartial = { key: mountedKey, fire: () => finishDrawing(img, canvas) };
@@ -1418,62 +1565,69 @@ function finishDrawing(img, canvas) {
 
 function buildDrawWaitingView(state) {
   mountedKey = `draw-waiting-${state.round}`;
-  app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen center">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds}</div>
-        <div class="prompt-text">${escapeHtml(state.prompt)}</div>
-      </div>
-      ${bigIcon('brush')}
-      <h3>${state.youMissed ? 'Nothing to doodle this time' : 'Doodle done!'}</h3>
-      <p class="subtitle" id="draw-count-text">Waiting for the others…</p>
-      <div class="timer" id="timer-el">--</div>
-    </div>
-  `;
+  app.innerHTML = sfStatusHtml(state, {
+    cls: 'sf-draw-wait',
+    pill: sfRoundPill(state, 'doodle time'),
+    title: `<span class="prompt-text">${escapeHtml(state.prompt)}</span>`,
+    ring: 'small',
+    art: `<div class="sf-art">${icon('brush')}</div>`,
+    h: state.youMissed ? 'Nothing to doodle this time' : 'Doodle done!',
+    sub: '<span class="sf-sr" id="draw-count-text">Waiting for the others…</span>',
+    card: sfWaitCardHtml(),
+  });
   patchDrawCount(state);
 }
 
 function patchDrawCount(state) {
   const el = document.getElementById('draw-count-text');
   if (el) el.textContent = `${state.doneCount} / ${state.activeCount} players done…`;
+  sfSetCount(state.doneCount || 0, state.activeCount || 0);
 }
 
 // --------------------------------------------------------------- VOTING ---
 
 function buildVotingView(state) {
   mountedKey = `voting-${state.round}`;
+  const ownMissed = state.cards.some((c) => c.isOwn && !c.photoDataUrl);
   const cardsHtml = state.cards.map((c) => {
     if (c.isOwn) {
       return `
         <div class="vote-card own">
-          ${c.photoDataUrl ? `<img src="${c.photoDataUrl}">` : `<div class="missed"><span class="emoji">${icon('sad')}</span>Too slow!!</div>`}
+          ${c.photoDataUrl ? `<img src="${c.photoDataUrl}">` : sfMissedHtml()}
           <div class="tag">Yours – can't vote</div>
         </div>`;
     }
     if (c.missed) {
       return `
         <div class="vote-card disabled">
-          <div class="missed"><span class="emoji">${icon('sad')}</span>Too slow!!</div>
+          ${sfMissedHtml()}
         </div>`;
     }
     return `
-      <div class="vote-card" data-id="${c.id}">
+      <div class="vote-card" data-id="${c.id}" role="button" tabindex="0" aria-pressed="false">
         <img src="${c.photoDataUrl}">
         ${likeBtnHtml(c.id)}
       </div>`;
   }).join('');
 
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">${promptPackBadge(state)}Round ${state.round} / ${state.totalRounds} — vote</div>
-        <div class="prompt-text">${escapeHtml(state.prompt)}</div>
+    <div class="screen sf-g sf-vote">
+      <div class="sf-vote-top">
+        <span class="sf-pill">${sfRoundPill(state, 'vote')}</span>
+        <span class="sf-voted"><i></i><b class="sf-count-num num">0/${state.activeCount}</b><span>voted</span></span>
+        <button class="sf-exit" data-exit-game aria-label="Leave game">${icon('logout')}</button>
       </div>
-      <div class="timer" id="timer-el">--</div>
-      <div class="grid" id="vote-grid">${cardsHtml}</div>
-      <p class="wait-note" id="vote-count-text"></p>
+      <div class="sf-vote-headrow">
+        <div>
+          <h1 class="sf-vote-title prompt-text">${escapeHtml(state.prompt)}</h1>
+          <p class="sf-vote-sub">Photos are anonymous. Pick the funniest.</p>
+        </div>
+        ${sfRingHtml(true)}
+      </div>
+      ${ownMissed ? `<div class="sf-slow">${sfSadFaceHtml(56)}<div><b>Too slow!!</b><span>Your photo this round is a sad face. You can still vote.</span></div></div>` : ''}
+      <div class="grid sf-pickable" id="vote-grid">${cardsHtml}</div>
+      <p class="sf-sr" id="vote-count-text"></p>
+      <div class="sf-start-bar"><button class="btn btn-primary btn-block sf-start" id="vote-status" disabled>Tap a photo to vote</button></div>
     </div>
   `;
 
@@ -1498,10 +1652,14 @@ function markVoteSelection(selector, targetId) {
     const on = c.getAttribute('data-id') === targetId;
     c.classList.toggle('selected', on);
     c.classList.remove('disabled');
+    c.setAttribute('aria-pressed', String(on));
     const chk = c.querySelector('.check');
     if (on && !chk && c.classList.contains('vote-card')) c.insertAdjacentHTML('beforeend', `<div class="check">${icon('check')}</div>`);
     if (!on && chk) chk.remove();
   });
+  document.querySelectorAll('.sf-pickable').forEach((g) => g.classList.toggle('has-pick', !!targetId));
+  const st = document.getElementById('vote-status');
+  if (st) { st.textContent = targetId ? 'Vote sent.' : 'Tap a photo to vote'; st.classList.toggle('is-sent', !!targetId); }
 }
 
 // --- Liky pod fotkami (jen pro galerii; počty se hráčům neukazují, vidí jen své srdíčko) ---
@@ -1553,17 +1711,36 @@ function patchVoteCount(state) {
   if (el) el.textContent = state.youVoted
     ? `Vote sent (you can change it). ${state.votedCount} / ${state.activeCount} voted…`
     : `${state.votedCount} / ${state.activeCount} voted…`;
+  sfSetCount(state.votedCount || 0, state.activeCount || 0);
 }
 
 // -------------------------------------------------------------- RESULTS ---
 
 function scoreboardRowsHtml(players) {
   return players.map((p, i) => `
-    <div class="row ${p.isYou ? 'you' : ''}">
-      <span class="sb-player"><span class="rank">${i + 1}.</span>${avatarHtml(p.name, p.looks, 28)}${playerNameHtml(p.name, p.looks)}</span>
-      <span class="num" style="color:var(--gold); font-weight:700;">${p.score}</span>
+    <div class="row ${p.isYou ? 'you' : ''} ${i === 0 ? 'first' : ''}">
+      <span class="sb-player"><span class="rank">${i + 1}</span>${playerNameHtml(p.name, p.looks)}${p.isYou ? '<span class="sf-you">(you)</span>' : ''}</span>
+      <span class="num sb-score">${p.score}</span>
     </div>
   `).join('');
+}
+
+// hlavní vítěz kola (zoom + koruna + konfety) a ostatní fotky v řádku
+function sfWinnerHeroHtml(state, winners, ptsText) {
+  const many = winners.length > 1;
+  return `<div class="sf-hero ${many ? 'many' : ''}">
+    ${winners.map((c) => `
+      <div class="sf-hero-card">
+        <div class="sf-hero-photo">${c.missed ? sfMissedHtml() : resultPhotoHtml(c.photoDataUrl, looksOf(state, c.id))}</div>
+        <span class="sf-crown" aria-hidden="true">${sfCrownSvg()}</span>
+        <div class="sf-hero-name">${playerNameHtml(c.name, looksOf(state, c.id))}</div>
+        ${c.photoOwnerName ? `<div class="sf-hero-sub">On ${escapeHtml(c.photoOwnerName)}'s photo</div>` : ''}
+        <div class="sf-hero-sub"><span>${c.votes} ${c.votes === 1 ? 'vote' : 'votes'}</span> · <b>+${c.points} pts</b></div>
+      </div>`).join('')}
+  </div>`;
+}
+function sfCrownSvg() {
+  return '<svg width="74" height="54" viewBox="0 0 74 54"><path d="M6 18 18 46h38l12-28-17 11L37 6 23 29z" fill="#FFD23F" stroke="#A37A00" stroke-width="4" stroke-linejoin="round"/><circle cx="37" cy="34" r="5" fill="#EF4B5F"/></svg>';
 }
 
 function renderResultsScreen(state) {
@@ -1576,50 +1753,36 @@ function renderResultsScreen(state) {
   if (r.kind === 'twins') return renderTwinResultsScreen(state, r);
   if (r.kind === 'impostor') return renderImpostorResults(state, r);
 
-  const cardsHtml = r.cards.map((c) => `
-    <div class="result-card ${c.isWinner ? 'winner' : ''}">
-      ${c.isWinner ? `<div class="crown">${CROWN_SVG}</div>` : ''}
+  const winners = r.cards.filter((c) => c.isWinner && !c.missed);
+  const rest = r.cards.filter((c) => !winners.includes(c));
+  const restHtml = rest.map((c) => `
+    <div class="result-card">
       ${c.missed
-        ? `<div class="missed"><span class="emoji">${icon('sad')}</span>Too slow!!</div>`
+        ? sfMissedHtml()
         : resultPhotoHtml(c.photoDataUrl, looksOf(state, c.id))}
       <div class="meta">
         <div class="name">${playerNameHtml(c.name, looksOf(state, c.id))}</div>
         ${c.photoOwnerName ? `<div class="votes">On ${escapeHtml(c.photoOwnerName)}'s photo</div>` : ''}
-        ${c.missed ? '' : `<div class="votes">${c.votes} ${c.votes === 1 ? 'vote' : 'votes'} · +${c.points} pts</div>`}
+        ${c.missed ? '' : `<div class="votes">${c.votes} ${c.votes === 1 ? 'vote' : 'votes'}</div>`}
       </div>
-    </div>
-  `).join('');
-
-  const scoreboardHtml = state.players.map((p, i) => `
-    <div class="row ${p.isYou ? 'you' : ''}">
-      <span class="sb-player"><span class="rank">${i + 1}.</span>${avatarHtml(p.name, p.looks, 28)}${playerNameHtml(p.name, p.looks)}</span>
-      <span class="num" style="color:var(--gold); font-weight:700;">${p.score}</span>
     </div>
   `).join('');
 
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">Round ${r.round} / ${state.totalRounds} results</div>
-        <div class="prompt-text">${escapeHtml(r.prompt)}</div>
+    <div class="screen sf-g sf-results">
+      <div class="sf-res-top">
+        <span class="sf-pill">Round ${r.round} / ${state.totalRounds} results</span>
+        <button class="sf-exit" data-exit-game aria-label="Leave game">${icon('logout')}</button>
       </div>
-      <div class="grid">${cardsHtml}</div>
-
-      <div class="card">
-        <h3 style="margin-bottom:10px;">Scoreboard</h3>
-        <div class="scoreboard">${scoreboardHtml}</div>
-      </div>
-
-      ${state.isHost
-        ? `<button id="next-btn" class="btn btn-primary btn-block">${state.round >= state.totalRounds ? 'Show final results' : 'Next round'}</button>`
-        : `<p class="wait-note">Waiting for the host to start the next round…</p>`}
+      <h1 class="sf-vote-title prompt-text">${escapeHtml(r.prompt)}</h1>
+      ${winners.length ? sfWinnerHeroHtml(state, winners) : ''}
+      ${rest.length ? `<div class="sf-rest ${winners.length ? '' : 'is-all'}">${restHtml}</div>` : ''}
+      ${sfScoreboardHtml(state)}
+      ${sfNextBarHtml(state)}
     </div>
   `;
-
-  if (state.isHost) {
-    document.getElementById('next-btn').onclick = () => send({ type: 'next_round' });
-  }
+  sfWireNext();
+  if (winners.length) sfConfetti(document.querySelector('.sf-hero'));
 }
 
 function renderCaptionResultsScreen(state, r) {
@@ -1628,7 +1791,7 @@ function renderCaptionResultsScreen(state, r) {
     body = `<p class="subtitle" style="text-align:center;">${escapeHtml(r.subjectName)} didn't snap a photo — the round was skipped, no points.</p>`;
   } else if (!r.captions.length) {
     body = `
-      ${framedPhotoHtml(r.photoDataUrl, looksOf(state, r.subjectId), 'max-width:220px; width:100%; margin:0 auto 16px;')}
+      <div class="sf-cap-photo is-small">${framedPhotoHtml(r.photoDataUrl, looksOf(state, r.subjectId))}</div>
       <p class="subtitle" style="text-align:center;">Nobody wrote a caption in time — no points.</p>
     `;
   } else {
@@ -1640,33 +1803,26 @@ function renderCaptionResultsScreen(state, r) {
       </div>
     `).join('');
     body = `
-      ${framedPhotoHtml(r.photoDataUrl, looksOf(state, r.subjectId), 'max-width:220px; width:100%; margin:0 auto 16px;')}
+      <div class="sf-cap-photo is-small">${framedPhotoHtml(r.photoDataUrl, looksOf(state, r.subjectId))}</div>
       <p class="subtitle" style="text-align:center;">${playerNameHtml(r.subjectName, looksOf(state, r.subjectId))} picked the best caption</p>
       <div class="caption-list">${captionsHtml}</div>
     `;
   }
 
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen">
-      <div class="prompt-box">
-        <div class="eyebrow">Round ${r.round} / ${state.totalRounds} results</div>
-        <div class="prompt-text">${tr('Photo of', getLang())} ${playerNameHtml(r.subjectName, looksOf(state, r.subjectId))}</div>
+    <div class="screen sf-g sf-results">
+      <div class="sf-res-top">
+        <span class="sf-pill">Round ${r.round} / ${state.totalRounds} results</span>
+        <button class="sf-exit" data-exit-game aria-label="Leave game">${icon('logout')}</button>
       </div>
+      <h1 class="sf-vote-title"><span>Photo of</span> ${playerNameHtml(r.subjectName, looksOf(state, r.subjectId))}</h1>
       ${body}
-      <div class="card">
-        <h3 style="margin-bottom:10px;">Scoreboard</h3>
-        <div class="scoreboard">${scoreboardRowsHtml(state.players)}</div>
-      </div>
-      ${state.isHost
-        ? `<button id="next-btn" class="btn btn-primary btn-block">${state.round >= state.totalRounds ? 'Show final results' : 'Next round'}</button>`
-        : `<p class="wait-note">Waiting for the host to start the next round…</p>`}
+      ${sfScoreboardHtml(state)}
+      ${sfNextBarHtml(state)}
     </div>
   `;
-
-  if (state.isHost) {
-    document.getElementById('next-btn').onclick = () => send({ type: 'next_round' });
-  }
+  sfWireNext();
+  if (!r.skipped && r.captions && r.captions.some((c) => c.isWinner)) sfConfetti(document.querySelector('.sf-results .caption-card.winner'));
 }
 
 // ------------------------------------------------------------- GAMEOVER ---
@@ -1692,12 +1848,12 @@ function buildPodiumHtml(players) {
   return `<div class="podium">
     ${order.map((s) => `
       <div class="podium-spot place-${s.place}">
-        <span class="podium-medal">${medalSvg(s.place)}</span>
-        <div class="podium-avatars">${s.group.players.map((p) => avatarHtml(p.name, p.looks, s.place === 1 ? 52 : 40)).join('')}</div>
+        ${s.place === 1 ? `<span class="podium-crown" aria-hidden="true">${sfCrownSvg()}</span>` : ''}
+        <div class="podium-avatars">${s.group.players.map((p) => avatarHtml(p.name, p.looks, s.place === 1 ? 84 : 68)).join('')}</div>
         <div class="podium-names">${s.group.players.map((p) => playerNameHtml(p.name, p.looks)).join(' & ')}</div>
-        <div class="podium-score num">${s.group.score} pts</div>
         <div class="podium-bar">
-          <span class="podium-bar-label">${PODIUM_LABEL[s.place]}</span>
+          <span class="podium-bar-label" aria-label="${PODIUM_LABEL[s.place]}">${s.place}</span>
+          <span class="podium-score num">${s.group.score} pts</span>
         </div>
       </div>
     `).join('')}
@@ -1733,49 +1889,46 @@ function rewardCardHtml(reward) {
     ['For rounds won', reward.rounds],
   ].filter(([, v]) => v > 0);
   return `
-    <div class="reward-card">
-      <div class="reward-total">${COIN_SVG}<span class="num">+${reward.total}</span></div>
+    <section class="reward-card sf-reward" aria-label="Coins earned">
+      <div class="sf-reward-head"><span>You earned</span><span class="reward-total">${COIN_SVG}<span class="num" id="reward-num" data-to="${reward.total}">+${reward.total}</span></span></div>
       <div class="reward-rows">
         ${rows.map(([label, v]) => `<div><span>${label}</span><span class="num">+${v}</span></div>`).join('')}
       </div>
-    </div>`;
+    </section>`;
 }
 
 function renderGameOverScreen(state) {
   mountedKey = 'gameover';
   stopCamera();
   creditGameReward(state.reward);
-  const scoreboardHtml = state.players.map((p, i) => `
-    <div class="row ${p.isYou ? 'you' : ''}">
-      <span class="sb-player"><span class="rank">${i + 1}.</span>${avatarHtml(p.name, p.looks, 28)}${playerNameHtml(p.name, p.looks)}</span>
-      <span class="num" style="color:var(--gold); font-weight:700;">${p.score}</span>
-    </div>
-  `).join('');
+  const packLabel = state.mode !== 'caption' && state.mode !== 'hunt' && state.mode !== 'copycat' && QUESTION_PACK_INFO[state.promptPack]
+    ? ` · ${QUESTION_PACK_INFO[state.promptPack].label}` : '';
 
   app.innerHTML = `
-    ${brandHtml(state)}
-    <div class="screen center">
-      <div class="winners-line">${state.players.filter((p) => state.winners.includes(p.name)).map((p) => playerNameHtml(p.name, p.looks)).join(' & ')}</div>
-      <p class="subtitle">${state.winners.length > 1 ? 'win the game!' : 'wins the game!'}</p>
+    <div class="screen sf-g sf-over">
+      <div class="sf-over-head">
+        <h1>Game over!</h1>
+        <span class="sf-over-sub">${state.totalRounds} rounds · ${modeDisplayName(state.mode)}${packLabel}</span>
+        <span class="sf-sr winners-line">${state.players.filter((p) => state.winners.includes(p.name)).map((p) => playerNameHtml(p.name, p.looks)).join(' & ')} ${state.winners.length > 1 ? '<span>win the game!</span>' : '<span>wins the game!</span>'}</span>
+      </div>
 
       ${buildPodiumHtml(state.players)}
 
       ${rewardCardHtml(state.reward)}
 
-      <div class="card" style="width:100%;">
-        <h3 style="margin-bottom:10px;">Final standings</h3>
-        <div class="scoreboard">${scoreboardHtml}</div>
-      </div>
+      <section class="sf-card sf-sb">
+        <h2 class="sf-h3">Final standings</h2>
+        <div class="scoreboard">${scoreboardRowsHtml(state.players)}</div>
+      </section>
 
       ${galleryHtml(state)}
 
-      ${state.isHost
-        ? `<div class="btn-row">
-            <button id="again-btn" class="btn btn-primary btn-block">Play again</button>
-            <button id="menu-btn" class="btn btn-ghost btn-block">Main menu</button>
-          </div>`
-        : `<p class="wait-note">Waiting for the host to start a new game…</p>
-           <button id="menu-btn" class="btn btn-ghost btn-block">Main menu</button>`}
+      <div class="sf-start-bar sf-over-bar">
+        ${state.isHost
+          ? `<button id="again-btn" class="btn btn-primary btn-block sf-start">Play again</button>`
+          : `<p class="sf-wait-host"><span class="sf-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Waiting for the host to start a new game…</span></p>`}
+        <button id="menu-btn" class="btn btn-ghost btn-block">Main menu</button>
+      </div>
     </div>
   `;
 
@@ -1784,6 +1937,9 @@ function renderGameOverScreen(state) {
   }
   document.getElementById('menu-btn').onclick = leaveLobby;
   wireGallery(state);
+  sfConfetti(document.querySelector('.podium'));
+  const rn = document.getElementById('reward-num');
+  if (rn) sfCountUp(rn, Number(rn.dataset.to) || 0);
 }
 
 // ------------------------------------------------------------ DISPATCH ---
@@ -1812,7 +1968,7 @@ function renderApp(state) {
       else patchWaitingCount(state);
     } else {
       if (!mountedKey.startsWith('submitting-camera')) buildCameraView(state);
-      // jinak necháváme kameru běžet, nic nepřekreslujeme
+      else sfPatchSnapped(state); // jinak necháváme kameru běžet, jen aktualizujeme "x of y snapped"
     }
     return;
   }
@@ -1884,8 +2040,11 @@ setInterval(() => {
   const el = document.getElementById('timer-el');
   if (!el) return;
   const remaining = Math.max(0, Math.ceil((lastState.deadlineAt - Date.now()) / 1000));
-  el.innerHTML = `${icon('timer')}<span>${remaining}s</span>`;
-  el.classList.toggle('low', remaining <= 5);
+  if (el.classList.contains('sf-ring')) sfTickRing(el, lastState.deadlineAt, remaining);
+  else {
+    el.innerHTML = `${icon('timer')}<span>${remaining}s</span>`;
+    el.classList.toggle('low', remaining <= 5);
+  }
   timerSounds(lastState.deadlineAt, remaining);
   // ~1 s před koncem odešli rozdělanou práci (server přepne fázi přesně při vypršení času)
   if (autoPartial && autoPartial.key === mountedKey && autoPartial.firedFor !== lastState.deadlineAt
@@ -1932,6 +2091,19 @@ function playPhaseSounds(prev, state) {
   }
   if (state.phase === 'gameover' && prev.phase !== 'gameover') playSfx('win');
 }
+
+// Úvodní splash (index.html) zmizí, jakmile se naváže spojení — nejdřív po 1 s, nejpozději po 7 s.
+const splashShownAt = Date.now();
+function hideSplash() {
+  const el = document.getElementById('splash');
+  if (!el || el.dataset.leaving) return;
+  el.dataset.leaving = '1';
+  setTimeout(() => {
+    el.classList.add('is-hiding');
+    setTimeout(() => el.remove(), 360);
+  }, Math.max(0, 1000 - (Date.now() - splashShownAt)));
+}
+setTimeout(hideSplash, 7000);
 
 renderStartScreen();
 connect();

@@ -19,13 +19,13 @@ const SHOP_START_COINS = 0; // nový hráč začíná bez mincí — první si v
 // Vzácnosti: refund = kolik mincí vrátí duplikát (věc, kterou už máš).
 // Šance na jednotlivé vzácnosti má každá truhla vlastní (viz CASES v case.js).
 const RARITIES = {
-  common: { label: 'Common', color: '#60A5FA', refund: 15 },
-  rare: { label: 'Rare', color: '#A855F7', refund: 35 },
-  epic: { label: 'Epic', color: '#EC4899', refund: 75 },
-  legendary: { label: 'Legendary', color: '#F0B429', refund: 200 },
+  common: { label: 'Common', color: '#A9B4C8', refund: 15 },
+  rare: { label: 'Rare', color: '#3E8BFF', refund: 35 },
+  epic: { label: 'Epic', color: '#B66BFF', refund: 75 },
+  legendary: { label: 'Legendary', color: '#FF8F3A', refund: 200 },
   // Mythic — nejvzácnější, rámeček Fortune z kola štěstí a dárkový set Jezevčík (v truhlách není,
   // proto není v RARITY_ORDER, podle kterého se počítají šance truhel)
-  mythic: { label: 'Mythic', color: '#FF3D7F', refund: 500 },
+  mythic: { label: 'Mythic', color: '#FF4F9A', refund: 500 },
 };
 const RARITY_ORDER = ['common', 'rare', 'epic', 'legendary'];
 
@@ -262,12 +262,12 @@ const SHOP_TABS = [
 let shopTab = null;
 
 function shopTabsHtml() {
-  return `<div class="shop-tabs">${SHOP_TABS.map((t) => `
-    <button class="shop-tab ${t.id === shopTab ? 'active' : ''}" data-shop-tab="${t.id}">
-      <span class="shop-tab-icon">${icon(t.icon)}</span>
-      <span>${t.label}</span>
-      ${t.id === 'free' && anyDailyAvailable() ? '<i class="shop-tab-dot"></i>' : ''}
-    </button>`).join('')}</div>`;
+  const dots = {
+    free: anyDailyAvailable(),
+    chests: CASES.some((c) => isCaseAvailable(c) && caseIsFree(c)),
+  };
+  return `<div class="sf-seg shop-seg" role="tablist" aria-label="Shop">${SHOP_TABS.map((t) => `
+    <button class="sf-seg-btn ${t.id === shopTab ? 'on' : ''}" role="tab" aria-selected="${t.id === shopTab}" data-shop-tab="${t.id}">${t.label}${dots[t.id] ? '<i class="shop-tab-dot" aria-label="New"></i>' : ''}</button>`).join('')}</div>`;
 }
 
 // fromProfile = otevřeno z profilu (Edit look) — šipka zpět pak vede do menu, ne do obchodu
@@ -306,34 +306,42 @@ function renderShopScreen() {
   const data = shopLoad();
   if (!shopTab) shopTab = anyDailyAvailable() ? 'free' : 'chests';
 
-  const casesHtml = CASES.filter((c) => isCaseAvailable(c)).map((c) => `
-    <div class="case-card ${c.isNew ? 'is-new' : ''}" style="--case-glow:${c.glow}">
+  const availCases = CASES.filter((c) => isCaseAvailable(c));
+  // hlavní truhla nahoře: ta s odpočtem, jinak nová
+  const featured = availCases.find((c) => c.endsAt) || availCases.find((c) => c.isNew) || null;
+  const caseCardHtml = (c, feature) => `
+    <div class="case-card ${feature ? 'case-feature' : ''} ${c.isNew ? 'is-new' : ''}" data-case-card="${c.id}" style="--case-glow:${c.glow}">
       ${c.isNew ? '<span class="case-new-tag">NEW</span>' : ''}
-      <button class="case-info-btn" data-case="${c.id}" title="What's inside" aria-label="What's inside">?</button>
       <div class="case-art">${caseSvg(c)}</div>
-      <h3>${c.name}</h3>
-      ${c.endsAt ? `<div class="case-timer">${icon('timer')} ${caseTimeLeft(c)}</div>` : ''}
-      <button class="case-open-btn" data-case="${c.id}">${casePriceHtml(c, data)}</button>
-    </div>
-  `).join('');
+      <div class="case-card-info">
+        <h3>${c.name}</h3>
+        ${feature && c.endsAt ? `<div class="case-timer">${icon('timer')} ${caseTimeLeft(c)}</div>` : ''}
+        ${feature && !c.endsAt && c.exclusive ? '<div class="case-timer is-plain">Exclusive skins</div>' : ''}
+        <button class="case-open-btn ${caseIsFree(c, data) ? 'is-free' : 'is-paid'}" data-case="${c.id}">${casePriceHtml(c, data)}</button>
+      </div>
+    </div>`;
+  const casesHtml = (featured ? caseCardHtml(featured, true) : '')
+    + `<div class="case-grid">${availCases.filter((c) => c !== featured).map((c) => caseCardHtml(c, false)).join('')}</div>`;
 
   const packsHtml = COIN_PACKS.map((p) => `
     <button class="coin-pack" data-pack="${p.coins}">
       ${p.tag ? `<span class="coin-pack-tag">${p.tag}</span>` : ''}
-      <div class="coin-pack-icon">${COIN_PACK_ART[p.art]}</div>
-      <div class="coin-pack-amount num">${p.coins}</div>
-      ${p.bonus ? `<div class="coin-pack-bonus">+${p.bonus}% extra</div>` : ''}
-      <div class="coin-pack-price">${p.price}</div>
+      <span class="coin-pack-icon">${COIN_PACK_ART[p.art]}</span>
+      <span class="coin-pack-info">
+        <span class="coin-pack-amount num">${p.coins}</span>
+        <span class="coin-pack-price">${p.price}</span>
+        ${p.bonus ? `<span class="coin-pack-bonus">+${p.bonus}% extra</span>` : ''}
+      </span>
     </button>
   `).join('');
 
   app.innerHTML = `
-    <div class="home-top">
-      <div class="brand"><img class="mark" src="icon.png" alt=""><h1>Shop</h1></div>
+    <div class="home-top sf-page-top">
+      <div class="brand"><h1>Shop</h1></div>
       ${coinBadgeHtml(data.coins)}
     </div>
 
-    <div class="screen">
+    <div class="screen sf-shop">
       <button class="inventory-btn" id="inventory-btn">
         <div class="inventory-btn-icon">${icon('hanger')}</div>
         <div class="inventory-btn-text"><strong>Inventory</strong><span>${itemCountLabel(data.owned.length)}</span></div>
@@ -345,19 +353,21 @@ function renderShopScreen() {
       <div class="shop-tab-body">
         ${shopTab === 'free' ? dailyRewardsHtml() + redeemCodeCardHtml() : ''}
 
-        ${shopTab === 'chests' ? `<div class="case-grid">${casesHtml}</div>` : ''}
+        ${shopTab === 'chests' ? casesHtml : ''}
 
         ${shopTab === 'packs' ? `
           <div id="shop-pack">${partyPackCardHtml({ compact: true })}</div>
           <div id="shop-qpacks">${questionPacksCardHtml({ compact: true })}</div>
 
           <div class="section-eyebrow">COINS</div>
-          <div class="coin-packs">${packsHtml}</div>
-          <button class="no-ads-card" id="no-ads-btn">
-            <div class="no-ads-icon">${NO_ADS_SVG}</div>
-            <div class="no-ads-text"><strong>No ads</strong><span>Forever</span></div>
-            <div class="no-ads-price">${NO_ADS_PRICE}</div>
-          </button>` : ''}
+          <div class="coin-packs">
+            ${packsHtml}
+            <button class="no-ads-card" id="no-ads-btn">
+              <div class="no-ads-icon">${NO_ADS_SVG}</div>
+              <div class="no-ads-text"><strong>No ads</strong><span>Forever</span></div>
+              <div class="no-ads-price">${NO_ADS_PRICE}</div>
+            </button>
+          </div>` : ''}
       </div>
     </div>
     ${bottomNavHtml('shop')}
@@ -373,30 +383,31 @@ function renderShopScreen() {
     wirePackBuy(document.getElementById('shop-pack'), renderShopScreen);
     wireQuestionPacksBuy(document.getElementById('shop-qpacks'), renderShopScreen);
   }
-  // truhla se po ťuknutí zatřese; "Otevřít" ji nejdřív zatřese a pak otevře
+  // truhla se po ťuknutí zatřese; zdarma se otevře hned, za mince se nejdřív ukáže okno s nákupem
   const shake = (card) => {
     card.classList.remove('shake');
     void card.offsetWidth; // restart animace, i když se ťukne vícekrát za sebou
     card.classList.add('shake');
     playSfx('chest-shake');
   };
-  document.querySelectorAll('.case-grid .case-card').forEach((card) => {
+  document.querySelectorAll('.case-card').forEach((card) => {
     // po zatřesení se truhla vrátí k levitování
     card.addEventListener('animationend', (e) => {
       if (e.animationName === 'chest-shake') card.classList.remove('shake');
     });
     card.addEventListener('click', (e) => {
-      if (!e.target.closest('button')) shake(card);
+      if (e.target.closest('button')) return;
+      shake(card);
+      setTimeout(() => showCaseContents(card.dataset.caseCard), 350);
     });
   });
   document.querySelectorAll('.case-open-btn').forEach((btn) => {
     btn.onclick = () => {
       shake(btn.closest('.case-card'));
-      setTimeout(() => openCase(btn.dataset.case), 450);
+      const id = btn.dataset.case;
+      setTimeout(() => (caseIsFree(caseById(id)) ? openCase(id) : showCaseContents(id)), 450);
     };
   });
-  // jen truhly v sekci CHESTS — Daily Chest má vlastní "?" (daily.js), ten nepřepisovat
-  document.querySelectorAll('.case-info-btn[data-case]').forEach((btn) => { btn.onclick = () => showCaseContents(btn.dataset.case); });
 
   const notYet = () => showToast('Payments aren\'t live yet — this is a prototype.');
   document.querySelectorAll('.coin-pack').forEach((b) => { b.onclick = notYet; });
@@ -405,18 +416,42 @@ function renderShopScreen() {
 }
 
 let toastTimer = null;
-function showToast(text) {
+// kind: 'good' (zelený), 'danger' (červený), 'gold' (mince), jinak fialový. Bez kind se odhadne z textu.
+function showToast(text, kind) {
   clearTimeout(toastTimer);
+  if (!kind) {
+    if (/not enough/i.test(text)) kind = 'gold';
+    else if (/couldn|failed|denied|removed|lost connection/i.test(text)) kind = 'danger';
+    else if (/copied|bought|let you in|developer mode on/i.test(text)) kind = 'good';
+  }
   let el = document.getElementById('toast');
   if (!el) {
     el = document.createElement('div');
     el.id = 'toast';
-    el.className = 'toast';
     document.body.appendChild(el);
   }
-  el.textContent = text;
+  el.className = `toast${kind ? ` toast-${kind}` : ''}`;
+  el.setAttribute('role', kind === 'danger' ? 'alert' : 'status');
+  const ico = kind === 'good' ? icon('check') : kind === 'danger' ? icon('alert') : '';
+  const needCoins = kind === 'gold' && /not enough/i.test(text);
+  el.innerHTML = `${ico}<span></span>${needCoins ? '<button type="button" class="toast-btn">Get coins</button>' : ''}`;
+  el.querySelector('span').textContent = text;
+  const getCoins = el.querySelector('.toast-btn');
+  if (getCoins) {
+    getCoins.onclick = () => {
+      el.classList.remove('show');
+      if (typeof lastState !== 'undefined' && lastState) return; // uprostřed hry se nepřepíná
+      closeCaseOverlay();
+      closeModal();
+      shopTab = 'packs';
+      shopView = 'shop';
+      homeTab = 'shop';
+      renderStartScreen();
+    };
+  }
+  void el.offsetWidth; // ať se animace přehraje i při rychlém opakování
   el.classList.add('show');
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
 // ------------------------------------------------------------ INVENTÁŘ ---
@@ -444,34 +479,55 @@ function nameStyleFor(item) {
   return `color:${item.color};`;
 }
 
-// Náhled toho, jak tě uvidí ostatní — nasazený rámeček + barva jména.
+// Náhled toho, jak tě uvidí ostatní — nasazený rámeček + barva jména + postup sbírky.
 function looksPreviewHtml(data) {
   const frame = equippedItem(data, 'frame');
   const nameItem = equippedItem(data, 'name');
+  const totalItems = ALL_ITEMS.length;
+  const owned = data.owned.length;
+  const pct = Math.round((owned / totalItems) * 100);
+  const fr = frame ? `${frame.name} · <span style="color:${RARITIES[frame.rarity].color}">${RARITIES[frame.rarity].label}</span>` : 'Default';
   return `
     <div class="looks-card">
-      <div class="looks-frame" style="background:${frame ? frame.style : 'rgba(255,255,255,0.12)'}">
+      <div class="looks-frame" style="background:${frame ? frame.style : 'var(--sf-r-common)'}">
         <div class="looks-photo">${getAvatar() ? `<img class="avatar-img" src="${getAvatar()}" alt="">` : escapeHtml((getSavedName() || '?').charAt(0).toUpperCase())}</div>
         ${frameDecorHtml(frame)}
       </div>
-      <div class="looks-name" style="${nameStyleFor(nameItem)}">${escapeHtml(getSavedName() || 'Name')}</div>
+      <div class="looks-info">
+        <div class="looks-name" style="${nameStyleFor(nameItem)}">${escapeHtml(getSavedName() || 'Name')}</div>
+        <div class="looks-frame-line">Frame: ${fr}</div>
+        <div class="looks-progress"><span class="num">${owned} of ${totalItems} skins</span><div class="profile-progress"><div style="width:${pct}%"></div></div></div>
+      </div>
     </div>`;
 }
 
+let invTab = 'frame';
+
 function inventoryTileHtml(section, item, equipped) {
+  const rar = item ? RARITIES[item.rarity] : RARITIES.common;
   const preview = item
-    ? shopItemPreview(section, item)
+    ? (section.id === 'frame' ? shopItemPreview(section, item) : `<span class="inv-aa" style="${nameStyleFor(item)}">Aa</span>`)
     : section.id === 'frame'
-      ? `<div class="frame-preview" style="background:rgba(255,255,255,0.12)"><div class="frame-inner">${icon('camera')}</div></div>`
-      : `<div class="name-preview"><span style="color:#fff">${escapeHtml(getSavedName() || 'Name')}</span></div>`;
+      ? `<div class="frame-preview" style="background:var(--sf-r-common)"><div class="frame-inner">${icon('camera')}</div></div>`
+      : `<span class="inv-aa" style="color:#fff">Aa</span>`;
+  const label = item ? item.name : 'Default';
   return `
-    <button class="shop-item inv-item ${equipped ? 'is-equipped' : ''} ${item ? 'has-rarity' : ''}" data-section="${section.id}" data-id="${item ? item.id : ''}" style="${item ? `--rc:${RARITIES[item.rarity].color}` : ''}">
-      ${preview}
-      <div class="shop-item-name">${item ? item.name : 'Default'}</div>
-      ${equipped
-        ? `<span class="shop-state equipped">${icon('check')} Equipped</span>`
-        : `<span class="shop-state owned">Equip</span>`}
+    <button class="inv-item ${equipped ? 'is-equipped' : ''}" data-section="${section.id}" data-id="${item ? item.id : ''}" aria-pressed="${equipped}" aria-label="${label}, ${rar.label}${equipped ? ', equipped' : ''}" style="--rc:${rar.color}">
+      <span class="inv-preview">${preview}</span>
+      <span class="inv-label">${label}</span>
+      ${equipped ? `<span class="inv-check">${icon('check')}</span>` : ''}
     </button>`;
+}
+
+function inventoryLockedTileHtml(section, item) {
+  const preview = section.id === 'frame'
+    ? shopItemPreview(section, item)
+    : `<span class="inv-aa" style="${nameStyleFor(item)}">Aa</span>`;
+  return `
+    <div class="inv-item is-locked" role="img" aria-label="${item.name}, ${RARITIES[item.rarity].label}, not owned" style="--rc:${RARITIES[item.rarity].color}">
+      <span class="inv-preview">${preview}</span>
+      <span class="inv-label">${item.name}</span>
+    </div>`;
 }
 
 function renderInventoryScreen() {
@@ -479,32 +535,45 @@ function renderInventoryScreen() {
   stopCamera();
   document.body.classList.add('home-bg', 'has-bottom-nav');
   const data = shopLoad();
+  const section = SHOP_SECTIONS.find((x) => x.id === invTab) || SHOP_SECTIONS[0];
+  const TAB_LABELS = { frame: 'Frames', name: 'Name colors' };
 
-  const sectionsHtml = SHOP_SECTIONS.map((section) => {
-    // od nejvzácnější po nejběžnější (mythic → legendary → epic → rare → common)
-    const rank = (i) => (i.rarity === 'mythic' ? RARITY_ORDER.length : RARITY_ORDER.indexOf(i.rarity));
-    const ownedItems = section.items.filter((i) => data.owned.includes(i.id)).sort((a, b) => rank(b) - rank(a));
-    const tiles = [inventoryTileHtml(section, null, !data.equipped[section.id])]
-      .concat(ownedItems.map((item) => inventoryTileHtml(section, item, data.equipped[section.id] === item.id)))
-      .join('');
+  // od nejvzácnější po nejběžnější; každá skupina má svou barvu A slovo vzácnosti
+  const groupsHtml = ['mythic', 'legendary', 'epic', 'rare', 'common'].map((r) => {
+    const items = section.items.filter((i) => i.rarity === r);
+    if (!items.length && r !== 'common') return '';
+    const ownedN = items.filter((i) => data.owned.includes(i.id)).length;
+    const tiles = (r === 'common' ? [inventoryTileHtml(section, null, !data.equipped[section.id])] : [])
+      .concat(items.map((item) => (data.owned.includes(item.id)
+        ? inventoryTileHtml(section, item, data.equipped[section.id] === item.id)
+        : inventoryLockedTileHtml(section, item))));
     return `
-      <div class="section-eyebrow">${section.title.toUpperCase()}</div>
-      <div class="shop-grid">${tiles}</div>`;
+      <section class="inv-group">
+        <h2 class="inv-group-title"><i style="background:${RARITIES[r].color}"></i>${RARITIES[r].label.toUpperCase()}<span>${ownedN}/${items.length}</span></h2>
+        <div class="inv-grid">${tiles.join('')}</div>
+      </section>`;
   }).join('');
 
   app.innerHTML = `
-    <div class="home-top">
+    <div class="home-top sf-page-top">
       <div class="lobby-top" style="margin-bottom:0">
-        <button id="inv-back" class="back-btn" title="Back to shop">${icon('back')}</button>
+        <button id="inv-back" class="back-btn" title="Back to shop" aria-label="Back">${icon('back')}</button>
         <div class="brand"><h1>Inventory</h1></div>
       </div>
       ${coinBadgeHtml(data.coins)}
     </div>
 
-    <div class="screen">
+    <div class="screen sf-inventory">
       ${looksPreviewHtml(data)}
-      ${sectionsHtml}
-      ${data.owned.length === 0 ? `<button class="btn btn-primary btn-block" id="inv-to-shop">${icon('bag')} Open a chest in the shop</button>` : ''}
+      ${data.owned.length === 0 ? `
+        <div class="sf-empty">
+          <svg viewBox="0 0 96 96" width="84" height="84" aria-hidden="true"><circle cx="48" cy="54" r="34" fill="#FFD23F" stroke="#8C6600" stroke-width="4"/><circle cx="48" cy="16" r="10" fill="#C2531B" stroke="#8C6600" stroke-width="4"/><circle cx="38" cy="52" r="4" fill="#3A2500"/><circle cx="58" cy="52" r="4" fill="#3A2500"/><ellipse cx="48" cy="68" rx="6" ry="4" fill="#3A2500"/></svg>
+          <div class="sf-empty-text"><strong>No skins yet</strong><span>Open a chest to get your first frame.</span>
+            <button class="btn btn-primary sf-empty-btn" id="inv-to-shop">Go to chests</button></div>
+        </div>` : `
+      <div class="sf-seg" role="tablist" aria-label="Skins">${SHOP_SECTIONS.map((x) => `
+        <button class="sf-seg-btn ${x.id === section.id ? 'on' : ''}" role="tab" aria-selected="${x.id === section.id}" data-inv-tab="${x.id}">${TAB_LABELS[x.id] || x.title}</button>`).join('')}</div>
+      ${groupsHtml}`}
     </div>
     ${bottomNavHtml('shop')}
   `;
@@ -515,8 +584,11 @@ function renderInventoryScreen() {
   document.getElementById('inv-back').onclick = inventoryFromProfile ? backToMenu : backToShop;
   const toShop = document.getElementById('inv-to-shop');
   if (toShop) toShop.onclick = () => { shopTab = 'chests'; backToShop(); };
+  document.querySelectorAll('[data-inv-tab]').forEach((b) => {
+    b.onclick = () => { invTab = b.dataset.invTab; playSfx('swipe'); renderInventoryScreen(); };
+  });
 
-  document.querySelectorAll('.inv-item').forEach((btn) => {
+  document.querySelectorAll('button.inv-item').forEach((btn) => {
     btn.onclick = () => {
       const d = shopLoad();
       if (btn.dataset.id) d.equipped[btn.dataset.section] = btn.dataset.id;
@@ -526,4 +598,5 @@ function renderInventoryScreen() {
       renderInventoryScreen();
     };
   });
+
 }

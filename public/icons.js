@@ -31,6 +31,9 @@ const ICON_PATHS = {
   star: '<path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
   chevron: '<path d="M9 5l7 7-7 7"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  alert: '<circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 17h.01"/>',
+  clipboard: '<rect x="8" y="3" width="8" height="4" rx="1.5"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/>',
   spy: '<path d="M7 10l1.4-5a1 1 0 0 1 1.4-.6L12 5.6l2.2-1.2a1 1 0 0 1 1.4.6L17 10"/><path d="M3 10.5c5 2 13 2 18 0"/><path d="M6 15.5c3.5-2 8.5-2 12 0-1 3-3.5 3.3-6 1.6-2.5 1.7-5 1.4-6-1.6z"/>',
   users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.4 3-5.3 6-5.3s5.4 1.9 6 5.3"/><circle cx="17" cy="9" r="2.6"/><path d="M16 13.8c2.6 0 4.4 1.6 5 4.7"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
@@ -152,8 +155,24 @@ function packGlyph(pack) {
   return `<svg class="pack-glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">${PACK_GLYPHS[pack] || ''}</svg>`;
 }
 
+// Snapfam v2: ikonka módu = barevný čtverec s lemem + obrysový glyf (barvy dává CSS třída .mt-<mód>).
+const SF_MODE_ART = {
+  classic: '<circle cx="12" cy="12" r="9"/><path d="M7.5 13h9a4.5 4.5 0 0 1-9 0z" fill="currentColor"/><path d="M8.5 9.2l1.6-1M15.5 9.2l-1.6-1"/>',
+  caption: '<path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 20l1.6-4.6A7.5 7.5 0 1 1 20 11.5z"/><path d="M8.6 11.5h.01M12 11.5h.01M15.4 11.5h.01" stroke-width="3"/>',
+  draw: '<path d="M18.4 3.6a2 2 0 0 1 2.9 2.9L11.6 16.2l-2.9-2.9z"/><path d="M7.4 14.6c-2 0-3.4 1.5-3.4 3.4 0 1.2-.6 1.8-1.4 2.3 3.3.5 6.7-1 6.7-3.9z" fill="currentColor"/>',
+  impostor: '<path d="M3 11h18M6.2 11 7.6 5h8.8l1.4 6"/><circle cx="7.8" cy="16" r="2.6"/><circle cx="16.2" cy="16" r="2.6"/><path d="M10.4 16h3.2"/>',
+  hunt: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/><path d="M8 9.5a3 3 0 0 1 2.5-2"/>',
+  copycat: '<circle cx="8.5" cy="12" r="5.5"/><circle cx="15.5" cy="12" r="5.5"/><path d="M6.6 13.6q1.9 1.5 3.8 0M13.6 13.6q1.9 1.5 3.8 0"/>',
+  twins: '<circle cx="7.5" cy="12" r="4.8"/><circle cx="16.5" cy="12" r="4.8"/><path d="M6 11h.01M9 11h.01M15 11h.01M18 11h.01" stroke-width="2.8"/><path d="M5.8 13.6q1.7 1.2 3.4 0M14.8 13.6q1.7 1.2 3.4 0"/>',
+};
+
 function modeTile(mode) {
-  return `<div class="mode-tile"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true">${MODE_GLYPHS[mode]}</svg></div>`;
+  return `<div class="mode-tile mt-${mode}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SF_MODE_ART[mode] || ''}</svg></div>`;
+}
+
+// Logo Snapfam (fialový čtverec, rámeček hledáčku, žlutý smajlík). bg = barva čtverce.
+function sfLogoSvg(size = 40, bg = '#4B2A9B') {
+  return `<svg class="sf-logo" width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="${bg}"/><path d="M9 15v-4a2 2 0 0 1 2-2h4M25 9h4a2 2 0 0 1 2 2v4M31 25v4a2 2 0 0 1-2 2h-4M15 31h-4a2 2 0 0 1-2-2v-4" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/><circle cx="20" cy="20" r="8" fill="#FFD23F"/><circle cx="17.2" cy="18.3" r="1.2" fill="#3A2500"/><circle cx="22.8" cy="18.3" r="1.2" fill="#3A2500"/><path d="M16 21.2h8a4 4 0 0 1-8 0z" fill="#3A2500"/></svg>`;
 }
 
 // Ikonka „No ads" — nápis AD v červeném zákazovém kruhu (jako dopravní značka).
