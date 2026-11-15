@@ -143,8 +143,10 @@ const NAME_PROMPTS = [
 
 // Kosmetika ze shopu (nasazený rámeček / barva jména). Server jen přeposílá
 // id věcí ostatním hráčům — co id znamená, ví až klient.
+// Přejmenované skiny: staré id → nové (musí odpovídat ITEM_ALIASES v public/shop.js).
+const LOOK_ALIASES = { 'name-northern-lights': 'name-aurora' };
 function sanitizeLooks(raw) {
-  const clean = (v) => (typeof v === 'string' && /^[a-z0-9-]{1,32}$/.test(v) ? v : null);
+  const clean = (v) => (typeof v === 'string' && /^[a-z0-9-]{1,32}$/.test(v) ? (LOOK_ALIASES[v] || v) : null);
   if (!raw || typeof raw !== 'object') return { frame: null, name: null };
   return { frame: clean(raw.frame), name: clean(raw.name) };
 }

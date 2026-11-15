@@ -320,7 +320,7 @@ function showWheelReveal(result) {
   if (item) {
     label = RARITIES[item.rarity].label;
     color = RARITIES[item.rarity].color;
-    preview = shopItemPreview(sectionOf(item), item);
+    preview = shopItemPreview(sectionOf(item), item, true);
     sound = item.rarity === 'mythic' ? 'reveal-legendary' : `reveal-${item.rarity}`;
     if (item.rarity === 'mythic' && !result.duplicate) setTimeout(() => playSfx('win'), 900); // fanfára navíc
   }

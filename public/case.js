@@ -9,12 +9,53 @@
 // exclusive = časově omezená truhla: její skiny nepadají nikde jinde (ani
 // z Daily Chest) a po endsAt (místní čas telefonu) truhla ze shopu zmizí.
 const CASES = [
+  // Sady ze Snapfam exportu (specs.csv). Šance podle README: Common 60 / Rare 28 / Epic 10 / Legendary 2 %.
+  // Skiny jsou exkluzivní pro svou truhlu; Mythic z truhel nepadá nikdy. NEW štítek jen u Winter (hlavní truhla nahoře).
+  {
+    id: 'winter',
+    name: 'Winter Chest',
+    price: 120,
+    isNew: true,
+    exclusive: true,
+    items: [
+      'frame-snowball', 'frame-mitten', 'frame-cocoa', 'frame-candy-cane', 'frame-fairy-lights', 'frame-gift-wrap', 'frame-snow-globe',
+      'name-snowy', 'name-cranberry', 'name-minty', 'name-gingerbread', 'name-frosted', 'name-aurora', 'name-santa',
+    ],
+    odds: { common: 60, rare: 28, epic: 10, legendary: 2 },
+    colors: { body: ['#D8343F', '#8E1C28'], lid: ['#E6F4FF', '#7FA8D8'], trim: ['#7FA8D8', '#4A7BB0'] },
+    glow: 'rgba(111,184,240,0.45)',
+  },
+  {
+    id: 'cosmos',
+    name: 'Cosmos Chest',
+    price: 120,
+    exclusive: true,
+    items: [
+      'frame-moon-grey', 'frame-nebula-blue', 'frame-stardust', 'frame-saturn', 'frame-rocket', 'frame-alien', 'frame-black-hole',
+      'name-moon', 'name-comet', 'name-nebula', 'name-mars', 'name-supernova', 'name-galaxy-far', 'name-cosmic',
+    ],
+    odds: { common: 60, rare: 28, epic: 10, legendary: 2 },
+    colors: { body: ['#2A1F7A', '#160E4A'], lid: ['#5B3FD0', '#2A1F7A'], trim: ['#8FB0FF', '#4A6FE8'] },
+    glow: 'rgba(143,176,255,0.45)',
+  },
+  {
+    id: 'street',
+    name: 'Street Chest',
+    price: 120,
+    exclusive: true,
+    items: [
+      'frame-asphalt', 'frame-spray-red', 'frame-sticker-bomb', 'frame-sneaker', 'frame-graffiti', 'frame-neon-sign', 'frame-boombox',
+      'name-concrete', 'name-spray', 'name-tag', 'name-highlighter', 'name-fresh-kicks', 'name-wildstyle', 'name-gold-chain',
+    ],
+    odds: { common: 60, rare: 28, epic: 10, legendary: 2 },
+    colors: { body: ['#2C2C38', '#1A1A24'], lid: ['#FF4FD8', '#B0189A'], trim: ['#2BE0C8', '#FF8FE6'] },
+    glow: 'rgba(255,143,230,0.45)',
+  },
   {
     id: 'dragon',
     name: 'Dragon Chest',
     price: 150,
     firstFree: true, // první otevření na zařízení zdarma (data.freeOpened v obchodě), pak už za mince
-    isNew: true,
     exclusive: true, // trvalá truhla (bez endsAt), ale její skiny nepadají nikde jinde
     // dračí / fantasy sada — tyhle skiny jsou exkluzivní pro tuhle truhlu
     items: [
@@ -51,7 +92,7 @@ const CASES = [
     items: [
       'frame-sunset', 'frame-grape', 'frame-sand', 'frame-neon', 'frame-candy', 'frame-aurora', 'frame-music', 'frame-sweets',
       'frame-lemon', 'frame-berry', 'frame-arcade', 'frame-pizza', 'frame-disco', 'frame-spacecat',
-      'name-pink', 'name-peach', 'name-coral', 'name-sunset', 'name-candy', 'name-aurora', 'name-rainbow',
+      'name-pink', 'name-peach', 'name-coral', 'name-sunset', 'name-candy', 'name-rainbow',
       'name-lemon', 'name-arcade', 'name-pizza', 'name-disco', 'name-spacecat',
     ],
     odds: { common: 57, rare: 28, epic: 13, legendary: 2 },
@@ -66,7 +107,7 @@ const CASES = [
     items: [
       'frame-ice', 'frame-forest', 'frame-mint', 'frame-slate', 'frame-night', 'frame-ocean', 'frame-toxic', 'frame-deepsea',
       'frame-fire', 'frame-lava', 'frame-frost', 'frame-electric', 'frame-galaxy', 'frame-phoenix',
-      'frame-sky', 'frame-cocoa', 'frame-jungle', 'frame-ninja', 'frame-robot', 'frame-dino',
+      'frame-sky', 'frame-jungle', 'frame-ninja', 'frame-robot', 'frame-dino',
     ],
     odds: { common: 52, rare: 30, epic: 15, legendary: 3 },
     colors: { body: ['#0EA5E9', '#0C4A6E'], lid: ['#7DD3FC', '#0284C7'], trim: ['#E0F2FE', '#94A3B8'] },
@@ -156,47 +197,61 @@ function casePool(caseDef) {
   }
 })();
 
-// Truhla ze style sheetu (part-chest-art): plochá barva + jeden tmavý obrys ve stejném odstínu.
-// Je rozdělená na spodek (.chest-base) a víko (.chest-lid), ať víko při otevření může odskočit.
-// Barvy podle druhu: dragon, party, frame, color, mythic (+ spooky v oranžové).
-const SF_CHEST_COLORS = {
-  dragon: { lid: '#E0453A', body: '#C9352B', line: '#6E150F', trim: '#FFD23F', gem: '#3FC97A', spikes: true },
-  party:  { lid: '#A57BFF', body: '#8B5CF6', line: '#3F2389', trim: '#FFD23F', gem: '#FF7FC0', bow: true },
-  frame:  { lid: '#55C3F5', body: '#3EA8E0', line: '#145A85', trim: '#E9F7FF', gem: '#3E8BFF' },
-  color:  { lid: '#55D383', body: '#3FC46A', line: '#1A6634', trim: '#FFD23F', gem: '#FF8A3D' },
-  mythic: { lid: '#FF6FAE', body: '#F0438E', line: '#7E0F45', trim: '#FFE38C', gem: '#B66BFF' },
-  spooky: { lid: '#FF9F43', body: '#7A3FC4', line: '#2F1659', trim: '#D9F99D', gem: '#FF8A3D' },
-};
-const SF_CHEST_KIND = { dragon: 'dragon', party: 'party', frames: 'frame', names: 'color', legend: 'mythic', spooky: 'spooky' };
+// Truhla ze Snapfam exportu (assets/chests/<složka>/<složka>-<stav>.svg, 10 stavů + vrstva inner-glow).
+// Jeden <img> mění stavy (closed, bounce-1/2, shake-1/2/3, open-25/60/100, empty), vrstva inner-glow se po otevření
+// rozsvítí. Stavy jsou hotové obrázky s odskočeným víkem, takže se animace dělá střídáním obrázků (chestPlay).
+const CHEST_DIR = { dragon: 'dragon', spooky: 'spooky', party: 'party', frames: 'frame', names: 'name', legend: 'legendary', winter: 'winter', cosmos: 'cosmos', street: 'street' };
+const CHEST_STATES = ['closed', 'bounce-1', 'bounce-2', 'shake-1', 'shake-2', 'shake-3', 'open-25', 'open-60', 'open-100', 'empty'];
+const CHEST_SHAKE_SEQ = ['bounce-1', 'bounce-2', 'shake-1', 'shake-2', 'shake-3', 'closed'];
 
-function caseSvg(caseDef) {
-  const k = `case-${caseDef.id}`;
-  const c = SF_CHEST_COLORS[SF_CHEST_KIND[caseDef.id]] || SF_CHEST_COLORS.party;
-  // Truhla (.case-chest) a stín pod ní (.case-shadow) jsou zvlášť, ať se můžou animovat proti sobě.
-  // .chest-glow / .chest-beam je barevné světlo z truhly (barva kování, nikdy bílá).
-  return `<svg viewBox="0 0 200 170" aria-hidden="true" stroke-linejoin="round">
-    <ellipse class="case-shadow" cx="100" cy="158" rx="70" ry="8" fill="#000" opacity=".28"/>
-    <g class="case-chest">
-      <g class="chest-base">
-        <rect x="30" y="80" width="140" height="70" rx="12" fill="${c.body}" stroke="${c.line}" stroke-width="6"/>
-        <path d="M30 96 H170" stroke="${c.line}" stroke-width="6"/>
-        <rect x="52" y="82" width="16" height="68" rx="4" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
-        <rect x="132" y="82" width="16" height="68" rx="4" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
-        <rect x="84" y="84" width="32" height="32" rx="9" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
-        <circle cx="100" cy="99" r="7" fill="${c.gem}" stroke="${c.line}" stroke-width="4"/>
-      </g>
-      <path class="chest-beam" d="M40 80 L160 80 L210 -90 L-10 -90 Z" fill="${c.trim}"/>
-      <ellipse class="chest-glow" cx="100" cy="80" rx="62" ry="10" fill="${c.trim}"/>
-      <g class="chest-lid">
-        ${c.spikes ? `<g fill="${c.trim}" stroke="${c.line}" stroke-width="5"><path d="M58 46 64 18 76 40z"/><path d="M92 34 100 4 108 34z"/><path d="M124 40 136 18 142 46z"/></g>` : ''}
-        <path d="M36 82 V66 C 36 40, 60 30, 100 30 C 140 30, 164 40, 164 66 V82 Z" fill="${c.lid}" stroke="${c.line}" stroke-width="6"/>
-        <rect x="52" y="30" width="16" height="52" rx="4" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
-        <rect x="132" y="30" width="16" height="52" rx="4" fill="${c.trim}" stroke="${c.line}" stroke-width="5"/>
-        ${c.bow ? `<g fill="#FF7FC0" stroke="#A3236A" stroke-width="5"><path d="M100 30 C 84 10, 66 18, 76 32 Z"/><path d="M100 30 C 116 10, 134 18, 124 32 Z"/><circle cx="100" cy="30" r="7"/></g>` : ''}
-        <path d="M46 52 C 54 44, 66 40, 80 39" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="5" fill="none" stroke-linecap="round"/>
-      </g>
-    </g>
-  </svg>`;
+function chestDir(caseDef) { return CHEST_DIR[caseDef.id] || 'party'; }
+function chestUrl(caseDef, state) { const d = chestDir(caseDef); return `assets/chests/${d}/${d}-${state}.svg`; }
+
+// stáhne obrázky stavů předem (držíme je v paměti, ať se při střídání nic nezasekne)
+const chestPreloaded = {};
+function chestPreload(caseDef, states = CHEST_STATES) {
+  states.forEach((st) => {
+    const url = chestUrl(caseDef, st);
+    if (!chestPreloaded[url]) { const im = new Image(); im.src = url; chestPreloaded[url] = im; }
+  });
+}
+
+// crop = jen zavřená truhla (karty a okno nákupu); bez crop = celý obrázek i s místem nad truhlou pro víko
+function caseSvg(caseDef, { crop = true } = {}) {
+  return `<div class="chest-art ${crop ? 'is-crop' : ''}" data-chest="${caseDef.id}" aria-hidden="true">
+    <img class="ch-img case-chest" src="${chestUrl(caseDef, 'closed')}" alt="" draggable="false">
+    <img class="ch-glow" src="assets/chests/${chestDir(caseDef)}/${chestDir(caseDef)}-inner-glow.svg" alt="" draggable="false">
+  </div>`;
+}
+
+// Přehraje stavy za sebou (každý stepMs). Předchozí přehrávání na stejné truhle se zruší.
+// Vrací { stop } — po stop se truhla nechá, jak je. Když truhla zmizí z DOM, přestane se.
+function chestPlay(art, caseDef, seq, stepMs, { loop = false, done } = {}) {
+  if (!art) return { stop() {} };
+  const img = art.querySelector('.ch-img');
+  if (art._chestTimer) clearTimeout(art._chestTimer);
+  let i = 0;
+  let stopped = false;
+  const step = () => {
+    if (stopped || !art.isConnected) return;
+    img.src = chestUrl(caseDef, seq[i]);
+    i++;
+    if (i >= seq.length) {
+      if (loop) i = 0;
+      else { art._chestTimer = setTimeout(() => { if (!stopped && done) done(); }, stepMs); return; }
+    }
+    art._chestTimer = setTimeout(step, stepMs);
+  };
+  step();
+  return { stop() { stopped = true; clearTimeout(art._chestTimer); } };
+}
+
+// ťuknutí na truhlu: poskočí a zatřese se (stavy bounce / shake), pak zůstane zavřená
+function chestTap(art, caseDef) {
+  if (!art) return;
+  chestPreload(caseDef, CHEST_SHAKE_SEQ);
+  if (caseReducedMotion()) return;
+  chestPlay(art, caseDef, CHEST_SHAKE_SEQ, 70);
 }
 
 function randomFloat() {
@@ -268,6 +323,7 @@ function showCaseContents(caseId) {
       <button type="button" class="buy-odds-link" id="contents-odds-btn" aria-expanded="false" aria-controls="contents-odds">See drop odds</button>
       <div class="buy-odds" id="contents-odds" hidden>
         <div class="odds-row">${oddsHtml}</div>
+        <p class="odds-dup">Duplicates give back coins: ${RARITY_ORDER.map((r) => `${RARITIES[r].label} ${RARITIES[r].refund}`).join(' · ')}</p>
         <div class="drop-grid">${dropsHtml}</div>
       </div>
       ${free ? '' : `<div class="buy-balance"><span>Your coins</span><span class="num"><b>${data.coins}</b> → <b class="${afford ? '' : 'is-short'}">${afford ? after : data.coins}</b></span></div>`}
@@ -280,6 +336,9 @@ function showCaseContents(caseId) {
     </div>
   `);
   modal.querySelector('#contents-close').onclick = closeModal;
+  chestPreload(caseDef, CHEST_SHAKE_SEQ);
+  const buyArt = modal.querySelector('.buy-art');
+  buyArt.onclick = () => chestTap(buyArt.querySelector('.chest-art'), caseDef);
   const oddsBtn = modal.querySelector('#contents-odds-btn');
   oddsBtn.onclick = () => {
     const box = modal.querySelector('#contents-odds');
@@ -448,7 +507,7 @@ function showCaseOverlay(caseDef, won, duplicate, refund) {
       </div>
       <div class="chest-stage ${reduced ? '' : 'shake'}" id="chest-stage">
         <div class="chest-rays"></div>
-        ${caseSvg(caseDef)}
+        ${caseSvg(caseDef, { crop: false })}
       </div>
       <div class="strip-window" id="strip-window">
         <div class="strip-marker"><i class="strip-line"></i><span class="strip-pointer top">${STRIP_POINTER_SVG}</span><span class="strip-pointer bottom">${STRIP_POINTER_SVG}</span></div>
@@ -461,6 +520,10 @@ function showCaseOverlay(caseDef, won, duplicate, refund) {
   document.body.classList.add('no-scroll');
 
   const chestStage = overlay.querySelector('#chest-stage');
+  const chestArt = chestStage.querySelector('.chest-art');
+  chestPreload(caseDef); // všech 10 stavů předem (otevření začne až za pár vteřin)
+  let shakeLoop = null;
+  if (!reduced) shakeLoop = chestPlay(chestArt, caseDef, ['shake-1', 'shake-2', 'shake-3', 'shake-2'], 110, { loop: true });
   const skipBtn = overlay.querySelector('#case-skip');
   const alive = () => overlay.isConnected;
   const win = overlay.querySelector('#strip-window');
@@ -475,13 +538,21 @@ function showCaseOverlay(caseDef, won, duplicate, refund) {
     done = true;
     skipBtn.hidden = true;
     chestStage.classList.remove('shake');
+    if (shakeLoop) shakeLoop.stop();
     if (!reduced) {
       chestStage.classList.add('pop');
+      // víko se otevře po stavech 25 → 60 → 100 %, rozsvítí se inner-glow a truhla se vyprázdní
+      chestPlay(chestArt, caseDef, ['open-25', 'open-60', 'open-100', 'open-100', 'empty'], 130);
+      setTimeout(() => chestArt.classList.add('glow-on'), 140); // světlo svítí, dokud je víko nahoře
+      setTimeout(() => chestArt.classList.remove('glow-on'), 540);
       const r = chestStage.getBoundingClientRect();
       const o = overlay.getBoundingClientRect();
-      const trim = SF_CHEST_COLORS[SF_CHEST_KIND[caseDef.id]] || SF_CHEST_COLORS.party;
-      caseBurst(overlay, [trim.trim, trim.lid, '#F472B6', '#60A5FA', '#34D399', '#FB923C'], 22, true,
-        r.left - o.left + r.width / 2, r.top - o.top + r.height * 0.4, 4);
+      const col = caseDef.colors;
+      caseBurst(overlay, [col.trim[0], col.lid[0], '#F472B6', '#60A5FA', '#34D399', '#FB923C'], 22, true,
+        r.left - o.left + r.width / 2, r.top - o.top + r.height * 0.55, 4);
+    } else {
+      chestArt.querySelector('.ch-img').src = chestUrl(caseDef, 'open-100');
+      chestArt.classList.add('glow-on');
     }
     setTimeout(() => { if (alive()) showReveal(caseDef, won, duplicate, refund); }, reduced ? 250 : 750);
   }
@@ -556,7 +627,7 @@ function showReveal(caseDef, won, duplicate, refund) {
     <div class="reveal-card rar-${won.rarity} ${won.rarity === 'mythic' ? 'is-mythic' : ''}">
       <div class="reveal-rays"></div>
       <div class="reveal-rarity"><i></i>${rarity.label}</div>
-      <div class="reveal-preview">${shopItemPreview(sectionOf(won), won)}</div>
+      <div class="reveal-preview">${shopItemPreview(sectionOf(won), won, true)}</div>
       <div class="reveal-title">
         <div class="reveal-name">${won.name}</div>
         <div class="reveal-kind">${kind}</div>

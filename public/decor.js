@@ -219,9 +219,11 @@ const FORTUNE_EXTRA = '<div class="fortune-rays" aria-hidden="true"></div>'
   + `<i class="fo-item fo-clover" style="animation-delay:-6.75s">${CLOVER_SVG}</i>`
   + '</div><div class="fortune-burst" aria-hidden="true"></div>';
 
-function frameDecorHtml(frame) {
+function frameDecorHtml(frame, size) {
   if (!frame) return '';
   const id = typeof frame === 'string' ? frame : frame.id;
+  const svgItem = frameItemOf(frame);
+  if (svgItem && svgItem.svg) return frameSvgHtml(svgItem, size); // nový SVG rámeček — bez starých aur a ozdob
   const make = FRAME_DECOR[id];
   // lesk / efekt okraje podle vzácnosti (Fortune má vlastní duhovou animaci)
   const item = typeof frame === 'string' ? ALL_ITEMS.find((i) => i.id === frame) : frame;
@@ -1417,3 +1419,37 @@ function burstTick() {
   });
 }
 setInterval(burstTick, 900);
+
+// ============================ SVG rámečky (Snapfam export: assets/frames) ============================
+// Rámeček s `svg: true` je hotový obrázek 512×512 s průhledným středem (okraj 26 px, malá verze 44 px
+// pro avatary ≤ 64 px). Kontejner má průhledné pozadí, fotka se vejde do okna (třída .fsv-lg / .fsv-sm /
+// .fsv-globe, rozměry v sf-shop.css) a obrázek leží přes ni. Animované rámečky (`anim: [vrstvy]`) se skládají
+// z vrstev (okraj + pohyblivá část, pohyb je přímo v SVG); při „reduce motion“ se místo nich ukáže statický obrázek.
+const FRAME_SVG_DIR = 'assets/frames/';
+const FRAME_SVG_SMALL_MAX = 64; // do téhle šířky (px) se použije -small.svg (bez animace)
+
+function frameItemOf(frame) {
+  if (!frame) return null;
+  return typeof frame === 'string' ? ALL_ITEMS.find((i) => i.id === frame) || null : frame;
+}
+
+// { cls, bg } pro kontejner rámečku: SVG rámečky mají průhledné pozadí a třídy okna fotky.
+function frameBox(frame, size) {
+  const item = frameItemOf(frame);
+  if (item && item.svg) {
+    const sm = size != null && size <= FRAME_SVG_SMALL_MAX;
+    return { cls: `fsv ${sm ? 'fsv-sm' : 'fsv-lg'}${item.round ? ' fsv-globe' : ''}`, bg: 'transparent', svg: true };
+  }
+  return { cls: '', bg: item ? item.style : 'var(--sf-r-common)', svg: false };
+}
+
+function frameSvgHtml(item, size) {
+  const id = item.id;
+  const img = (src, cls = '') => `<img ${cls ? `class="${cls}" ` : ''}src="${src}" alt="" draggable="false" decoding="async">`;
+  if ((size != null && size <= FRAME_SVG_SMALL_MAX) || !item.anim) {
+    const small = size != null && size <= FRAME_SVG_SMALL_MAX;
+    return `<div class="fsv-art" aria-hidden="true">${img(`${FRAME_SVG_DIR}${id}${small ? '-small' : ''}.svg`)}</div>`;
+  }
+  const layers = ['border', ...item.anim].map((l) => img(`${FRAME_SVG_DIR}layers/${id}/${id}-${l}.svg`)).join('');
+  return `<div class="fsv-art has-anim" aria-hidden="true">${img(`${FRAME_SVG_DIR}${id}.svg`, 'fs-static')}<span class="fs-anim">${layers}</span></div>`;
+}

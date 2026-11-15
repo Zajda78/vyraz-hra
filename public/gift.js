@@ -137,7 +137,7 @@ function showGiftReveal(gift) {
   items.forEach((it) => playSkinSfx(it.id, 1200));
   // jeden skin = původní vzhled; víc skinů = pod sebou náhled + název + druh každého
   const itemsHtml = items.map((item) => `
-          <div class="reveal-preview">${shopItemPreview(sectionOf(item), item)}</div>
+          <div class="reveal-preview">${shopItemPreview(sectionOf(item), item, true)}</div>
           <div class="reveal-name">${item.name}</div>
           <div class="reveal-kind">${item.section === 'frame' ? 'Frame' : 'Name color'}</div>`).join('');
   const overlay = document.createElement('div');

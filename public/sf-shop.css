@@ -429,3 +429,45 @@
 .daily-row .daily-btn, .daily-wait{ flex:0 1 auto; max-width:44%; white-space:normal; text-align:center; line-height:1.15; padding:0 12px; font-size:14px; justify-content:center; }
 .daily-row-text{ flex:1 1 0; }
 .daily-amt{ white-space:nowrap; }
+
+/* ======================= SNAPFAM EXPORT: SVG rámečky, truhly, barvy jmen ======================= */
+
+/* --- barvy jmen: přechod 6 s jede 0 → 100 → 0 % (Epic z exportu) --- */
+@keyframes name-slide{ 0%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } 100%{ background-position:0% 50%; } }
+@media (prefers-reduced-motion: reduce){ [style*="name-slide"]{ animation:none !important; } }
+
+/* --- SVG rámečky: kontejner je průhledný bez paddingu (procenta paddingu se počítají z rodiče, ne z prvku), fotka se
+   zmenší transformem do okna rámečku (velké SVG: okno 454/512, poloměr 48; malé ≤ 64 px: 418/512; sněhová koule: kruh 452/512
+   a 408/512) a obrázek leží přes ni. --- */
+.fsv{ border-radius:14% !important; box-shadow:none !important; padding:0 !important; }
+.fsv > .frame-inner, .fsv > .framed-avatar-inner, .fsv > .looks-photo, .fsv > .camera-wrap, .fsv > img.photo{ transform:scale(.887); border-radius:10.6% !important; }
+.fsv-sm > .frame-inner, .fsv-sm > .framed-avatar-inner, .fsv-sm > .looks-photo, .fsv-sm > .camera-wrap, .fsv-sm > img.photo{ transform:scale(.816); border-radius:11.5% !important; }
+.fsv-globe > .frame-inner, .fsv-globe > .framed-avatar-inner, .fsv-globe > .looks-photo, .fsv-globe > .camera-wrap, .fsv-globe > img.photo{ transform:scale(.883); border-radius:50% !important; }
+.fsv-globe.fsv-sm > .frame-inner, .fsv-globe.fsv-sm > .framed-avatar-inner, .fsv-globe.fsv-sm > .looks-photo, .fsv-globe.fsv-sm > .camera-wrap, .fsv-globe.fsv-sm > img.photo{ transform:scale(.797); border-radius:50% !important; }
+.fsv-art{ position:absolute; inset:0; z-index:3; pointer-events:none; }
+.fsv-art img, .fsv-art .fs-anim{ position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:fill; -webkit-user-drag:none; user-select:none; }
+.fsv-art.has-anim .fs-static{ display:none; }
+@media (prefers-reduced-motion: reduce){
+  .fsv-art.has-anim .fs-static{ display:block; }
+  .fsv-art.has-anim .fs-anim{ display:none; }
+}
+
+/* --- truhly (assets/chests, case.js): jeden <img> mění stavy, vrstva inner-glow se po otevření rozsvítí --- */
+.chest-art{ position:relative; width:100%; aspect-ratio:320/370; }
+.chest-art .ch-img, .chest-art .ch-glow{ position:absolute; left:0; top:0; width:100%; height:100%; display:block; pointer-events:none; user-select:none; -webkit-user-drag:none; }
+/* crop: jen zavřená truhla (spodních ~57 % obrázku); obrázek přesahuje nahoru, ale je tam průhledný */
+.chest-art.is-crop{ aspect-ratio:640/422; }
+.chest-art.is-crop .ch-img, .chest-art.is-crop .ch-glow{ top:auto; bottom:-5.3%; height:auto; aspect-ratio:320/370; }
+.chest-art .ch-glow{ opacity:0; transition:opacity .35s ease-out; }
+.chest-art.glow-on .ch-glow{ opacity:.55; }
+.chest-art .ch-img.case-chest{ animation:ch-float 3.6s ease-in-out infinite; transform-origin:50% 100%; }
+@keyframes ch-float{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
+.case-art{ display:flex; align-items:center; justify-content:center; }
+.case-grid .case-art{ width:128px; height:86px; }
+.case-feature .case-art{ width:140px; height:96px; }
+.buy-art{ width:200px; height:auto; margin:10px auto 0; }
+.buy-art .chest-art{ cursor:pointer; }
+.chest-stage{ width:176px; height:auto; aspect-ratio:320/370; }
+.chest-stage .chest-art{ position:relative; z-index:1; }
+.chest-stage .chest-art .ch-img.case-chest{ animation:none; }
+.odds-dup{ margin:10px 0 0; font:600 13px/1.4 'IBM Plex Sans',sans-serif; color:var(--sf-text-soft); text-align:center; }

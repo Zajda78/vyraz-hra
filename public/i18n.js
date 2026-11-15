@@ -497,6 +497,10 @@ const DICT_ROWS = [
   ['Friend code', 'Kód přítele', 'Código de amigo'],
   ['My QR', 'Můj QR', 'Mi QR'],
   ['Code copied', 'Kód zkopírován', 'Código copiado'],
+  // --- Snapfam export: nové truhly ---
+  ['Winter Chest', 'Zimní truhla', 'Cofre de invierno'],
+  ['Cosmos Chest', 'Vesmírná truhla', 'Cofre del cosmos'],
+  ['Street Chest', 'Pouliční truhla', 'Cofre callejero'],
 ];
 
 // Texty poskládané z více částí (čísla, jména) — regulární výraz na celý text.
@@ -566,6 +570,10 @@ const PATTERNS = [
   [/^Already yours — you get$/, (m, lang) => (lang === 'cs' ? 'Už to máš — dostáváš' : 'Ya lo tienes: recibes')],
   [/^You own the Party Pack — you get$/, (m, lang) => (lang === 'cs' ? 'Máš Party Pack — dostáváš' : 'Tienes el Party Pack: recibes')],
   [/^\+(\d+) coins$/, (m, lang) => (lang === 'cs' ? `+${m[1]} mincí` : `+${m[1]} monedas`)],
+  [/^Duplicates give back coins: (.+)$/, (m, lang) => {
+    const parts = m[1].split(' · ').map((p) => { const q = p.match(/^(\w+) (\d+)$/); return q ? `${tr(q[1], lang)} ${q[2]}` : p; }).join(' · ');
+    return (lang === 'cs' ? 'Duplikát vrátí mince: ' : 'El duplicado devuelve monedas: ') + parts;
+  }],
   [/^Equipped: (.+)$/, (m, lang) => (lang === 'cs' ? `Nasazeno: ${m[1]}` : `Equipado: ${m[1]}`)],
   [/^Unlocked! \+(\d+) coins \(prototype — nothing was charged\)$/, (m, lang) => (lang === 'cs' ? `Odemčeno! +${m[1]} mincí (prototyp — nic se nezaplatilo)` : `¡Desbloqueado! +${m[1]} monedas (prototipo: no se cobró nada)`)],
   [/^(.+) is in the (Party Pack|Question Packs)$/, (m, lang) => (lang === 'cs' ? `${tr(m[1], lang)} je v nabídce ${tr(m[2], lang)}` : `${tr(m[1], lang)} está en ${tr(m[2], lang)}`)],

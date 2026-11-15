@@ -19,10 +19,10 @@ const SHOP_START_COINS = 0; // nový hráč začíná bez mincí — první si v
 // Vzácnosti: refund = kolik mincí vrátí duplikát (věc, kterou už máš).
 // Šance na jednotlivé vzácnosti má každá truhla vlastní (viz CASES v case.js).
 const RARITIES = {
-  common: { label: 'Common', color: '#A9B4C8', refund: 15 },
-  rare: { label: 'Rare', color: '#3E8BFF', refund: 35 },
-  epic: { label: 'Epic', color: '#B66BFF', refund: 75 },
-  legendary: { label: 'Legendary', color: '#FF8F3A', refund: 200 },
+  common: { label: 'Common', color: '#A9B4C8', refund: 15 }, // refund = mince za duplikát: 15 / 40 / 100 / 250
+  rare: { label: 'Rare', color: '#3E8BFF', refund: 40 },
+  epic: { label: 'Epic', color: '#B66BFF', refund: 100 },
+  legendary: { label: 'Legendary', color: '#FF8F3A', refund: 250 },
   // Mythic — nejvzácnější, rámeček Fortune z kola štěstí a dárkový set Jezevčík (v truhlách není,
   // proto není v RARITY_ORDER, podle kterého se počítají šance truhel)
   mythic: { label: 'Mythic', color: '#FF4F9A', refund: 500 },
@@ -81,7 +81,6 @@ const SHOP_SECTIONS = [
       { id: 'frame-lemon', name: 'Lemon', rarity: 'common', style: '#FACC15' },
       { id: 'frame-sky', name: 'Sky Blue', rarity: 'common', style: '#38BDF8' },
       { id: 'frame-berry', name: 'Berry', rarity: 'common', style: '#DB2777' },
-      { id: 'frame-cocoa', name: 'Cocoa', rarity: 'common', style: '#92400E' },
       { id: 'frame-arcade', name: 'Arcade', rarity: 'rare', style: 'linear-gradient(135deg,#FACC15,#F43F5E,#6366F1)' },
       { id: 'frame-jungle', name: 'Jungle', rarity: 'rare', style: 'linear-gradient(135deg,#A3E635,#16A34A,#713F12)' },
       { id: 'frame-pizza', name: 'Pizza', rarity: 'rare', style: 'linear-gradient(135deg,#FDE68A,#F59E0B 45%,#DC2626)' },
@@ -98,6 +97,29 @@ const SHOP_SECTIONS = [
       { id: 'frame-wizard', name: 'Wizard', rarity: 'epic', style: 'linear-gradient(135deg,#6366F1,#7C3AED 50%,#1E1B4B)' },
       { id: 'frame-crystal', name: 'Crystal', rarity: 'epic', style: 'linear-gradient(135deg,#67E8F9,#818CF8 50%,#C084FC)' },
       { id: 'frame-dragon', name: 'Dragon', rarity: 'legendary', style: 'linear-gradient(160deg,#EF4444,#B91C1C 50%,#7F1D1D 50%,#450A0A)' },
+      // Snapfam export (SVG rámečky, assets/frames) — sady Winter Party, Space Cadet a Street Art; viz CASES v case.js.
+      // frame-cocoa dřív existoval jako běžný hnědý rámeček — stejné id, teď nové SVG (Rare); kdo ho vlastní, ho má dál.
+      { id: 'frame-snowball', name: 'Snowball', rarity: 'common', style: '#CFE8FF', svg: true },
+      { id: 'frame-mitten', name: 'Mitten', rarity: 'common', style: '#E8424F', svg: true },
+      { id: 'frame-cocoa', name: 'Cocoa', rarity: 'rare', style: '#6B3B22', svg: true },
+      { id: 'frame-candy-cane', name: 'Candy Cane', rarity: 'rare', style: '#E8313F', svg: true },
+      { id: 'frame-fairy-lights', name: 'Fairy Lights', rarity: 'epic', style: '#2E7A4F', svg: true, anim: ['bulbs'] },
+      { id: 'frame-gift-wrap', name: 'Gift Wrap', rarity: 'epic', style: '#E23B5A', svg: true, anim: ['bow'] },
+      { id: 'frame-snow-globe', name: 'Snow Globe', rarity: 'legendary', style: '#7CC4F0', svg: true, round: true, anim: ['snow'] },
+      { id: 'frame-moon-grey', name: 'Moon Grey', rarity: 'common', style: '#A3ABBD', svg: true },
+      { id: 'frame-nebula-blue', name: 'Nebula Blue', rarity: 'common', style: '#4A6FE8', svg: true },
+      { id: 'frame-stardust', name: 'Stardust', rarity: 'rare', style: '#2B3A99', svg: true },
+      { id: 'frame-saturn', name: 'Saturn', rarity: 'rare', style: '#D9934A', svg: true },
+      { id: 'frame-rocket', name: 'Rocket', rarity: 'epic', style: '#5B3FD0', svg: true, anim: ['rocket'] },
+      { id: 'frame-alien', name: 'Alien', rarity: 'epic', style: '#1FA463', svg: true, anim: ['alien'] },
+      { id: 'frame-black-hole', name: 'Black Hole', rarity: 'legendary', style: '#6B3FE0', svg: true, anim: ['swirl', 'rim'] },
+      { id: 'frame-asphalt', name: 'Asphalt', rarity: 'common', style: '#5A5A6A', svg: true },
+      { id: 'frame-spray-red', name: 'Spray Red', rarity: 'common', style: '#FF3B4E', svg: true },
+      { id: 'frame-sticker-bomb', name: 'Sticker Bomb', rarity: 'rare', style: '#FF5CA8', svg: true },
+      { id: 'frame-sneaker', name: 'Sneaker', rarity: 'rare', style: '#3E7BFA', svg: true },
+      { id: 'frame-graffiti', name: 'Graffiti', rarity: 'epic', style: '#FF3FA4', svg: true, anim: ['spray'] },
+      { id: 'frame-neon-sign', name: 'Neon Sign', rarity: 'epic', style: '#FF4FD8', svg: true, anim: ['tube'] },
+      { id: 'frame-boombox', name: 'Boombox', rarity: 'legendary', style: '#2BE0C8', svg: true, anim: ['speakers'] },
       // jen z dárkového odkazu (gift.js) — v žádné truhle ani na kole
       { id: 'frame-obzerstvi', name: 'Obžerství', rarity: 'legendary', promoOnly: true, style: 'linear-gradient(160deg,#FBBF24,#EF4444 50%,#B91C1C 50%,#7F1D1D)' },
       // jen z druhého dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
@@ -125,7 +147,6 @@ const SHOP_SECTIONS = [
       { id: 'name-sunset', name: 'Sunset', rarity: 'rare', gradient: 'linear-gradient(90deg,#FDBA74,#F472B6)' },
       { id: 'name-toxic', name: 'Toxic', rarity: 'rare', gradient: 'linear-gradient(90deg,#BEF264,#22C55E)' },
       { id: 'name-candy', name: 'Candy', rarity: 'rare', gradient: 'linear-gradient(90deg,#F9A8D4,#C4B5FD,#93C5FD)' },
-      { id: 'name-aurora', name: 'Aurora', rarity: 'epic', gradient: 'linear-gradient(90deg,#34D399,#22D3EE,#A78BFA)' },
       { id: 'name-chrome', name: 'Chrome', rarity: 'epic', gradient: 'linear-gradient(90deg,#F8FAFC,#94A3B8,#F1F5F9,#94A3B8)' },
       { id: 'name-galaxy', name: 'Galactic', rarity: 'legendary', gradient: 'linear-gradient(90deg,#A78BFA,#EC4899,#22D3EE)' },
       { id: 'name-diamond', name: 'Diamond', rarity: 'legendary', gradient: 'linear-gradient(90deg,#E0F2FE,#A5F3FC,#F5D0FE,#FFFFFF,#BAE6FD)' },
@@ -166,6 +187,30 @@ const SHOP_SECTIONS = [
       { id: 'name-arcane', name: 'Arcane', rarity: 'epic', gradient: 'linear-gradient(90deg,#818CF8,#C084FC,#22D3EE,#818CF8)' },
       { id: 'name-crystal', name: 'Crystalline', rarity: 'epic', gradient: 'linear-gradient(90deg,#67E8F9,#A5B4FC,#F0ABFC,#67E8F9)' },
       { id: 'name-dragon', name: 'Dragonfire', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FDE047,#F97316,#DC2626,#7F1D1D,#DC2626,#F97316)' },
+      // Snapfam export (names/names.css) — Winter Party, Space Cadet, Street Art. art = přesně podle specs.csv:
+      // slide = přechod 6 s jezdí sem a tam, edge = 1px světlejší horní hrana (legendary, bez záře).
+      // name-aurora dřív existovalo jako Epic (starý přechod) — stejné id, teď nová definice.
+      { id: 'name-snowy', name: 'Snowy', rarity: 'common', color: '#E3F2FF', art: true },
+      { id: 'name-cranberry', name: 'Cranberry', rarity: 'common', color: '#FF6F86', art: true },
+      { id: 'name-minty', name: 'Minty', rarity: 'rare', gradient: 'linear-gradient(90deg,#9FF5D0,#5ED8F0)', art: true },
+      { id: 'name-gingerbread', name: 'Gingerbread', rarity: 'rare', gradient: 'linear-gradient(90deg,#F7B36B,#E08A4E)', art: true },
+      { id: 'name-frosted', name: 'Frosted', rarity: 'epic', gradient: 'linear-gradient(90deg,#FFFFFF,#BAE6FD,#60A5FA,#BAE6FD,#FFFFFF)', art: true, slide: true },
+      { id: 'name-aurora', name: 'Aurora', rarity: 'epic', gradient: 'linear-gradient(90deg,#5EF2B5,#5EC8FF,#C9A2FF,#5EF2B5)', art: true, slide: true },
+      { id: 'name-santa', name: 'Santa', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FF6B6B,#FFE9D6,#FF6B6B)', art: true, edge: '#FFE9D6' },
+      { id: 'name-moon', name: 'Moon', rarity: 'common', color: '#D6DCE8', art: true },
+      { id: 'name-comet', name: 'Comet', rarity: 'common', color: '#7FD3FF', art: true },
+      { id: 'name-nebula', name: 'Nebula', rarity: 'rare', gradient: 'linear-gradient(90deg,#C9A2FF,#8FB0FF)', art: true },
+      { id: 'name-mars', name: 'Mars', rarity: 'rare', gradient: 'linear-gradient(90deg,#FF8A5C,#FFB45C)', art: true },
+      { id: 'name-supernova', name: 'Supernova', rarity: 'epic', gradient: 'linear-gradient(90deg,#FFD23F,#FF8A5C,#FF6FB0,#FF8A5C,#FFD23F)', art: true, slide: true },
+      { id: 'name-galaxy-far', name: 'Galaxy Far', rarity: 'epic', gradient: 'linear-gradient(90deg,#8FB0FF,#C9A2FF,#FF8FD8,#8FB0FF)', art: true, slide: true },
+      { id: 'name-cosmic', name: 'Cosmic', rarity: 'legendary', gradient: 'linear-gradient(90deg,#5EF2B5,#5EC8FF,#C9A2FF,#FF8FD8,#FFD23F)', art: true, edge: '#5EF2B5' },
+      { id: 'name-concrete', name: 'Concrete', rarity: 'common', color: '#C4C4CF', art: true },
+      { id: 'name-spray', name: 'Spray', rarity: 'common', color: '#FF6FB4', art: true },
+      { id: 'name-tag', name: 'Tag', rarity: 'rare', gradient: 'linear-gradient(90deg,#FF6FB4,#FFB45C)', art: true },
+      { id: 'name-highlighter', name: 'Highlighter', rarity: 'rare', gradient: 'linear-gradient(90deg,#EEFF5C,#7DFF8A)', art: true },
+      { id: 'name-fresh-kicks', name: 'Fresh Kicks', rarity: 'epic', gradient: 'linear-gradient(90deg,#5EC8FF,#EEFF5C,#5EC8FF)', art: true, slide: true },
+      { id: 'name-wildstyle', name: 'Wildstyle', rarity: 'epic', gradient: 'linear-gradient(90deg,#FF6FB4,#FFD23F,#5EF2B5,#5EC8FF,#FF6FB4)', art: true, slide: true },
+      { id: 'name-gold-chain', name: 'Gold Chain', rarity: 'legendary', gradient: 'linear-gradient(90deg,#FFE38C,#E8B84A,#FFF1B8,#E8B84A)', art: true, edge: '#FFF1B8' },
       // jen z druhého dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
       { id: 'name-jezevcik', name: 'Jezevčík', rarity: 'mythic', promoOnly: true, gradient: 'linear-gradient(90deg,#B88552,#D9A066,#F0C27A,#FBBF24,#E8B068,#B88552)' },
       // jen z třetího dárkového odkazu (gift.js) — mythic, v žádné truhle ani na kole
@@ -175,6 +220,11 @@ const SHOP_SECTIONS = [
     ],
   },
 ];
+
+// Staré / přejmenované id → platné id (uložený inventář, nasazené věci i looks od ostatních hráčů).
+// Při přejmenování skinu sem přidat řádek, ať se nic vlastněného neztratí.
+const ITEM_ALIASES = { 'name-northern-lights': 'name-aurora' };
+function resolveItemId(id) { return (id && ITEM_ALIASES[id]) || id; }
 
 // Všechny věci v jednom seznamu, každá ví, do jaké sekce patří.
 const ALL_ITEMS = SHOP_SECTIONS.flatMap((s) => s.items.map((i) => ({ ...i, section: s.id })));
@@ -206,6 +256,9 @@ function shopLoad() {
   let data = null;
   try { data = JSON.parse(localStorage.getItem(shopKey()) || 'null'); } catch { /* ignore */ }
   data = data || { coins: SHOP_START_COINS, owned: [], equipped: {} };
+  // aliasy: přejmenovaná id se převedou na nová (bez duplicit)
+  if (Array.isArray(data.owned)) data.owned = [...new Set(data.owned.map(resolveItemId))];
+  if (data.equipped) for (const k of Object.keys(data.equipped)) data.equipped[k] = resolveItemId(data.equipped[k]);
   // nabídky byly zdarma omylem v prototypu, tak se odstraní od běžných hráčů (dev storage se nemění)
   if (!isDevMode() && data.unlocks) {
     const partyPackCoins = 200; // PARTY_PACK.coins z offers.js
@@ -237,9 +290,11 @@ function coinBadgeHtml(coins) {
   return `<div class="coin-badge">${COIN_SVG}<span class="num">${coins}</span></div>`;
 }
 
-function shopItemPreview(section, item) {
+// big = velký náhled (odhalení výhry); jinak malý (mřížky, inventář) → u SVG rámečků malá varianta
+function shopItemPreview(section, item, big = false) {
   if (section.id === 'frame') {
-    return `<div class="frame-preview" style="background:${item.style}"><div class="frame-inner">${icon('camera')}</div>${frameDecorHtml(item)}</div>`;
+    const box = frameBox(item, big ? 110 : 54);
+    return `<div class="frame-preview ${box.cls}" style="background:${box.bg}"><div class="frame-inner">${icon('camera')}</div>${frameDecorHtml(item, big ? 110 : 54)}</div>`;
   }
   const name = escapeHtml(getSavedName() || 'Name');
   return `<div class="name-preview"><span style="${nameStyleFor(item)}">${name}</span></div>`;
@@ -385,16 +440,15 @@ function renderShopScreen() {
   }
   // truhla se po ťuknutí zatřese; zdarma se otevře hned, za mince se nejdřív ukáže okno s nákupem
   const shake = (card) => {
-    card.classList.remove('shake');
-    void card.offsetWidth; // restart animace, i když se ťukne vícekrát za sebou
-    card.classList.add('shake');
+    const c = caseById(card.dataset.caseCard);
+    chestTap(card.querySelector('.chest-art'), c); // stavy bounce / shake z exportu truhel
     playSfx('chest-shake');
   };
+  // zavřené truhly se stáhnou předem po prvním vykreslení (zatřesení pak nic nezdrží)
+  const featuredCase = featured || availCases[0];
+  if (featuredCase) setTimeout(() => chestPreload(featuredCase, CHEST_SHAKE_SEQ), 400);
   document.querySelectorAll('.case-card').forEach((card) => {
-    // po zatřesení se truhla vrátí k levitování
-    card.addEventListener('animationend', (e) => {
-      if (e.animationName === 'chest-shake') card.classList.remove('shake');
-    });
+    card.addEventListener('pointerdown', () => chestPreload(caseById(card.dataset.caseCard), CHEST_SHAKE_SEQ), { once: true });
     card.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
       shake(card);
@@ -458,11 +512,20 @@ function showToast(text, kind) {
 
 function equippedItem(data, sectionId) {
   const section = SHOP_SECTIONS.find((s) => s.id === sectionId);
-  return section.items.find((i) => i.id === data.equipped[sectionId]) || null;
+  return section.items.find((i) => i.id === resolveItemId(data.equipped[sectionId])) || null;
 }
 
 function nameStyleFor(item) {
   if (!item) return 'color:#fff;';
+  // Snapfam export (art): přesně podle specs.csv — Common/Rare statické, Epic přechod jezdí 6 s (name-slide), Legendary
+  // statický + 1px světlejší horní hrana (drop-shadow, protože text-shadow by přes průhledný text překryl přechod). Bez aury.
+  if (item.art) {
+    if (!item.gradient) return `color:${item.color};`;
+    const base = `background:${item.gradient}; -webkit-background-clip:text; background-clip:text; color:transparent;`;
+    if (item.slide) return `${base} background-size:200% 100%; animation:name-slide 6s linear infinite;`;
+    if (item.edge) return `${base} filter:drop-shadow(0 -1px 0 ${item.edge}80);`;
+    return base;
+  }
   if (item.gradient) {
     const base = `background:${item.gradient}; -webkit-background-clip:text; background-clip:text; color:transparent;`;
     // mythic: plynule proudící přechod (bez bílé), tenký tmavě hnědý obrys pro čitelnost, žádná velká záře
@@ -489,9 +552,9 @@ function looksPreviewHtml(data) {
   const fr = frame ? `${frame.name} · <span style="color:${RARITIES[frame.rarity].color}">${RARITIES[frame.rarity].label}</span>` : 'Default';
   return `
     <div class="looks-card">
-      <div class="looks-frame" style="background:${frame ? frame.style : 'var(--sf-r-common)'}">
+      <div class="looks-frame ${frameBox(frame, 112).cls}" style="background:${frameBox(frame, 112).bg}">
         <div class="looks-photo">${getAvatar() ? `<img class="avatar-img" src="${getAvatar()}" alt="">` : escapeHtml((getSavedName() || '?').charAt(0).toUpperCase())}</div>
-        ${frameDecorHtml(frame)}
+        ${frameDecorHtml(frame, 112)}
       </div>
       <div class="looks-info">
         <div class="looks-name" style="${nameStyleFor(nameItem)}">${escapeHtml(getSavedName() || 'Name')}</div>

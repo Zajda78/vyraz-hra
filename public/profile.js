@@ -59,6 +59,7 @@ function fileToAvatar(file) {
 
 function findShopItem(sectionId, itemId) {
   if (!itemId) return null;
+  itemId = resolveItemId(itemId); // staré / přejmenované id (shop.js ITEM_ALIASES)
   const section = SHOP_SECTIONS.find((s) => s.id === sectionId);
   return (section && section.items.find((i) => i.id === itemId)) || null;
 }
@@ -80,10 +81,11 @@ function avatarHtml(name, looks, size) {
   const pad = Math.max(2, Math.round(size * 0.055));
   // profilovka jen z data URL obrázku — nic jiného se do src nepustí
   const avatar = looks && typeof looks.avatar === 'string' && looks.avatar.startsWith('data:image/') ? looks.avatar : null;
+  const box = frameBox(frame, size); // SVG rámeček: průhledné pozadí + okno fotky (třídy .fsv)
   return `
-    <div class="framed-avatar" style="width:${size}px; height:${size}px; padding:${pad}px; border-radius:${Math.round(size * 0.24)}px; background:${frame ? frame.style : 'var(--sf-r-common)'}">
+    <div class="framed-avatar ${box.cls}" style="width:${size}px; height:${size}px; padding:${pad}px; border-radius:${Math.round(size * 0.24)}px; background:${box.bg}">
       <div class="framed-avatar-inner" style="border-radius:${Math.round(size * 0.19)}px; font-size:${Math.round(size * 0.4)}px">${avatar ? `<img class="avatar-img" src="${avatar}" alt="">` : letter}</div>
-      ${frameDecorHtml(frame)}
+      ${frameDecorHtml(frame, size)}
     </div>`;
 }
 
@@ -91,8 +93,9 @@ function avatarHtml(name, looks, size) {
 // (při hlasování ne, to musí zůstat anonymní).
 function framedPhotoHtml(src, looks, wrapStyle = '') {
   const frame = findShopItem('frame', looks && looks.frame);
+  const box = frameBox(frame);
   return `
-    <div class="photo-frame ${frame ? 'has-frame' : ''}" style="${wrapStyle}${frame ? ` background:${frame.style};` : ''}">
+    <div class="photo-frame ${frame ? 'has-frame' : ''} ${box.cls}" style="${wrapStyle}${frame ? ` background:${box.bg};` : ''}">
       <div class="camera-wrap"><img src="${src}"></div>
       ${frameDecorHtml(frame)}
     </div>`;
@@ -101,7 +104,8 @@ function framedPhotoHtml(src, looks, wrapStyle = '') {
 function resultPhotoHtml(src, looks) {
   const frame = findShopItem('frame', looks && looks.frame);
   if (!frame) return `<img class="photo" src="${src}">`;
-  return `<div class="result-photo-frame" style="background:${frame.style}"><img class="photo" src="${src}">${frameDecorHtml(frame)}</div>`;
+  const box = frameBox(frame);
+  return `<div class="result-photo-frame ${box.cls}" style="background:${box.bg}"><img class="photo" src="${src}">${frameDecorHtml(frame)}</div>`;
 }
 
 // Avatar přihlášeného hráče v nasazeném rámečku.
